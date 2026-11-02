@@ -1,0 +1,12 @@
+---
+description: Markdown documentation authoring
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Markdown Documentation
+
+- Use UK English spelling.
+- For general documentation, use `documentation-writer` and `project-documentation` skills in `.agents/skills/`.
+- Ground content in `GOALS.md`, `SCOPE.md`, and `CONVENTIONS.md`.
+- For ADRs under `adr/`, use `create-architectural-decision-record` instead of general documentation skills.

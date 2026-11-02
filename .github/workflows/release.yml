@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Verify & GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore Repo.slnx
+
+      - name: Verify formatting
+        run: dotnet format Repo.slnx --no-restore --verify-no-changes --verbosity minimal
+
+      - name: Clean, restore, build, and test
+        run: |
+          dotnet clean Repo.slnx
+          dotnet restore Repo.slnx
+          dotnet build Repo.slnx --no-restore --configuration Release -warnaserror
+          dotnet test Repo.slnx --no-build --configuration Release
+
+      - name: Determine if prerelease
+        id: prerelease_check
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$TAG" =~ -[a-zA-Z] ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const isPrerelease = ${{ steps.prerelease_check.outputs.is_prerelease }};
+
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              });
+              core.info(`Release for tag ${tag} already exists. Skipping createRelease.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: tag,
+              prerelease: isPrerelease,
+              generate_release_notes: true,
+            });

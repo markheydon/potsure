@@ -1,0 +1,74 @@
+name: Chore request
+description: Propose maintenance, tooling, docs, or governance work
+title: "[Chore] "
+labels: [type/chore, status/todo, priority/medium]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for non-feature work such as docs/process updates, test hardening,
+        release engineering, CI upkeep, or repository governance.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What maintenance task is needed?
+      placeholder: Add a concise summary of the chore.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why now?
+      description: Why this task should be prioritised now
+      placeholder: Explain timing, risk, or value.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Define boundaries so this stays appropriately sized
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List clear, verifiable outcomes
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and trade-offs
+      description: Note regression risk, operational risk, or trade-offs
+      placeholder: |
+        - Risk:
+        - Mitigation:
+    validations:
+      required: true
+  - type: textarea
+    id: goals
+    attributes:
+      label: Goal links
+      description: Link relevant goals from GOALS.md (for example G4, G5)
+      placeholder: |
+        - G4 (...)
+        - G5 (...)
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and related items
+      description: Related issues, PRs, workflows, or docs

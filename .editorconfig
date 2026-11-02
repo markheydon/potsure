@@ -1,0 +1,74 @@
+root = true
+
+[*]
+indent_style             = space
+end_of_line              = lf
+charset                  = utf-8
+trim_trailing_whitespace = true
+insert_final_newline     = true
+
+[*.{cs,csx}]
+indent_size = 4
+
+# Braces on their own line (Allman style)
+csharp_new_line_before_open_brace                                   = all
+csharp_new_line_before_else                                         = true
+csharp_new_line_before_catch                                        = true
+csharp_new_line_before_finally                                      = true
+csharp_new_line_before_members_in_object_initializers              = true
+csharp_new_line_before_members_in_anonymous_types                  = true
+
+# Indentation
+csharp_indent_case_contents                                         = true
+csharp_indent_switch_labels                                         = true
+
+# Spaces
+csharp_space_after_cast                                             = false
+csharp_space_before_colon_in_inheritance_clause                     = true
+csharp_space_after_colon_in_inheritance_clause                      = true
+csharp_space_around_binary_operators                                = before_and_after
+
+# Prefer file-scoped namespaces
+csharp_style_namespace_declarations                                 = file_scoped:warning
+
+# var preferences - use explicit types; var only for obvious cases
+csharp_style_var_for_built_in_types                                 = false:suggestion
+csharp_style_var_when_type_is_apparent                              = true:suggestion
+csharp_style_var_elsewhere                                          = false:suggestion
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods                              = false:silent
+csharp_style_expression_bodied_constructors                         = false:silent
+csharp_style_expression_bodied_properties                           = true:suggestion
+
+# Pattern matching
+csharp_style_pattern_matching_over_is_with_cast_check              = true:warning
+csharp_style_pattern_matching_over_as_with_null_check               = true:warning
+
+# Null checking
+dotnet_style_null_propagation                                       = true:warning
+dotnet_style_coalesce_expression                                    = true:warning
+
+# Using directives - system first, then alphabetical
+dotnet_sort_system_directives_first                                 = true
+dotnet_separate_import_directive_groups                             = false
+
+# Naming rules
+dotnet_naming_rule.private_fields_should_be_camelcase.symbols      = private_fields
+dotnet_naming_rule.private_fields_should_be_camelcase.style        = camel_case_style
+dotnet_naming_rule.private_fields_should_be_camelcase.severity     = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds              = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities    = private
+
+dotnet_naming_style.camel_case_style.capitalization                = camel_case
+
+[*.{json,yml,yaml,xml,props,targets}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Test files: allow underscore-separated method names (e.g. Method_State_Expected)
+[**/*Tests.cs]
+dotnet_diagnostic.CA1707.severity = none
