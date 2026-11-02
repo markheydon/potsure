@@ -1,7 +1,7 @@
 # Versioning Policy
 
-**Project:** Acme.Project
-**Last updated:** (date)
+**Project:** Potsure
+**Last updated:** 2026-11-02
 
 ---
 
@@ -21,4 +21,5 @@ See [plan/RELEASE.md](plan/RELEASE.md). This template creates **GitHub Releases*
 
 | Date | Change | Reason |
 |---|---|---|
-| (date) | Initial draft from csharp-oss-template | New repository |
+| 2026-11-02 | Project name aligned with Potsure | Product definition |
+| (prior) | Initial draft from csharp-oss-template | New repository |

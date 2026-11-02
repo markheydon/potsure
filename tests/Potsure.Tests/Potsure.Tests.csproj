@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Acme.Project\Acme.Project.csproj" />
+    <ProjectReference Include="..\..\src\Potsure\Potsure.csproj" />
   </ItemGroup>
 
 </Project>

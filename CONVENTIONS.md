@@ -2,8 +2,8 @@
 
 # Conventions
 
-**Project:** Acme.Project
-**Last updated:** (date)
+**Project:** Potsure  
+**Last updated:** 2026-11-02
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
 
@@ -13,13 +13,13 @@ When in doubt, follow this file. Significant architecture changes need an ADR.
 
 ```
 src/
-└── Acme.Project/
+└── Potsure/
 
 tests/
-└── Acme.Project.Tests/
+└── Potsure.Tests/
 ```
 
-Add folders (`samples/`, `docs/`, Blazor projects, etc.) as the product grows. Update this section when layout changes.
+Add folders (`samples/`, `docs/`, AppHost, web projects, etc.) as the product grows. Update this section when layout changes.
 
 ---
 
@@ -29,7 +29,7 @@ Add folders (`samples/`, `docs/`, Blazor projects, etc.) as the product grows. U
 - **Nullable reference types** enabled (`Directory.Build.props`).
 - **Treat warnings as errors** in all projects.
 - **XML documentation** on public API members.
-- **HTTP outbound calls** (if any): use `IHttpClientFactory` and typed clients — see [dotnet-api-client-template](https://github.com/markheydon/dotnet-api-client-template) or ADR-0001 in that template.
+- **HTTP outbound calls** (if any): use `IHttpClientFactory` and typed clients; record significant HTTP client choices in an ADR.
 
 ---
 

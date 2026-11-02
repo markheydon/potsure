@@ -1,16 +1,14 @@
-# C# OSS project template
+# Potsure
 
-GitHub template for **Mark Heydon**-style open source .NET repositories: governance markdown, Cursor agent rules, CI, optional GitHub Releases on tags, and xUnit v3 tests. Works for class libraries, Blazor packages, tools, or apps — not only HTTP clients.
+Web application for running a **pots-based budget** from bank statements with minimal manual upkeep. Potsure discovers recurring income and payments from uploads, lets you confirm them instead of retyping, and shows **planned vs. actual** spending by category—the same check a spreadsheet gives, without weekly reconciliation drudgery.
 
-**Using this template:** click **Use this template** on GitHub, then follow [TEMPLATE.md](TEMPLATE.md).
-
-**HTTP API client SDK?** Start from [dotnet-api-client-template](https://github.com/markheydon/dotnet-api-client-template) instead (NuGet, typed `HttpClient`, sample console, Pages docs).
+Product direction and success criteria: [GOALS.md](GOALS.md). Boundaries: [SCOPE.md](SCOPE.md).
 
 ## Quick start
 
 ```bash
-dotnet build Repo.slnx -c Release -warnaserror
-dotnet test Repo.slnx -c Release --no-build
+dotnet build Potsure.slnx -c Release -warnaserror
+dotnet test Potsure.slnx -c Release --no-build
 ```
 
 ## Repository layout
@@ -19,10 +17,16 @@ dotnet test Repo.slnx -c Release --no-build
 |------|---------|
 | `GOALS.md`, `SCOPE.md`, `CONVENTIONS.md` | Product and coding context for humans and agents |
 | `AGENTS.md` | Cursor agent operating rules |
+| `.specify/memory/constitution.md` | Project constitution (Spec Kit governance) |
+| `specs/` | Feature specifications (`001-potsure-v1` is active v1 spec) |
 | `.cursor/rules/` | File-scoped agent constraints |
-| `.agents/skills/` | Project skills (ADR, docs, PR review) |
+| `.agents/skills/` | Project skills (ADR, docs, code review, Aspire) |
 | `plan/` | Release and PR policy |
 | `adr/` | Architectural decision records |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security concerns: [SECURITY.md](SECURITY.md).
 
 ## Licence
 

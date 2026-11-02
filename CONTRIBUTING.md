@@ -5,9 +5,9 @@ Read [GOALS.md](GOALS.md), [SCOPE.md](SCOPE.md), [CONVENTIONS.md](CONVENTIONS.md
 ## Development
 
 ```bash
-dotnet format Repo.slnx --verify-no-changes
-dotnet build Repo.slnx -c Release -warnaserror
-dotnet test Repo.slnx -c Release --no-build
+dotnet format Potsure.slnx --verify-no-changes
+dotnet build Potsure.slnx -c Release -warnaserror
+dotnet test Potsure.slnx -c Release --no-build
 ```
 
 ## Pull requests

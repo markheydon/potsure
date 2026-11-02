@@ -1,5 +1,5 @@
 # Support
 
-Open a [GitHub issue](https://github.com/markheydon/csharp-oss-template/issues) for bugs and questions about this template.
+Open a [GitHub issue](https://github.com/markheydon/potsure/issues) for bugs, questions, and feature requests about Potsure.
 
-After forking, replace this link with your repository issue tracker.
+For security vulnerabilities, follow [SECURITY.md](SECURITY.md) and report privately.

@@ -5,9 +5,9 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/Acme.Project/Acme.Project.csproj" />
+    <Project Path="src/Potsure/Potsure.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Acme.Project.Tests/Acme.Project.Tests.csproj" />
+    <Project Path="tests/Potsure.Tests/Potsure.Tests.csproj" />
   </Folder>
 </Solution>
