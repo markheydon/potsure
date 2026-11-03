@@ -13,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.ConfigurePotsureOpenTelemetry();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.Configure<DeploymentModeOptions>(
     builder.Configuration.GetSection(DeploymentModeOptions.SectionName));
 
@@ -28,7 +30,6 @@ if (deployment.Mode == DeploymentMode.LocalOnly)
 }
 if (deployment.Mode == DeploymentMode.Hosted)
 {
-    builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
     builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
 }

@@ -129,6 +129,9 @@ internal sealed class IncomeSourceConfiguration : IEntityTypeConfiguration<Incom
         builder.Property(e => e.SourceLabel).HasMaxLength(256).IsRequired();
         builder.Property(e => e.FixedAmount).HasPrecision(18, 2);
         builder.Property(e => e.EstimateAmount).HasPrecision(18, 2);
+        builder.Property(e => e.SplitNeedsPercent).HasPrecision(18, 2);
+        builder.Property(e => e.SplitWantsPercent).HasPrecision(18, 2);
+        builder.Property(e => e.SplitSavingsDebtPercent).HasPrecision(18, 2);
     }
 }
 

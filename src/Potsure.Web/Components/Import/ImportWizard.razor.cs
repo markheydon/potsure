@@ -176,16 +176,11 @@ public partial class ImportWizard
             string match = required;
             foreach (string fileHeader in preview.ColumnMapping.FileHeaders)
             {
-                if (fileHeader == required)
+                if (string.Equals(fileHeader, required, StringComparison.OrdinalIgnoreCase))
                 {
                     match = fileHeader;
                     break;
                 }
-            }
-
-            if (match == required && preview.ColumnMapping.FileHeaders.Count > 0)
-            {
-                match = preview.ColumnMapping.FileHeaders[0];
             }
 
             mapping[required] = match;

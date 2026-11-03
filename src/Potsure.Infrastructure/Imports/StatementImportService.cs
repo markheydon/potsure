@@ -295,16 +295,11 @@ public sealed class StatementImportService(
             string match = required;
             foreach (string fileHeader in layout.FileHeaders)
             {
-                if (fileHeader == required)
+                if (string.Equals(fileHeader, required, StringComparison.OrdinalIgnoreCase))
                 {
                     match = fileHeader;
                     break;
                 }
-            }
-
-            if (match == required && layout.FileHeaders.Count > 0)
-            {
-                match = layout.FileHeaders[0];
             }
 
             mapping[required] = match;
