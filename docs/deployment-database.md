@@ -2,60 +2,90 @@
 
 Potsure stores application data, ASP.NET Core Identity (hosted mode, including passkeys in `AspNetUserPasskeys`), and Data Protection keys in SQL Server (Azure SQL in hosted deployments; SQL container locally via Aspire).
 
+## Ownership
+
+| Concern | Project |
+|---------|---------|
+| `DbContext`, EF entities, configurations, migrations | [`src/Potsure.Data`](../src/Potsure.Data/) |
+| Repositories, services, runtime seeding | [`src/Potsure.Infrastructure`](../src/Potsure.Infrastructure/) |
+| Runtime SQL registration | [`src/Potsure.Web`](../src/Potsure.Web/Program.cs) via `AddSqlServerDbContext` (client name `potsure`) |
+
 ## Migrations
 
-EF Core migrations live in `src/Potsure.Infrastructure/Persistence/Migrations/`.
+EF Core migrations live under `src/Potsure.Data/Migrations/`:
+
+- **Application + Identity:** `Migrations/PotsureDbContext/`
+- **Data Protection keys:** `Migrations/PotsureDataProtectionDbContext/` (history table `__EFDataProtectionMigrationsHistory`)
 
 ### Developer commands
 
-Create a new migration or apply pending migrations manually:
+Set `ConnectionStrings__potsure` from the Aspire dashboard or AppHost environment output before running design-time tools. Do not commit connection strings.
+
+**Application / Identity context:**
+
+```bash
+export ConnectionStrings__potsure='…'   # Aspire-injected value
+
+dotnet ef migrations add <Name> \
+  --project src/Potsure.Data/Potsure.Data.csproj \
+  --context Potsure.Data.PotsureDbContext \
+  --output-dir Migrations/PotsureDbContext \
+  --namespace Potsure.Data.Migrations
+```
+
+**Data Protection context:**
 
 ```bash
 dotnet ef migrations add <Name> \
-  --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
-  --startup-project src/Potsure.Web/Potsure.Web.csproj
-
-dotnet ef database update \
-  --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
-  --startup-project src/Potsure.Web/Potsure.Web.csproj
+  --project src/Potsure.Data/Potsure.Data.csproj \
+  --context Potsure.Data.PotsureDataProtectionDbContext \
+  --output-dir Migrations/PotsureDataProtectionDbContext \
+  --namespace Potsure.Data.Migrations.PotsureDataProtectionDbContext
 ```
 
-The design-time factory in `PotsureDbContextFactory` may use a local connection string from configuration; runtime uses Aspire `AddSqlServerDbContext` with the `potsure` database reference name.
+Apply pending migrations manually (optional; local AppHost applies automatically):
+
+```bash
+dotnet ef database update \
+  --project src/Potsure.Data/Potsure.Data.csproj \
+  --context Potsure.Data.PotsureDbContext
+
+dotnet ef database update \
+  --project src/Potsure.Data/Potsure.Data.csproj \
+  --context Potsure.Data.PotsureDataProtectionDbContext
+```
+
+Design-time factories in `src/Potsure.Data/DesignTime/` resolve the `potsure` connection from configuration/environment only.
 
 ## Local Aspire (automatic schema apply)
 
-When you run the AppHost locally (`aspire run` or F5 on `Potsure.AppHost`), schema is applied **before** the web app starts:
+When you run the AppHost locally (`aspire run` or F5 on `Potsure.AppHost`):
 
 1. SQL container becomes healthy.
-2. The **ef-migrations** resource runs `dotnet ef database update` once and exits (`RunDatabaseUpdateOnStart`).
-3. The web project waits for that migration resource to complete (`WaitForCompletion`).
+2. **ef-data-protection-migrations** runs `dotnet ef database update` for `PotsureDataProtectionDbContext`, then exits.
+3. **ef-migrations** runs for `PotsureDbContext`, then exits.
+4. **web** starts after both complete (`WaitForCompletion`).
 
-The migration resource is hidden in the Aspire dashboard by default. Inspect it with:
+Inspect hidden migration resources:
 
 ```bash
 aspire describe --include-hidden
 ```
 
-`Potsure.Web` does **not** call `Database.MigrateAsync()` at startup. Application data seeding (for example default budget categories via `BudgetProfileSeeder`) runs in the web process after schema exists, not inside the migration job.
+`Potsure.Web` does **not** call `Database.MigrateAsync()` at startup. Application seeding (`BudgetProfileSeeder`) runs in the web process after schema exists, not inside the migration job.
 
 ## Hosted deployment (controlled apply)
 
-For hosted stages, use a **single runner** — not `RunDatabaseUpdateOnStart` on publish and not concurrent migrate on every web replica:
+Use a **single runner** per environment — not concurrent migrate on every web replica:
 
-1. Take a backup or confirm restore point (Azure SQL point-in-time restore).
+1. Backup or confirm restore point (Azure SQL point-in-time restore).
 2. Apply schema using one of:
-   - The idempotent SQL script generated at publish time (`PublishAsMigrationScript()` on the AppHost migration resource — output under `efmigrations/` in the publish directory), reviewed in staging first; or
-   - `dotnet ef database update` from CI or a one-off deployment job against the target connection string; or
-   - A published EF migration bundle executed once with the target connection string.
-3. Verify schema version (`__EFMigrationsHistory`) before shifting traffic.
+   - Idempotent SQL scripts from `PublishAsMigrationScript()` (under `efmigrations/` in the publish directory), **Data Protection first**, then application migrations; or
+   - `dotnet ef database update` for each context from CI; or
+   - A published EF migration bundle executed once per context.
+3. Verify both history tables before shifting traffic.
 4. Roll forward only; do not edit applied migration files.
-
-Review generated SQL in staging (`dotnet ef migrations script`) before the first public environment.
-
-## Idempotent production apply
-
-Prefer idempotent scripts (`IF NOT EXISTS` checks) when using `PublishAsMigrationScript()` so a partially applied database can be retried safely.
 
 ## Data Protection keys
 
-Keys persist to the `DataProtectionKeys` table through `IDataProtectionKeyContext` on `PotsureDbContext`. Ensure migrations creating this table are applied before scaling out multiple web instances.
+Keys persist through `PotsureDataProtectionDbContext` and `PersistKeysToDbContext`. Apply Data Protection migrations before scaling out multiple web instances.

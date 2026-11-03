@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Potsure.Infrastructure.Persistence.Identity;
+using Potsure.Data.Identity;
 using Potsure.Web;
 
 namespace Potsure.Web.Configuration;

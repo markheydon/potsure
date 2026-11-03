@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Potsure.Infrastructure.Persistence.Identity;
+using Potsure.Data.Identity;
 using Potsure.Web;
 using IdentitySignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 

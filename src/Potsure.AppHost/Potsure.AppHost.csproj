@@ -6,7 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AspireUseCliBundle>true</AspireUseCliBundle>
-    <NoWarn>$(NoWarn);ASPIRE004</NoWarn>
     <UserSecretsId>potsure-apphost-secrets</UserSecretsId>
   </PropertyGroup>
 
@@ -18,7 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Potsure.Infrastructure\Potsure.Infrastructure.csproj" />
+    <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj">
+      <IsAspireProjectResource>false</IsAspireProjectResource>
+    </ProjectReference>
     <ProjectReference Include="..\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 

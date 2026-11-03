@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Potsure.Data;
+using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Deletion;
 using Potsure.Infrastructure.Export;
-using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Repositories;
-using Potsure.Infrastructure.Persistence.Tenancy;
 using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Reporting;
 using Potsure.Infrastructure.Services;

@@ -1,4 +1,4 @@
-namespace Potsure.Infrastructure.Persistence.Tenancy;
+namespace Potsure.Infrastructure.Tenancy;
 
 public static class EntityOwnershipValidator
 {

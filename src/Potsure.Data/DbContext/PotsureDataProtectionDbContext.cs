@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Potsure.Infrastructure.Persistence;
+namespace Potsure.Data;
 
 /// <summary>
 /// SQL persistence for ASP.NET Core Data Protection keys without tenancy-scoped dependencies.

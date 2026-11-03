@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj" />
     <ProjectReference Include="..\Potsure.Infrastructure\Potsure.Infrastructure.csproj" />
     <ProjectReference Include="..\Potsure.Reporting\Potsure.Reporting.csproj" />
     <ProjectReference Include="..\Potsure.ServiceDefaults\Potsure.ServiceDefaults.csproj" />

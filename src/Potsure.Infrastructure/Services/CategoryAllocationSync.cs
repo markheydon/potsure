@@ -1,5 +1,5 @@
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Persistence.Entities;
+using Potsure.Data.Entities;
 
 namespace Potsure.Infrastructure.Services;
 

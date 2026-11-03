@@ -13,13 +13,15 @@ When in doubt, follow this file. Significant architecture changes need an ADR.
 
 ```
 src/
-└── Potsure/
-
+├── Potsure.Data/          # EF Core DbContexts, entities, migrations
+├── Potsure.Infrastructure/ # Services, repositories, runtime seeding
+├── Potsure.Web/
+└── …
 tests/
-└── Potsure.Tests/
+└── …
 ```
 
-Add folders (`samples/`, `docs/`, AppHost, web projects, etc.) as the product grows. Update this section when layout changes.
+Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update this section when layout changes.
 
 ---
 

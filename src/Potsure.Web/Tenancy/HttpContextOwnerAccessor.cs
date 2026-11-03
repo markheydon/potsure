@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Potsure.Data.Tenancy;
 
-namespace Potsure.Infrastructure.Persistence.Tenancy;
+namespace Potsure.Web.Tenancy;
 
 public sealed class HttpContextOwnerAccessor(IHttpContextAccessor httpContextAccessor) : ICurrentOwnerAccessor
 {

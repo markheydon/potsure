@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Potsure.Infrastructure.Persistence.Entities;
-using Potsure.Infrastructure.Persistence.Identity;
-using Potsure.Infrastructure.Persistence.Tenancy;
+using Potsure.Data.Entities;
+using Potsure.Data.Identity;
+using Potsure.Data.Tenancy;
 
-namespace Potsure.Infrastructure.Persistence;
+namespace Potsure.Data;
 
 public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>
 {

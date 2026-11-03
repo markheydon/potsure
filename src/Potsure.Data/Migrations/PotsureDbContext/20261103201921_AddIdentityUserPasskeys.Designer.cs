@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Potsure.Infrastructure.Persistence;
+using Potsure.Data;
 
 #nullable disable
 
-namespace Potsure.Infrastructure.Persistence.Migrations
+namespace Potsure.Data.Migrations
 {
-    [DbContext(typeof(PotsureDbContext))]
-    [Migration("20261103123205_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(global::Potsure.Data.PotsureDbContext))]
+    [Migration("20261103201921_AddIdentityUserPasskeys")]
+    partial class AddIdentityUserPasskeys
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,25 +24,6 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FriendlyName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Xml")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DataProtectionKeys");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -124,10 +105,12 @@ namespace Potsure.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -141,6 +124,23 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserPasskey<string>", b =>
+                {
+                    b.Property<byte[]>("CredentialId")
+                        .HasMaxLength(1024)
+                        .HasColumnType("varbinary(1024)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("CredentialId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserPasskeys", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -164,10 +164,12 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -177,7 +179,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.AssignmentEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.AssignmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -212,7 +214,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("Assignments", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BankPotEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BankPotEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,7 +257,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BankPots", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetCategoryEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -292,7 +294,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetCategories", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetPeriodEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetPeriodEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -318,7 +320,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetPeriods", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -365,7 +367,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetProfiles", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.IncomeSourceEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.IncomeSourceEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -393,12 +395,15 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<decimal>("SplitNeedsPercent")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("SplitSavingsDebtPercent")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("SplitWantsPercent")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("State")
@@ -409,7 +414,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("IncomeSources", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.MonzoAccountAssociationEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.MonzoAccountAssociationEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -439,7 +444,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("MonzoAccounts", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.RecurringExpenseEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.RecurringExpenseEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -495,7 +500,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("RecurringExpenses", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.StatementUploadEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -539,7 +544,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("StatementUploads", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.TransactionEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.TransactionEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -610,7 +615,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("Transactions", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", b =>
+            modelBuilder.Entity("Potsure.Data.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -647,7 +652,8 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
@@ -686,7 +692,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -695,10 +701,61 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserPasskey<string>", b =>
+                {
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Microsoft.AspNetCore.Identity.IdentityPasskeyData", "Data", b1 =>
+                        {
+                            b1.Property<byte[]>("IdentityUserPasskeyCredentialId");
+
+                            b1.Property<byte[]>("AttestationObject")
+                                .IsRequired();
+
+                            b1.Property<byte[]>("ClientDataJson")
+                                .IsRequired();
+
+                            b1.Property<DateTimeOffset>("CreatedAt");
+
+                            b1.Property<bool>("IsBackedUp");
+
+                            b1.Property<bool>("IsBackupEligible");
+
+                            b1.Property<bool>("IsUserVerified");
+
+                            b1.Property<string>("Name");
+
+                            b1.Property<byte[]>("PublicKey")
+                                .IsRequired();
+
+                            b1.Property<long>("SignCount");
+
+                            b1.PrimitiveCollection<string>("Transports");
+
+                            b1.HasKey("IdentityUserPasskeyCredentialId");
+
+                            b1.ToTable("AspNetUserPasskeys");
+
+                            b1
+                                .ToJson("Data")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IdentityUserPasskeyCredentialId");
+                        });
+
+                    b.Navigation("Data")
                         .IsRequired();
                 });
 
@@ -710,7 +767,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -719,22 +776,22 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BankPotEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BankPotEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetProfile")
+                    b.HasOne("Potsure.Data.Entities.BudgetProfileEntity", "BudgetProfile")
                         .WithMany("Pots")
                         .HasForeignKey("BudgetProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", "Category")
+                    b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -745,9 +802,9 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetCategoryEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetProfile")
+                    b.HasOne("Potsure.Data.Entities.BudgetProfileEntity", "BudgetProfile")
                         .WithMany("Categories")
                         .HasForeignKey("BudgetProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -756,15 +813,15 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("BudgetProfile");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetPeriodEntity", "BudgetPeriod")
+                    b.HasOne("Potsure.Data.Entities.BudgetPeriodEntity", "BudgetPeriod")
                         .WithOne()
-                        .HasForeignKey("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetPeriodId")
+                        .HasForeignKey("Potsure.Data.Entities.BudgetProfileEntity", "BudgetPeriodId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.MonzoAccountAssociationEntity", "MonzoAccount")
+                    b.HasOne("Potsure.Data.Entities.MonzoAccountAssociationEntity", "MonzoAccount")
                         .WithMany()
                         .HasForeignKey("MonzoAccountId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -774,9 +831,9 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("MonzoAccount");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.TransactionEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.TransactionEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", "UploadBatch")
+                    b.HasOne("Potsure.Data.Entities.StatementUploadEntity", "UploadBatch")
                         .WithMany("Transactions")
                         .HasForeignKey("UploadBatchId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -785,14 +842,14 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("UploadBatch");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
                     b.Navigation("Categories");
 
                     b.Navigation("Pots");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.StatementUploadEntity", b =>
                 {
                     b.Navigation("Transactions");
                 });

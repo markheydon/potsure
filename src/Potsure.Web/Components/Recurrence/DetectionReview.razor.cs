@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Entities;
+using Potsure.Data;
+using Potsure.Data.Entities;
 using Potsure.Infrastructure.Services;
 using Potsure.Recurrence;
 

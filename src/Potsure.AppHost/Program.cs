@@ -15,12 +15,22 @@ var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithComputeEnvironment(aca)
     .PublishAsAzureContainerApp((_, _) => { });
 
-var migrations = web.AddEFMigrations(
-        "ef-migrations",
-        "Potsure.Infrastructure.Persistence.PotsureDbContext")
+var dataProtectionMigrations = web.AddEFMigrations(
+        "ef-data-protection-migrations",
+        "Potsure.Data.PotsureDataProtectionDbContext")
     .WithReference(database)
     .WaitFor(database)
-    .WithMigrationsProject<Projects.Potsure_Infrastructure>()
+    .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
+    .RunDatabaseUpdateOnStart()
+    .PublishAsMigrationScript();
+
+var migrations = web.AddEFMigrations(
+        "ef-migrations",
+        "Potsure.Data.PotsureDbContext")
+    .WithReference(database)
+    .WaitFor(database)
+    .WaitForCompletion(dataProtectionMigrations)
+    .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();
 

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Potsure.Infrastructure.Persistence.Entities;
+using Potsure.Data.Entities;
 
-namespace Potsure.Infrastructure.Persistence.Configurations;
+namespace Potsure.Data.Configurations;
 
 internal sealed class BudgetProfileConfiguration : IEntityTypeConfiguration<BudgetProfileEntity>
 {

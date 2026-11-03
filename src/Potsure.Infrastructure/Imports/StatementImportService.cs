@@ -1,10 +1,10 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Entities;
+using Potsure.Data;
+using Potsure.Data.Entities;
+using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Persistence.Repositories;
-using Potsure.Infrastructure.Persistence.Tenancy;
 using Potsure.Infrastructure.Services;
 using Potsure.Statements;
 

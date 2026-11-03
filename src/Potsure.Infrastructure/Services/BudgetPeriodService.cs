@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Entities;
-using Potsure.Infrastructure.Persistence.Tenancy;
+using Potsure.Data;
+using Potsure.Data.Entities;
+using Potsure.Data.Tenancy;
 
 namespace Potsure.Infrastructure.Services;
 

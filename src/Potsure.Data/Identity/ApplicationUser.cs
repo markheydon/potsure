@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace Potsure.Infrastructure.Persistence.Identity;
+namespace Potsure.Data.Identity;
 
 public sealed class ApplicationUser : IdentityUser
 {

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Entities;
+using Potsure.Data;
+using Potsure.Data.Entities;
 
 namespace Potsure.Infrastructure.Queries;
 

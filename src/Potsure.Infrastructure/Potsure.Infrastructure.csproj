@@ -7,23 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Potsure.Budgeting\Potsure.Budgeting.csproj" />
+    <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj" />
     <ProjectReference Include="..\Potsure.Recurrence\Potsure.Recurrence.csproj" />
     <ProjectReference Include="..\Potsure.Statements\Potsure.Statements.csproj" />
     <ProjectReference Include="..\Potsure.Reporting\Potsure.Reporting.csproj" />

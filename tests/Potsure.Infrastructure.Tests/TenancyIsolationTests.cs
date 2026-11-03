@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
+using Potsure.Data;
+using Potsure.Data.Entities;
+using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Entities;
-using Potsure.Infrastructure.Persistence.Tenancy;
 
 namespace Potsure.Infrastructure.Tests;
 
@@ -123,6 +123,6 @@ public sealed class TenancyIsolationTests
         return Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..", "..",
-            "src", "Potsure.Infrastructure", "Persistence", "PotsureDbContext.cs"));
+            "src", "Potsure.Data", "DbContext", "PotsureDbContext.cs"));
     }
 }

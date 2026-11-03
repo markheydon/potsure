@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Potsure.Infrastructure.Persistence;
+using Potsure.Data;
 
 #nullable disable
 
-namespace Potsure.Infrastructure.Persistence.Migrations
+namespace Potsure.Data.Migrations
 {
-    [DbContext(typeof(PotsureDbContext))]
-    [Migration("20261103134647_AddIdentityUserPasskeys")]
-    partial class AddIdentityUserPasskeys
+    [DbContext(typeof(Potsure.Data.PotsureDbContext))]
+    [Migration("20261103123205_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -177,7 +177,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.AssignmentEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.AssignmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -212,7 +212,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("Assignments", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BankPotEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BankPotEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,7 +255,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BankPots", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetCategoryEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -292,7 +292,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetCategories", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetPeriodEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetPeriodEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -318,7 +318,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetPeriods", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -365,7 +365,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetProfiles", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.IncomeSourceEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.IncomeSourceEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -409,7 +409,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("IncomeSources", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.MonzoAccountAssociationEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.MonzoAccountAssociationEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -439,7 +439,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("MonzoAccounts", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.RecurringExpenseEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.RecurringExpenseEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -495,7 +495,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("RecurringExpenses", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.StatementUploadEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -539,7 +539,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("StatementUploads", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.TransactionEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.TransactionEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -610,7 +610,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.ToTable("Transactions", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", b =>
+            modelBuilder.Entity("Potsure.Data.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -686,7 +686,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -695,7 +695,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -710,7 +710,7 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -719,22 +719,22 @@ namespace Potsure.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Potsure.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BankPotEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BankPotEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetProfile")
+                    b.HasOne("Potsure.Data.Entities.BudgetProfileEntity", "BudgetProfile")
                         .WithMany("Pots")
                         .HasForeignKey("BudgetProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", "Category")
+                    b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -745,9 +745,9 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetCategoryEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetCategoryEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetProfile")
+                    b.HasOne("Potsure.Data.Entities.BudgetProfileEntity", "BudgetProfile")
                         .WithMany("Categories")
                         .HasForeignKey("BudgetProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -756,15 +756,15 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("BudgetProfile");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.BudgetPeriodEntity", "BudgetPeriod")
+                    b.HasOne("Potsure.Data.Entities.BudgetPeriodEntity", "BudgetPeriod")
                         .WithOne()
-                        .HasForeignKey("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", "BudgetPeriodId")
+                        .HasForeignKey("Potsure.Data.Entities.BudgetProfileEntity", "BudgetPeriodId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.MonzoAccountAssociationEntity", "MonzoAccount")
+                    b.HasOne("Potsure.Data.Entities.MonzoAccountAssociationEntity", "MonzoAccount")
                         .WithMany()
                         .HasForeignKey("MonzoAccountId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -774,9 +774,9 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("MonzoAccount");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.TransactionEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.TransactionEntity", b =>
                 {
-                    b.HasOne("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", "UploadBatch")
+                    b.HasOne("Potsure.Data.Entities.StatementUploadEntity", "UploadBatch")
                         .WithMany("Transactions")
                         .HasForeignKey("UploadBatchId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -785,14 +785,14 @@ namespace Potsure.Infrastructure.Persistence.Migrations
                     b.Navigation("UploadBatch");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.BudgetProfileEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
                     b.Navigation("Categories");
 
                     b.Navigation("Pots");
                 });
 
-            modelBuilder.Entity("Potsure.Infrastructure.Persistence.Entities.StatementUploadEntity", b =>
+            modelBuilder.Entity("Potsure.Data.Entities.StatementUploadEntity", b =>
                 {
                     b.Navigation("Transactions");
                 });

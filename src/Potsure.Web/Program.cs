@@ -1,14 +1,17 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using BlazorBlueprint.Components;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Potsure.Data;
+using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Tenancy;
+using Potsure.Infrastructure.Tenancy;
 using Potsure.Web;
 using Potsure.Web.Components;
 using Potsure.Web.Configuration;
 using Potsure.Web.Services;
 using Potsure.Web.Telemetry;
+using Potsure.Web.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +46,11 @@ builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
-builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>("potsure");
+builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>(
+    "potsure",
+    configureDbContextOptions: options =>
+        options.UseSqlServer(
+            sql => sql.MigrationsHistoryTable("__EFDataProtectionMigrationsHistory")));
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

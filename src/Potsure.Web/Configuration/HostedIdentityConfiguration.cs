@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Identity;
+using Potsure.Data;
+using Potsure.Data.Identity;
 
 namespace Potsure.Web.Configuration;
 

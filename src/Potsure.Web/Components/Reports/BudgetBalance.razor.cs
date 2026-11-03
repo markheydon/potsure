@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Persistence;
+using Potsure.Data;
 using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Reporting;
 using Potsure.Reporting;

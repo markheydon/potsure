@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Potsure.Data;
+using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Export;
-using Potsure.Infrastructure.Persistence;
-using Potsure.Infrastructure.Persistence.Tenancy;
 
 namespace Potsure.Infrastructure.Deletion;
 

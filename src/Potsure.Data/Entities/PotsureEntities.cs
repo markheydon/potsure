@@ -1,6 +1,6 @@
 using Potsure.Budgeting;
 
-namespace Potsure.Infrastructure.Persistence.Entities;
+namespace Potsure.Data.Entities;
 
 public sealed class BudgetProfileEntity
 {
