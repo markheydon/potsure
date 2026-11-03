@@ -87,26 +87,12 @@ public static class HostedPasskeySignInEndpoints
                     "An account already exists for this email. Sign in with your passkey instead of registering again.");
             }
 
-            var user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-            };
-
-            string unusablePassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(96));
-            IdentityResult create = await userManager.CreateAsync(user, unusablePassword);
-            if (!create.Succeeded)
-            {
-                return Results.BadRequest(string.Join(' ', create.Errors.Select(e => e.Description)));
-            }
-
-            string userId = await userManager.GetUserIdAsync(user) ?? user.Id;
-            string userName = await userManager.GetUserNameAsync(user) ?? email;
+            string provisionalUserId = Guid.NewGuid().ToString();
             string optionsJson = await signInManager.MakePasskeyCreationOptionsAsync(new PasskeyUserEntity
             {
-                Id = userId,
-                Name = userName,
-                DisplayName = userName,
+                Id = provisionalUserId,
+                Name = email,
+                DisplayName = email,
             });
 
             return Results.Content(optionsJson, "application/json");
@@ -125,11 +111,12 @@ public static class HostedPasskeySignInEndpoints
                 return antiforgeryFailure;
             }
 
-            if (string.IsNullOrWhiteSpace(body.CredentialJson))
+            if (string.IsNullOrWhiteSpace(body.CredentialJson) || string.IsNullOrWhiteSpace(body.Email))
             {
                 return Results.BadRequest();
             }
 
+            string email = body.Email.Trim();
             PasskeyAttestationResult attestation =
                 await signInManager.PerformPasskeyAttestationAsync(body.CredentialJson);
             if (!attestation.Succeeded
@@ -139,10 +126,34 @@ public static class HostedPasskeySignInEndpoints
                 return Results.Unauthorized();
             }
 
+            if (!string.Equals(attestation.UserEntity.Name, email, StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Unauthorized();
+            }
+
             ApplicationUser? user = await userManager.FindByIdAsync(attestation.UserEntity.Id);
             if (user is null)
             {
-                return Results.Unauthorized();
+                ApplicationUser? existingEmail = await userManager.FindByEmailAsync(email);
+                if (existingEmail is not null)
+                {
+                    return Results.BadRequest(
+                        "An account already exists for this email. Sign in with your passkey instead of registering again.");
+                }
+
+                user = new ApplicationUser
+                {
+                    Id = attestation.UserEntity.Id,
+                    UserName = email,
+                    Email = email,
+                };
+
+                string unusablePassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(96));
+                IdentityResult create = await userManager.CreateAsync(user, unusablePassword);
+                if (!create.Succeeded)
+                {
+                    return Results.BadRequest(string.Join(' ', create.Errors.Select(e => e.Description)));
+                }
             }
             IdentityResult store = await userManager.AddOrUpdatePasskeyAsync(user, attestation.Passkey);
             if (!store.Succeeded)
@@ -161,5 +172,5 @@ public static class HostedPasskeySignInEndpoints
 
     public sealed record PasskeyRegisterOptionsRequest(string Email);
 
-    public sealed record PasskeyCredentialRequest(string CredentialJson);
+    public sealed record PasskeyCredentialRequest(string CredentialJson, string? Email = null);
 }

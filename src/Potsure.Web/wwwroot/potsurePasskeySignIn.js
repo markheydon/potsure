@@ -86,7 +86,7 @@ window.potsurePasskeySignIn = {
       method: "POST",
       credentials: "include",
       headers,
-      body: JSON.stringify({ credentialJson: JSON.stringify(credential) }),
+      body: JSON.stringify({ credentialJson: JSON.stringify(credential), email }),
     });
 
     if (!registerResponse.ok) {
