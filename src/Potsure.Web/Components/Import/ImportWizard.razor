@@ -1,0 +1,78 @@
+@page "/import"
+@rendermode InteractiveServer
+
+<PageTitle>Import statement</PageTitle>
+
+<h1 tabindex="-1" id="import-heading">Import Monzo statement</h1>
+
+@if (_isBusy)
+{
+    <BbAlert Variant="AlertVariant.Default">
+        <BbAlertTitle>Importing</BbAlertTitle>
+        <BbAlertDescription>Processing your CSV file…</BbAlertDescription>
+    </BbAlert>
+}
+else if (_summary is not null && !_awaitingAccountConfirmation)
+{
+    <ImportSummaryView Summary="_summary" OnImportAnother="ResetWizard" />
+}
+else
+{
+    @if (_awaitingAccountConfirmation)
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Confirm account</BbAlertTitle>
+            <BbAlertDescription>
+                We could not verify this export against your linked Monzo account. Confirm it is yours before importing.
+            </BbAlertDescription>
+        </BbAlert>
+    }
+
+    <section class="potsure-import-panel" aria-labelledby="import-heading">
+        <BbCard>
+            <BbCardHeader>
+                <BbCardTitle>Upload CSV</BbCardTitle>
+                <BbCardDescription>
+                    Select a Monzo statement export (.csv). Rows that cannot be imported are listed in the summary.
+                </BbCardDescription>
+            </BbCardHeader>
+            <BbCardContent>
+                <InputFile OnChange="OnFileSelectedAsync" accept=".csv,text/csv" disabled="@_isBusy" />
+                @if (!string.IsNullOrEmpty(_selectedFileName))
+                {
+                    <p>Selected: @_selectedFileName</p>
+                }
+            </BbCardContent>
+            <BbCardFooter>
+                @if (_awaitingAccountConfirmation)
+                {
+                    <BbCheckbox @bind-Checked="_accountConfirmed">
+                        I confirm this export is from my Monzo account
+                    </BbCheckbox>
+                    <BbInput @bind-Value="_accountFingerprint" Placeholder="Optional account fingerprint" />
+                    <BbButton Variant="ButtonVariant.Default"
+                              Disabled="@(!_accountConfirmed || _pendingFile is null)"
+                              OnClick="ConfirmAccountAndImportAsync">
+                        Confirm and import
+                    </BbButton>
+                }
+                else
+                {
+                    <BbButton Variant="ButtonVariant.Default"
+                              Disabled="@(_pendingFile is null)"
+                              OnClick="ImportWithoutConfirmationAsync">
+                        Import
+                    </BbButton>
+                }
+            </BbCardFooter>
+        </BbCard>
+    </section>
+}
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <BbAlert Variant="AlertVariant.Danger">
+        <BbAlertTitle>Import failed</BbAlertTitle>
+        <BbAlertDescription>@_errorMessage</BbAlertDescription>
+    </BbAlert>
+}

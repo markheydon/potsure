@@ -1,0 +1,91 @@
+@page "/reports/budget-balance"
+@rendermode InteractiveServer
+
+<PageTitle>Budget balance</PageTitle>
+
+<h1>Budget balance</h1>
+
+@if (_loading)
+{
+    <p>Loading report…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Report unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_report is not null)
+{
+    <p class="potsure-report-note" role="note">@ReportCopy.ForecastDisclaimer</p>
+
+    <section aria-labelledby="balance-income">
+        <h2 id="balance-income">Income (separate measures)</h2>
+        <dl>
+            <div>
+                <dt>@ReportCopy.BudgetedIncomeHeading</dt>
+                <dd>£@_report.Value.BudgetedIncome.Amount.ToString("F2")</dd>
+            </div>
+            <div>
+                <dt>@ReportCopy.ActualReceiptsHeading</dt>
+                <dd>£@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2")</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section aria-labelledby="balance-commitments">
+        <h2 id="balance-commitments">@ReportCopy.CommitmentsHeading</h2>
+        <ul>
+            @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
+            {
+                <li>@FormatKind(commitment.Category): £@commitment.AmountInPeriod.Amount.ToString("F2")</li>
+            }
+        </ul>
+    </section>
+
+    <section aria-labelledby="balance-required">
+        <h2 id="balance-required">Required income</h2>
+        <p>
+            Overall required:
+            £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2")
+            (limiting category: @FormatKind(_report.Value.RequiredIncome.LimitingCategory))
+        </p>
+        @if (_report.Value.RequiredIncome.Shortfall.Amount > 0m)
+        {
+            <BbAlert Variant="AlertVariant.Warning">
+                <BbAlertTitle>Shortfall</BbAlertTitle>
+                <BbAlertDescription>
+                    Planned income is £@_report.Value.RequiredIncome.Shortfall.Amount.ToString("F2") below the required amount.
+                    Balance conclusion: No.
+                </BbAlertDescription>
+            </BbAlert>
+        }
+        else
+        {
+            <BbAlert Variant="AlertVariant.Default">
+                <BbAlertTitle>Balance conclusion</BbAlertTitle>
+                <BbAlertDescription>Yes — planned income meets required income for this period.</BbAlertDescription>
+            </BbAlert>
+        }
+    </section>
+
+    <p class="potsure-sr-table-summary" id="balance-text-summary">
+        Textual summary: planned income £@_report.Value.BudgetedIncome.Amount.ToString("F2");
+        actual receipts £@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2");
+        required total £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2").
+    </p>
+
+    @if (_report.Value.ExpectedIncomePayments.Count > 0)
+    {
+        <section aria-labelledby="balance-expected-income">
+            <h2 id="balance-expected-income">@ReportCopy.ExpectedIncomeHeading</h2>
+            <ul>
+                @foreach (ExpectedIncomePayment payment in _report.Value.ExpectedIncomePayments)
+                {
+                    <li>@payment.ExpectedDate: £@payment.Amount.Amount.ToString("F2")</li>
+                }
+            </ul>
+        </section>
+    }
+}

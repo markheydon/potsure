@@ -1,0 +1,64 @@
+@page "/recurrence/review"
+@rendermode InteractiveServer
+
+<PageTitle>Recurring patterns</PageTitle>
+
+<h1 id="recurrence-review-heading">Review recurring patterns</h1>
+
+@if (_loading)
+{
+    <p>Loading suggestions…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Review unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else
+{
+    <p class="potsure-muted">
+        Suggested patterns are inferred from imports. Confirm income and expenses separately before they affect commitments.
+    </p>
+
+    <section aria-labelledby="recurrence-suggested">
+        <h2 id="recurrence-suggested">Suggested</h2>
+        @if (_suggested.Count == 0)
+        {
+            <p>No new suggestions. Import more history or open the recurring summary for confirmed patterns.</p>
+        }
+        else
+        {
+            <ul class="potsure-review-list" role="list">
+                @foreach (RecurrenceReviewItem item in _suggested)
+                {
+                    <li>
+                        <strong>@item.Label</strong>
+                        — @(item.IsIncome ? "Income" : "Expense")
+                        (@FormatCadence(item))
+                        typical £@item.TypicalAmount.ToString("F2")
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section aria-labelledby="recurrence-confirmed">
+        <h2 id="recurrence-confirmed">Confirmed or rejected</h2>
+        <ul class="potsure-review-list" role="list">
+            @foreach (RecurrenceReviewItem item in _confirmedOrRejected)
+            {
+                <li>
+                    <strong>@item.Label</strong>
+                    — @item.State
+                    (@FormatCadence(item))
+                </li>
+            }
+        </ul>
+    </section>
+
+    <nav aria-label="Related">
+        <a href="/recurrence/summary">Open recurring summary</a>
+    </nav>
+}

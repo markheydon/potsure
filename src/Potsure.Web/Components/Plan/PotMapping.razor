@@ -1,0 +1,89 @@
+@page "/plan/pots"
+@rendermode InteractiveServer
+
+<PageTitle>Pot mapping</PageTitle>
+
+<h1 id="pot-mapping-heading">Bank pot mapping</h1>
+
+@if (_loading)
+{
+    <p>Loading pot settings…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Pot mapping unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else
+{
+    <section aria-labelledby="pot-mode-heading">
+        <h2 id="pot-mode-heading">Mapping mode</h2>
+        <p class="potsure-muted">Choose no pots for category-only budgeting (FR-M014).</p>
+        <label for="pot-mode-select">Pot mapping mode</label>
+        <InputSelect id="pot-mode-select" @bind-Value="Mode">
+            @foreach (PotMappingMode mode in Enum.GetValues<PotMappingMode>())
+            {
+                <option value="@mode">@FormatMode(mode)</option>
+            }
+        </InputSelect>
+    </section>
+
+    @if (_mode != PotMappingMode.None)
+    {
+        <section aria-labelledby="pot-list-heading">
+            <h2 id="pot-list-heading">Pots</h2>
+            @if (_pots.Count == 0)
+            {
+                <p>Add a pot mapped to exactly one category.</p>
+            }
+            else
+            {
+                <table>
+                    <caption>Mapped bank pots</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Recorded funding</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (BankPotReadModel pot in _pots)
+                        {
+                            <tr>
+                                <th scope="row">@pot.Name</th>
+                                <td>@pot.CategoryKind</td>
+                                <td>£@pot.RecordedFundingAmount.ToString("F2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <div class="potsure-form-grid">
+                <label>
+                    New pot name
+                    <BbInput @bind-Value="_newPotName" />
+                </label>
+                <label>
+                    Category
+                    <InputSelect @bind-Value="_newPotCategoryId">
+                        @foreach (CategoryOption option in _categories)
+                        {
+                            <option value="@option.Id">@option.Kind</option>
+                        }
+                    </InputSelect>
+                </label>
+                <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
+            </div>
+        </section>
+    }
+    else
+    {
+        <p>Category-only budgeting is active. <a href="/plan">Return to plan settings</a>.</p>
+    }
+
+    <p><a href="/plan/funding">Recorded funding</a></p>
+}

@@ -430,3 +430,9 @@ FodyWeavers.xsd
 
 # Local sample app credentials
 samples/**/appsettings.local.json
+
+# Local dotnet tool installs (e.g. dotnet-ef)
+.tools/
+
+# Local dotnet tool installs (e.g. dotnet-ef)
+.tools/

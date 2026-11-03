@@ -1,0 +1,106 @@
+@page "/recurrence/summary"
+@rendermode InteractiveServer
+
+<PageTitle>Recurring summary</PageTitle>
+
+<h1 id="recurring-summary-heading">Confirmed recurring summary</h1>
+
+@if (_loading)
+{
+    <p>Loading summary…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Summary unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_model is not null)
+{
+    <section aria-labelledby="summary-income">
+        <h2 id="summary-income">Confirmed income</h2>
+        @if (_model.ConfirmedIncome.Count == 0)
+        {
+            <p>No confirmed income patterns yet.</p>
+        }
+        else
+        {
+            <table>
+                <caption>Income patterns used for display splits only</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Source</th>
+                        <th scope="col">Cadence</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Splits (Needs / Wants / Savings)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ConfirmedIncomeSummaryRow row in _model.ConfirmedIncome)
+                    {
+                        <tr>
+                            <th scope="row">@row.SourceLabel</th>
+                            <td>@row.Cadence</td>
+                            <td>£@((row.FixedAmount ?? row.EstimateAmount ?? 0m).ToString("F2"))</td>
+                            <td>@row.SplitNeedsPercent% / @row.SplitWantsPercent% / @row.SplitSavingsDebtPercent%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section aria-labelledby="summary-expenses">
+        <h2 id="summary-expenses">Confirmed expenses</h2>
+        @if (_model.ConfirmedExpenses.Count == 0)
+        {
+            <p>No confirmed expense patterns yet.</p>
+        }
+        else
+        {
+            <table>
+                <caption>Expense commitments for budget balance</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Vendor</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Cadence</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ConfirmedExpenseSummaryRow row in _model.ConfirmedExpenses)
+                    {
+                        <tr>
+                            <th scope="row">@row.VendorLabel</th>
+                            <td>@row.CategoryKind</td>
+                            <td>@row.Cadence</td>
+                            <td>£@((row.FixedAmount ?? row.MonthlyEstimate ?? 0m).ToString("F2"))</td>
+                            <td>@(row.Tag ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section aria-labelledby="summary-suggestions">
+        <h2 id="summary-suggestions">Suggestions (not confirmed)</h2>
+        @if (_model.Suggestions.Count == 0)
+        {
+            <p>No open suggestions.</p>
+        }
+        else
+        {
+            <ul role="list">
+                @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
+                {
+                    <li>@row.Label — @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</li>
+                }
+            </ul>
+            <p><a href="/recurrence/review">Review suggestions</a></p>
+        }
+    </section>
+}

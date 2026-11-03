@@ -1,0 +1,55 @@
+@page "/privacy"
+@rendermode InteractiveServer
+
+<PageTitle>Export and delete data</PageTitle>
+
+<h1>Export and delete data</h1>
+
+<p>Export your financial data or permanently delete it. You will be asked to reauthenticate before either action completes.</p>
+
+<section aria-labelledby="export-heading">
+    <h2 id="export-heading">Export</h2>
+    <div class="potsure-form-grid">
+        <label>
+            Format
+            <InputSelect @bind-Value="_exportFormat">
+                <option value="@ExportFormat.JsonBundle">JSON bundle</option>
+                <option value="@ExportFormat.CsvZip">CSV ZIP</option>
+            </InputSelect>
+        </label>
+    </div>
+    <BbButton Disabled="_busy" OnClick="ExportAsync">Export data</BbButton>
+    @if (_exportMessage is not null)
+    {
+        <p aria-live="polite">@_exportMessage</p>
+    }
+    @if (_downloadBase64 is not null && _downloadFileName is not null)
+    {
+        <p>
+            <a download="@_downloadFileName" href="@($"data:{_downloadContentType};base64,{_downloadBase64}")">
+                Download @_downloadFileName
+            </a>
+        </p>
+    }
+</section>
+
+<section aria-labelledby="delete-heading">
+    <h2 id="delete-heading">Permanent deletion</h2>
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Irreversible</BbAlertTitle>
+        <BbAlertDescription>
+            This removes all imported transactions, patterns, plan data, and pots for your account. It cannot be undone.
+        </BbAlertDescription>
+    </BbAlert>
+    <label>
+        <InputCheckbox @bind-Value="_confirmDelete" />
+        I understand this will permanently delete my financial data
+    </label>
+    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="DeleteAsync">
+        Delete all financial data
+    </BbButton>
+    @if (_deleteMessage is not null)
+    {
+        <p aria-live="polite">@_deleteMessage</p>
+    }
+</section>

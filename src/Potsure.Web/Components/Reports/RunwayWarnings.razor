@@ -1,0 +1,82 @@
+@page "/reports/runway"
+@rendermode InteractiveServer
+
+<PageTitle>Runway warnings</PageTitle>
+
+<h1 id="runway-heading">Category runway</h1>
+
+@if (_loading)
+{
+    <p>Loading runway…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Runway unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else
+{
+    <section aria-labelledby="runway-horizon">
+        <h2 id="runway-horizon">Forecast horizon</h2>
+        <label>
+            Months ahead
+            <InputNumber @bind-Value="_horizonMonths" min="1" max="12" />
+        </label>
+        <BbButton Variant="ButtonVariant.Default" OnClick="SaveHorizonAsync">Update horizon</BbButton>
+    </section>
+
+    @if (_flags.Messages.Count > 0)
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Forecast uncertainty</BbAlertTitle>
+            <BbAlertDescription>
+                <ul>
+                    @foreach (string message in _flags.Messages)
+                    {
+                        <li>@message</li>
+                    }
+                </ul>
+            </BbAlertDescription>
+        </BbAlert>
+    }
+
+    <section aria-labelledby="runway-income-measures">
+        <h2 id="runway-income-measures">Income (separate from commitments)</h2>
+        <p class="potsure-report-note">
+            @ReportCopy.BudgetedIncomeHeading and @ReportCopy.ActualReceiptsHeading are not mixed with projected spend below.
+        </p>
+    </section>
+
+    <table>
+        <caption>Runway by category</caption>
+        <thead>
+            <tr>
+                <th scope="col">Category</th>
+                <th scope="col">Projected spend</th>
+                <th scope="col">Threshold</th>
+                <th scope="col">Shortfall</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (RunwayProjectionLine line in _lines)
+            {
+                <tr>
+                    <th scope="row">@line.Category</th>
+                    <td>£@line.ProjectedRemainingSpend.Amount.ToString("F2")</td>
+                    <td>£@line.Threshold.Amount.ToString("F2")</td>
+                    <td>@(line.IsShortfall ? "Yes" : "No")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="potsure-sr-table-summary" id="runway-text-summary">
+        Textual summary:
+        @foreach (RunwayProjectionLine line in _lines)
+        {
+            <span>@line.Category projected £@line.ProjectedRemainingSpend.Amount.ToString("F2") against threshold £@line.Threshold.Amount.ToString("F2"). </span>
+        }
+    </p>
+}

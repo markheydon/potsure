@@ -1,5 +1,8 @@
 namespace Potsure.Budgeting;
 
+/// <summary>
+/// Shared budgeting and import domain types for Potsure v1.
+/// </summary>
 public enum BudgetCategoryKind
 {
     Needs,

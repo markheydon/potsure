@@ -17,6 +17,8 @@ public readonly record struct Money(decimal Amount)
 
     public static Money operator -(Money left, Money right) => new(left.Amount - right.Amount);
 
+    public static Money operator -(Money value) => new(-value.Amount);
+
     public static Money operator *(Money left, decimal right) => new(left.Amount * right);
 
     public static Money operator /(Money left, decimal right) =>

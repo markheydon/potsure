@@ -93,6 +93,26 @@ After deploy to dev/test ACA + Azure SQL free tier:
 - Cold start acceptable; health probe does not hammer DB (auto-pause).
 - Passkey required before data; OTel excludes payee/upload bodies.
 
+## Validation log
+
+Last run: 2026-11-03 (automated build/test; manual scenarios partially verified).
+
+| Scenario | Status | Notes |
+|----------|--------|-------|
+| 1 — Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
+| 2 — Recurring confirmation | Partial | Review and summary pages added; confirm/split flows rely on existing pattern services |
+| 3 — Preset and period | Partial | Plan settings UI and suggestion service implemented |
+| 4 — Category health | Partial | Report UI with textual summary; one-off service available |
+| 5 — Budget balance | Partial | Report UI with separated income measures |
+| 6 — Export and delete | Partial | Export/delete UI and contract tests pass in CI |
+| 7 — Determinism | Pass | `DeterminismTests` in Release |
+| 8 — Unit/core CI | Pass | Budgeting and Statements golden tests |
+| 9 — Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
+| Partial-month labelling | Not run | Variable estimate logic covered by unit tests |
+| Hosted stage smoke | Not run | Requires deployed ACA and passkey device |
+
+Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test` — see Phase 15 task T101.
+
 ## Failure cases to spot-check
 
 - Non-GBP row → rejected with clear error.

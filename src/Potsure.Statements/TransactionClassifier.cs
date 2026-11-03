@@ -8,6 +8,12 @@ namespace Potsure.Statements;
 public static class TransactionClassifier
 {
     /// <summary>
+    /// Classifies a parsed Monzo CSV row.
+    /// </summary>
+    public static TransactionKind Classify(MonzoCsvRow row) =>
+        Classify(row.Type, row.Name, row.Amount);
+
+    /// <summary>
     /// Classifies a parsed Monzo row using type, counterparty name, and signed amount.
     /// </summary>
     public static TransactionKind Classify(string monzoType, string name, decimal amount)

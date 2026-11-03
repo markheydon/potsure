@@ -1,0 +1,40 @@
+@using Potsure.Infrastructure.StatementImport
+
+<BbCard>
+    <BbCardHeader>
+        <BbCardTitle>Import summary</BbCardTitle>
+        <BbCardDescription>Upload @Summary.UploadId</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent>
+        <dl class="potsure-summary-stats">
+            <div><dt>Imported</dt><dd>@Summary.ImportedCount</dd></div>
+            <div><dt>Skipped</dt><dd>@Summary.SkippedCount</dd></div>
+            <div><dt>Duplicates</dt><dd>@Summary.DedupedCount</dd></div>
+            <div><dt>Transfers excluded</dt><dd>@Summary.TransferExcludedCount</dd></div>
+        </dl>
+
+        @if (Summary.SkippedReasons.Count > 0)
+        {
+            <h2>Skipped rows</h2>
+            <ul>
+                @foreach (string reason in Summary.SkippedReasons)
+                {
+                    <li>@reason</li>
+                }
+            </ul>
+        }
+    </BbCardContent>
+    <BbCardFooter>
+        <BbButton Variant="ButtonVariant.Outline" OnClick="OnImportAnother">
+            Import another file
+        </BbButton>
+    </BbCardFooter>
+</BbCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public StatementImportSummary Summary { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnImportAnother { get; set; }
+}

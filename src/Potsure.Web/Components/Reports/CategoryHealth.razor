@@ -1,0 +1,78 @@
+@page "/reports/category-health"
+@rendermode InteractiveServer
+
+<PageTitle>Category health</PageTitle>
+
+<h1>Category health</h1>
+
+@if (_loading)
+{
+    <p>Loading report…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Report unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_summary is not null)
+{
+    <section class="potsure-income-summary" aria-labelledby="category-health-income">
+        <h2 id="category-health-income">Income</h2>
+        <dl>
+            <div>
+                <dt>@ReportCopy.BudgetedIncomeHeading</dt>
+                <dd>£@_summary.Value.BudgetedIncome.Amount.ToString("F2")</dd>
+            </div>
+            <div>
+                <dt>@ReportCopy.ActualReceiptsHeading</dt>
+                <dd>£@_summary.Value.ActualIncomeInPeriod.Amount.ToString("F2")</dd>
+            </div>
+        </dl>
+        <p class="potsure-report-note">@ReportCopy.CategoryHealthBudgetedNote</p>
+    </section>
+
+    <table>
+        <caption>Category measures for @_summary.Value.Period.Start to @_summary.Value.Period.End</caption>
+        <thead>
+            <tr>
+                <th scope="col">Category</th>
+                <th scope="col">Allocation</th>
+                <th scope="col">Recorded funding</th>
+                <th scope="col">Actual activity</th>
+                <th scope="col">Under / over</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
+            {
+                <tr>
+                    <th scope="row">@FormatKind(row.Kind)</th>
+                    <td>£@row.Allocation.Amount.ToString("F2")</td>
+                    <td>£@row.RecordedFunding.Amount.ToString("F2")</td>
+                    <td>£@row.ActualActivity.Amount.ToString("F2")</td>
+                    <td>£@row.UnderOver.Amount.ToString("F2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="potsure-sr-table-summary" id="category-health-text-summary">
+        Textual summary:
+        @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
+        {
+            <span>@FormatKind(row.Kind): allocation £@row.Allocation.Amount.ToString("F2"), recorded funding £@row.RecordedFunding.Amount.ToString("F2"), actual £@row.ActualActivity.Amount.ToString("F2"), under/over £@row.UnderOver.Amount.ToString("F2"). </span>
+        }
+    </p>
+
+    @if (_summary.Value.UncategorisedSpendWarning)
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Uncategorised spend</BbAlertTitle>
+            <BbAlertDescription>
+                £@_summary.Value.UncategorisedSpend.Amount.ToString("F2") of spend is not attributed to a category.
+            </BbAlertDescription>
+        </BbAlert>
+    }
+}

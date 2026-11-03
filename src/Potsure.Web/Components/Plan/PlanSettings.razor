@@ -1,0 +1,79 @@
+@page "/plan"
+@rendermode InteractiveServer
+
+<PageTitle>Plan settings</PageTitle>
+
+<h1>Plan settings</h1>
+
+@if (_loading)
+{
+    <p>Loading plan…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Could not save plan</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else
+{
+    <section aria-labelledby="plan-income-heading">
+        <h2 id="plan-income-heading">Income and period</h2>
+        <p class="potsure-report-note">
+            <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
+            Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
+        </p>
+
+        <EditForm Model="_form" OnValidSubmit="SaveAsync">
+            <div class="potsure-form-grid">
+                <label>
+                    Allocation preset
+                    <InputSelect @bind-Value="_form.Preset">
+                        @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
+                        {
+                            <option value="@preset">@FormatPreset(preset)</option>
+                        }
+                    </InputSelect>
+                </label>
+
+                <label>
+                    Period start (inclusive)
+                    <InputDate @bind-Value="_form.StartDate" />
+                </label>
+
+                <label>
+                    Period end (inclusive)
+                    <InputDate @bind-Value="_form.EndDate" />
+                </label>
+
+                <label>
+                    Planned income (budgeted)
+                    <InputNumber @bind-Value="_form.BudgetedIncome" />
+                </label>
+            </div>
+
+            @if (_incomeSuggestion is not null)
+            {
+                <BbAlert Variant="AlertVariant.Default">
+                    <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
+                    <BbAlertDescription>
+                        £@_incomeSuggestion.SuggestedAmount.ToString("F2") — @_incomeSuggestion.Rationale
+                    </BbAlertDescription>
+                </BbAlert>
+            }
+
+            <p><a href="/plan/pots">Pot mapping</a> · <a href="/plan/funding">Recorded funding</a></p>
+
+            @if (_actualReceiptsInPeriod is not null)
+            {
+                <p aria-live="polite">
+                    @ReportCopy.ActualReceiptsHeading:
+                    £@_actualReceiptsInPeriod.Value.ToString("F2")
+                </p>
+            }
+
+            <BbButton Type="ButtonType.Submit" Disabled="_saving">Save plan</BbButton>
+        </EditForm>
+    </section>
+}

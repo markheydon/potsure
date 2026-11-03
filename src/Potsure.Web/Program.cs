@@ -1,18 +1,38 @@
 using BlazorBlueprint.Components;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Persistence;
+using Potsure.Infrastructure.Persistence.Tenancy;
+using Potsure.Web;
 using Potsure.Web.Components;
 using Potsure.Web.Configuration;
 using Potsure.Web.Services;
+using Potsure.Web.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.ConfigurePotsureOpenTelemetry();
 
 builder.Services.Configure<DeploymentModeOptions>(
     builder.Configuration.GetSection(DeploymentModeOptions.SectionName));
-builder.Services.AddSingleton<ReauthenticationService>();
 
+DeploymentModeOptions deployment = builder.Configuration
+    .GetSection(DeploymentModeOptions.SectionName)
+    .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
+
+if (deployment.Mode == DeploymentMode.LocalOnly)
+{
+    builder.Services.AddSingleton<ICurrentOwnerAccessor, LocalOnlyOwnerAccessor>();
+}
+else
+{
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
+    builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
+}
+
+builder.Services.AddSingleton<ReauthenticationService>();
+builder.Services.AddSingleton<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
 
@@ -31,6 +51,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+
+if (deployment.Mode == DeploymentMode.Hosted)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.UseMiddleware<HostedFinancialDataAuthorizationMiddleware>();
+    app.MapHostedPasskeyEndpoints();
+}
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
@@ -39,8 +68,6 @@ app.MapRazorComponents<App>()
 
 app.MapDefaultEndpoints();
 
-var deployment = builder.Configuration.GetSection(DeploymentModeOptions.SectionName).Get<DeploymentModeOptions>()
-    ?? new DeploymentModeOptions();
 if (deployment.Mode == DeploymentMode.LocalOnly && !deployment.BindPublicEndpoints)
 {
     app.Urls.Clear();

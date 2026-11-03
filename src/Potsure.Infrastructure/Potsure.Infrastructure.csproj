@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
@@ -25,6 +26,7 @@
     <ProjectReference Include="..\Potsure.Budgeting\Potsure.Budgeting.csproj" />
     <ProjectReference Include="..\Potsure.Recurrence\Potsure.Recurrence.csproj" />
     <ProjectReference Include="..\Potsure.Statements\Potsure.Statements.csproj" />
+    <ProjectReference Include="..\Potsure.Reporting\Potsure.Reporting.csproj" />
   </ItemGroup>
 
 </Project>

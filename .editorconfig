@@ -72,3 +72,8 @@ trim_trailing_whitespace = false
 # Test files: allow underscore-separated method names (e.g. Method_State_Expected)
 [**/*Tests.cs]
 dotnet_diagnostic.CA1707.severity = none
+
+# EF Core migrations are generated-style; suppress layout analyser noise
+[**/Migrations/*.cs]
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_diagnostic.CA1861.severity = none

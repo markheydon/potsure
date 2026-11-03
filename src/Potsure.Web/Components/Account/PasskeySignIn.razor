@@ -1,0 +1,60 @@
+@using Potsure.Web.Configuration
+@inject IConfiguration Configuration
+
+<BbCard>
+    <BbCardHeader>
+        <BbCardTitle>Sign in with passkey</BbCardTitle>
+        <BbCardDescription>
+            Hosted Potsure requires a passkey. Password sign-in is not available in v1 (FR-M025).
+        </BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent>
+        @if (_isHosted)
+        {
+            <p>
+                Use your device passkey, security key, or synced passkey to continue. Your financial data stays
+                isolated to your account.
+            </p>
+
+            @if (_passkeyUnavailable)
+            {
+                <BbAlert Variant="AlertVariant.Warning">
+                    <BbAlertTitle>Passkey not available on this device</BbAlertTitle>
+                    <BbAlertDescription>
+                        Register or use a passkey on a supported device (for example a phone or laptop with
+                        biometrics or a security key), then return here. Non-passkey login is not offered on
+                        hosted v1.
+                    </BbAlertDescription>
+                </BbAlert>
+            }
+            else
+            {
+                <p class="potsure-muted">
+                    Register or sign in with a passkey using the hosted Identity API (no password fallback in v1).
+                </p>
+                <a class="potsure-passkey-link" href="/identity/login">Continue with passkey</a>
+            }
+        }
+        else
+        {
+            <p>Local-only mode does not require passkey sign-in.</p>
+        }
+    </BbCardContent>
+</BbCard>
+
+@code {
+    [Parameter]
+    public bool PasskeyUnavailable { get; set; }
+
+    private bool _isHosted;
+    private bool _passkeyUnavailable;
+
+    protected override void OnParametersSet()
+    {
+        DeploymentModeOptions deployment = Configuration
+            .GetSection(DeploymentModeOptions.SectionName)
+            .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
+        _isHosted = deployment.Mode == DeploymentMode.Hosted;
+        _passkeyUnavailable = PasskeyUnavailable;
+    }
+}
