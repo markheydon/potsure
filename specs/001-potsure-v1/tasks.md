@@ -464,3 +464,11 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T138 [US1] When a remembered Monzo column map pre-fills on unchanged layout, still require an explicit mapping confirm-or-adjust step before import proceeds (do not skip the mapping panel solely because `RememberedMonzoColumnMapping` matched) per FR-M002 and US1/AC1 (partial)
 - [X] T139 [US7] [US8] Surface confirmed variable recurring expense `EstimateCoverageLabel` on `BudgetBalance.razor` (matching runway and recurring summary disclosure) per FR-M034 and SC-008 (partial)
 - [X] T140 [P] [US2] Replace placeholder assertions in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` with an integration test that re-imports overlapping CSV, asserts auto-attribution to confirmed patterns, and verifies manual overrides persist without re-auto-attribution per SC-003 and FR-M010a (partial)
+
+---
+
+## Phase 21: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, pass 3, post Phase 20) between spec intent and present codebase behaviour.
+
+- [X] T141 [P] [US2] Extend `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (or adjacent import integration tests) to import overlapping Monzo CSV twice via `StatementImportService`, assert auto-attribution to confirmed expense patterns on both passes, and verify manual `OverrideAttributionAsync` corrections persist without re-auto-attribution on the second import per US2/AC7, SC-003, FR-M010a, and T140 (partial)

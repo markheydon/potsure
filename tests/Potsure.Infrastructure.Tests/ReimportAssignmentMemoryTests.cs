@@ -103,6 +103,107 @@ public sealed class ReimportAssignmentMemoryTests
         Assert.Null(assignment.RecurringExpenseId);
     }
 
+    [Fact]
+    public async Task SecondAutoAttributionPass_AfterOverride_DoesNotReassignTransaction()
+    {
+        const string owner = "test-owner-reimport";
+        ServiceProvider provider = BuildProvider(owner);
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+
+        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        TransactionAttributionService attribution = scope.ServiceProvider.GetRequiredService<TransactionAttributionService>();
+        BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
+
+        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        BudgetCategoryEntity needs = await db.BudgetCategories.SingleAsync(
+            c => c.Kind == BudgetCategoryKind.Needs,
+            TestContext.Current.CancellationToken);
+
+        RecurringExpenseEntity expense = new()
+        {
+            Id = Guid.NewGuid(),
+            OwnerKey = owner,
+            VendorLabel = "Corner Cafe",
+            CategoryId = needs.Id,
+            Cadence = ExpenseCadence.Monthly,
+            PaymentType = "Card",
+            AmountKind = "Fixed",
+            FixedAmount = 3.5m,
+            State = PatternConfirmationState.Confirmed,
+        };
+        db.RecurringExpenses.Add(expense);
+
+        Guid uploadId = Guid.NewGuid();
+        db.StatementUploads.Add(new StatementUploadEntity
+        {
+            Id = uploadId,
+            OwnerKey = owner,
+            FileName = "first.csv",
+            Status = StatementUploadStatus.Completed,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        TransactionEntity firstDebit = new()
+        {
+            Id = Guid.NewGuid(),
+            OwnerKey = owner,
+            TransactionDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            Amount = -3.5m,
+            Currency = "GBP",
+            Type = "Card payment",
+            Name = "Corner Cafe",
+            Kind = TransactionKind.ExpenseDebit,
+            UploadBatchId = uploadId,
+            DedupeKey = "cafe-1",
+        };
+        db.Transactions.Add(firstDebit);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        int firstImportPass = await attribution.AttributeAllConfirmedExpensesAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(1, firstImportPass);
+
+        BudgetCategoryEntity wants = await db.BudgetCategories.SingleAsync(
+            c => c.Kind == BudgetCategoryKind.Wants,
+            TestContext.Current.CancellationToken);
+        await attribution.OverrideAttributionAsync(
+            firstDebit.Id,
+            wants.Id,
+            null,
+            expense.Id,
+            null,
+            TestContext.Current.CancellationToken);
+
+        Guid secondUploadId = Guid.NewGuid();
+        db.StatementUploads.Add(new StatementUploadEntity
+        {
+            Id = secondUploadId,
+            OwnerKey = owner,
+            FileName = "second.csv",
+            Status = StatementUploadStatus.Completed,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        db.Transactions.Add(new TransactionEntity
+        {
+            Id = Guid.NewGuid(),
+            OwnerKey = owner,
+            TransactionDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1),
+            Amount = -3.5m,
+            Currency = "GBP",
+            Type = "Card payment",
+            Name = "Corner Cafe",
+            Kind = TransactionKind.ExpenseDebit,
+            UploadBatchId = secondUploadId,
+            DedupeKey = "cafe-2",
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        int secondImportPass = await attribution.AttributeAllConfirmedExpensesAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(1, secondImportPass);
+
+        await db.Entry(firstDebit).ReloadAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(wants.Id, firstDebit.CategoryId);
+    }
+
     private static ServiceProvider BuildProvider(string ownerKey)
     {
         ServiceCollection services = new();
