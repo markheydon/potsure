@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components
 @using Potsure.Web.Services
+@using Potsure.Web
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject PasskeySignInJsInterop PasskeySignInJs
@@ -124,7 +125,7 @@
             (bool ok, string? message) = await action();
             if (ok)
             {
-                string destination = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+                string destination = HostedReturnUrlValidator.Normalize(ReturnUrl);
                 Navigation.NavigateTo(destination, forceLoad: true);
                 return;
             }

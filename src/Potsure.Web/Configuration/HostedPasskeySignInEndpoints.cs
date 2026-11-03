@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Potsure.Infrastructure.Persistence.Identity;
+using Potsure.Web;
 using IdentitySignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Potsure.Web.Configuration;
@@ -18,8 +20,16 @@ public static class HostedPasskeySignInEndpoints
         group.MapPost("/requestOptions", async Task<IResult> (
             [FromBody] PasskeySignInOptionsRequest? body,
             SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager) =>
+            UserManager<ApplicationUser> userManager,
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             ApplicationUser? user = null;
             if (!string.IsNullOrWhiteSpace(body?.Email))
             {
@@ -32,8 +42,16 @@ public static class HostedPasskeySignInEndpoints
 
         group.MapPost("/login", async Task<IResult> (
             [FromBody] PasskeyCredentialRequest body,
-            SignInManager<ApplicationUser> signInManager) =>
+            SignInManager<ApplicationUser> signInManager,
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             if (string.IsNullOrWhiteSpace(body.CredentialJson))
             {
                 return Results.BadRequest();
@@ -46,8 +64,16 @@ public static class HostedPasskeySignInEndpoints
         group.MapPost("/register/options", async Task<IResult> (
             [FromBody] PasskeyRegisterOptionsRequest body,
             SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager) =>
+            UserManager<ApplicationUser> userManager,
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             if (string.IsNullOrWhiteSpace(body.Email))
             {
                 return Results.BadRequest("Email is required to register a passkey.");
@@ -86,8 +112,16 @@ public static class HostedPasskeySignInEndpoints
         group.MapPost("/register", async Task<IResult> (
             [FromBody] PasskeyCredentialRequest body,
             SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager) =>
+            UserManager<ApplicationUser> userManager,
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             if (string.IsNullOrWhiteSpace(body.CredentialJson))
             {
                 return Results.BadRequest();

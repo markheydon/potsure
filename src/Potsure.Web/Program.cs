@@ -44,6 +44,11 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddBlazorBlueprintComponents();
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

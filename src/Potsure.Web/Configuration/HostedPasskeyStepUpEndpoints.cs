@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Potsure.Infrastructure.Persistence.Identity;
+using Potsure.Web;
 
 namespace Potsure.Web.Configuration;
 
@@ -17,8 +18,15 @@ public static class HostedPasskeyStepUpEndpoints
         group.MapPost("/passkey/options", async Task<IResult> (
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            HttpContext httpContext) =>
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             ApplicationUser? user = await userManager.GetUserAsync(httpContext.User);
             if (user is null)
             {
@@ -33,8 +41,15 @@ public static class HostedPasskeyStepUpEndpoints
             [FromBody] PasskeyStepUpVerifyRequest body,
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            HttpContext httpContext) =>
+            HttpContext httpContext,
+            IAntiforgery antiforgery) =>
         {
+            IResult? antiforgeryFailure = await PasskeyAntiforgeryValidation.ValidateAsync(httpContext, antiforgery);
+            if (antiforgeryFailure is not null)
+            {
+                return antiforgeryFailure;
+            }
+
             if (string.IsNullOrWhiteSpace(body.CredentialJson))
             {
                 return Results.BadRequest();
