@@ -15,7 +15,7 @@ public static class HostedPasskeySignInEndpoints
 {
     public static WebApplication MapHostedPasskeySignInEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder group = app.MapGroup("/identity/passkeys");
+        RouteGroupBuilder group = app.MapGroup("/identity/passkeys").AllowAnonymous();
 
         group.MapPost("/requestOptions", async Task<IResult> (
             [FromBody] PasskeySignInOptionsRequest? body,
