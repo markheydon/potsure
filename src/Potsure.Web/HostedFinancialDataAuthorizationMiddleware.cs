@@ -31,7 +31,12 @@ public sealed class HostedFinancialDataAuthorizationMiddleware(
         if (ProtectedPrefixes.Any(prefix => path.StartsWithSegments(prefix))
             && !(context.User.Identity?.IsAuthenticated ?? false))
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            string returnUrl = (path + context.Request.QueryString).ToString();
+            context.Response.Redirect(
+                Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
+                    "/account/sign-in",
+                    "returnUrl",
+                    returnUrl));
             return;
         }
 

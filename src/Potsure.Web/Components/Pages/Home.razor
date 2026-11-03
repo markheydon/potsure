@@ -1,7 +1,31 @@
 ﻿@page "/"
+@using Potsure.Web.Components.Account
+@using Potsure.Web.Configuration
+@inject IConfiguration Configuration
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Potsure</h1>
 
-Welcome to your new app.
+<p>Budgeting and statement import for your Monzo exports.</p>
+
+@if (_isHosted)
+{
+    <PasskeySignIn />
+}
+else
+{
+    <p>Use the navigation links to import statements, plan pots, and view reports.</p>
+}
+
+@code {
+    private bool _isHosted;
+
+    protected override void OnInitialized()
+    {
+        DeploymentModeOptions deployment = Configuration
+            .GetSection(DeploymentModeOptions.SectionName)
+            .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
+        _isHosted = deployment.Mode == DeploymentMode.Hosted;
+    }
+}

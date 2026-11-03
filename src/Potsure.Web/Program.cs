@@ -32,6 +32,7 @@ if (deployment.Mode == DeploymentMode.Hosted)
 }
 
 builder.Services.AddScoped<PasskeyStepUpJsInterop>();
+builder.Services.AddScoped<PasskeySignInJsInterop>();
 
 builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
@@ -60,6 +61,7 @@ if (deployment.Mode == DeploymentMode.Hosted)
     app.UseAuthorization();
     app.UseMiddleware<HostedFinancialDataAuthorizationMiddleware>();
     app.MapHostedPasskeyEndpoints();
+    app.MapHostedPasskeySignInEndpoints();
     app.MapHostedPasskeyStepUpEndpoints();
 }
 

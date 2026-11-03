@@ -1,5 +1,13 @@
 @using Potsure.Web.Configuration
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.Components
+@using Potsure.Web.Services
+@rendermode InteractiveServer
 @inject IConfiguration Configuration
+@inject PasskeySignInJsInterop PasskeySignInJs
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
 
 <BbCard>
     <BbCardHeader>
@@ -29,10 +37,26 @@
             }
             else
             {
-                <p class="potsure-muted">
-                    Register or sign in with a passkey using the hosted Identity API (no password fallback in v1).
-                </p>
-                <a class="potsure-passkey-link" href="/identity/login">Continue with passkey</a>
+                <EditForm Model="_form" OnValidSubmit="SignInAsync">
+                    <div class="potsure-form-field">
+                        <label for="passkey-email">Email (optional for sign-in)</label>
+                        <InputText id="passkey-email" @bind-Value="_form.Email" autocomplete="username webauthn" />
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_message))
+                    {
+                        <BbAlert Variant="@(_messageIsError ? AlertVariant.Warning : AlertVariant.Default)">
+                            <BbAlertDescription>@_message</BbAlertDescription>
+                        </BbAlert>
+                    }
+
+                    <div class="potsure-passkey-actions">
+                        <BbButton Type="ButtonType.Submit" Disabled="_busy">Sign in with passkey</BbButton>
+                        <BbButton Type="ButtonType.Button" Variant="ButtonVariant.Outline" Disabled="_busy" OnClick="RegisterAsync">
+                            Register a new passkey
+                        </BbButton>
+                    </div>
+                </EditForm>
             }
         }
         else
@@ -46,15 +70,84 @@
     [Parameter]
     public bool PasskeyUnavailable { get; set; }
 
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
     private bool _isHosted;
     private bool _passkeyUnavailable;
+    private bool _busy;
+    private string? _message;
+    private bool _messageIsError;
+    private readonly PasskeySignInForm _form = new();
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         DeploymentModeOptions deployment = Configuration
             .GetSection(DeploymentModeOptions.SectionName)
             .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
         _isHosted = deployment.Mode == DeploymentMode.Hosted;
         _passkeyUnavailable = PasskeyUnavailable;
+
+        if (_isHosted && !_passkeyUnavailable)
+        {
+            _passkeyUnavailable = !await PasskeySignInJs.IsAvailableAsync();
+        }
+    }
+
+    private async Task SignInAsync()
+    {
+        await RunPasskeyFlowAsync(
+            () => PasskeySignInJs.SignInAsync(
+                string.IsNullOrWhiteSpace(_form.Email) ? null : _form.Email.Trim(),
+                GetAntiforgeryToken()));
+    }
+
+    private async Task RegisterAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Email))
+        {
+            _messageIsError = true;
+            _message = "Enter your email before registering a passkey.";
+            return;
+        }
+
+        await RunPasskeyFlowAsync(
+            () => PasskeySignInJs.RegisterAsync(_form.Email.Trim(), GetAntiforgeryToken()));
+    }
+
+    private async Task RunPasskeyFlowAsync(Func<Task<(bool Ok, string? Message)>> action)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            (bool ok, string? message) = await action();
+            if (ok)
+            {
+                string destination = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+                Navigation.NavigateTo(destination, forceLoad: true);
+                return;
+            }
+
+            _messageIsError = true;
+            _message = message ?? "Passkey operation failed.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string GetAntiforgeryToken()
+    {
+        HttpContext? httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is required for passkey sign-in.");
+        AntiforgeryTokenSet tokens = Antiforgery.GetAndStoreTokens(httpContext);
+        return tokens.RequestToken ?? string.Empty;
+    }
+
+    private sealed class PasskeySignInForm
+    {
+        public string Email { get; set; } = string.Empty;
     }
 }

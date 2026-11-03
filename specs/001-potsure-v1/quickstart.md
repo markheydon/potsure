@@ -17,7 +17,7 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 ```
 
 - Open Aspire dashboard URL from console.
-- Launch web resource; confirm HTTPS and local-only mode restrictions per docs.
+- Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise hosted passkey behaviour (see `docs/local-only-mode.md`).
 - SQL container and `potsure` database healthy before migrations run.
 - **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
 - **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.1.0).

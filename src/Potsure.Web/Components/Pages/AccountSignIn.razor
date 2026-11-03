@@ -1,0 +1,21 @@
+@page "/account/sign-in"
+@using Potsure.Web.Components.Account
+@rendermode InteractiveServer
+
+<PageTitle>Sign in</PageTitle>
+
+<h1>Sign in</h1>
+
+<PasskeySignIn ReturnUrl="@_returnUrl" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private string? _returnUrl;
+
+    protected override void OnParametersSet()
+    {
+        _returnUrl = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+    }
+}

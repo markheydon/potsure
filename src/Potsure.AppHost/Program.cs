@@ -11,6 +11,7 @@ var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(database)
+    .WithEnvironment("Deployment__Mode", "Hosted")
     .WithComputeEnvironment(aca)
     .PublishAsAzureContainerApp((_, _) => { });
 
