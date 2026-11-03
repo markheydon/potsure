@@ -72,6 +72,19 @@ else
         </tbody>
     </table>
 
+    @if (_potBreakdown.Count > 0)
+    {
+        <section aria-labelledby="runway-pots">
+            <h2 id="runway-pots">Mapped pots (funding context)</h2>
+            <ul>
+                @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
+                {
+                    <li>@pot.Category — @pot.PotName: £@pot.RecordedFunding.ToString("F2") recorded</li>
+                }
+            </ul>
+        </section>
+    }
+
     <p class="potsure-sr-table-summary" id="runway-text-summary">
         Textual summary:
         @foreach (RunwayProjectionLine line in _lines)

@@ -421,3 +421,13 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T123 [US1] Persist internal transfer and pot movement rows from imports (excluded from uncategorised and category actuals by default) so users can one-off categorise them as spend per FR-M017 and [contracts/monzo-import.md](contracts/monzo-import.md) (partial)
 - [X] T124 [US10] Replace stub `ReauthenticationService` with a real reauthentication challenge before export and permanent deletion per T026 and export/delete UI flows (partial)
 - [X] T125 [US12] Harden `tests/Potsure.E2E/KeyJourneysTests.cs` to assert import → recurring → category health → export when `POTSURE_E2E_BASE_URL` is set (or document CI wiring) per Constitution II and T095 (partial)
+
+---
+
+## Phase 17: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, post Phase 16) between spec intent and present codebase behaviour.
+
+- [X] T126 [US6] Surface persistent over-allocation warnings on `CategoryHealth.razor` from `CategoryPeriodSummary.OverAllocationWarning` per FR-M017a (partial)
+- [X] T127 [US6] [US7] [US8] Add optional mapped-pot breakdown or detail on category health, budget balance (limiting category), and runway report UIs when pots are configured, using existing rollup/projection inputs per US6/US7/AC2/US8 and tasks T073/T082 (partial)
+- [X] T128 [P] Expand `tests/Potsure.E2E/KeyJourneysTests.cs` to exercise CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; document CI or local E2E wiring in `docs/` or repository workflow per Constitution II and T095/T125 (partial)

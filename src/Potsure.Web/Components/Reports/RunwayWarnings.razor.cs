@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Reporting;
 using Potsure.Infrastructure.Services;
 using Potsure.Reporting;
@@ -13,10 +14,14 @@ public partial class RunwayWarnings
     [Inject]
     private ForecastHorizonService HorizonService { get; set; } = null!;
 
+    [Inject]
+    private CategoryPotBreakdownQuery PotBreakdownQuery { get; set; } = null!;
+
     private bool _loading = true;
     private string? _error;
     private int _horizonMonths = ForecastHorizonService.DefaultHorizonMonths;
     private IReadOnlyList<RunwayProjectionLine> _lines = [];
+    private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
     private UncertaintyFlags _flags;
 
     protected override async Task OnInitializedAsync()
@@ -24,6 +29,7 @@ public partial class RunwayWarnings
         try
         {
             _horizonMonths = await HorizonService.GetHorizonMonthsAsync();
+            _potBreakdown = await PotBreakdownQuery.ListAsync();
             await LoadRunwayAsync();
         }
         catch (Exception ex)

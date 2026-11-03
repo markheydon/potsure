@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Infrastructure.Persistence;
+using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Reporting;
 using Potsure.Reporting;
 
@@ -14,7 +15,11 @@ public partial class BudgetBalance
     [Inject]
     private PeriodReportService ReportService { get; set; } = null!;
 
+    [Inject]
+    private CategoryPotBreakdownQuery PotBreakdownQuery { get; set; } = null!;
+
     private BudgetBalanceReport? _report;
+    private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
     private bool _loading = true;
     private string? _error;
 
@@ -24,6 +29,7 @@ public partial class BudgetBalance
         {
             await ProfileSeeder.EnsureProfileAsync();
             _report = await ReportService.GetBudgetBalanceReportAsync();
+            _potBreakdown = await PotBreakdownQuery.ListAsync();
         }
         catch (Exception ex)
         {

@@ -54,9 +54,51 @@ else if (_summary is not null)
                     <td>£@row.ActualActivity.Amount.ToString("F2")</td>
                     <td>£@row.UnderOver.Amount.ToString("F2")</td>
                 </tr>
+                @if (row.OverAllocationWarning)
+                {
+                    <tr>
+                        <td colspan="5">
+                            <BbAlert Variant="AlertVariant.Warning">
+                                <BbAlertTitle>Over-allocation</BbAlertTitle>
+                                <BbAlertDescription>
+                                    Recorded funding and pot assignments exceed allocation for @FormatKind(row.Kind).
+                                </BbAlertDescription>
+                            </BbAlert>
+                        </td>
+                    </tr>
+                }
             }
         </tbody>
     </table>
+
+    @if (_potBreakdown.Count > 0)
+    {
+        <section aria-labelledby="category-health-pots">
+            <h2 id="category-health-pots">Mapped bank pots</h2>
+            <table>
+                <caption>Pot funding by category</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Category</th>
+                        <th scope="col">Pot</th>
+                        <th scope="col">Allocation to pot</th>
+                        <th scope="col">Recorded funding</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
+                    {
+                        <tr>
+                            <th scope="row">@FormatKind(pot.Category)</th>
+                            <td>@pot.PotName</td>
+                            <td>@(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "—")</td>
+                            <td>£@pot.RecordedFunding.ToString("F2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
 
     <p class="potsure-sr-table-summary" id="category-health-text-summary">
         Textual summary:

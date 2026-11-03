@@ -51,6 +51,18 @@ else if (_report is not null)
             £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2")
             (limiting category: @FormatKind(_report.Value.RequiredIncome.LimitingCategory))
         </p>
+        @if (_potBreakdown.Count > 0)
+        {
+            <details>
+                <summary>Mapped pots for @FormatKind(_report.Value.RequiredIncome.LimitingCategory)</summary>
+                <ul>
+                    @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
+                    {
+                        <li>@pot.PotName — recorded funding £@pot.RecordedFunding.ToString("F2")</li>
+                    }
+                </ul>
+            </details>
+        }
         @if (_report.Value.RequiredIncome.Shortfall.Amount > 0m)
         {
             <BbAlert Variant="AlertVariant.Warning">
