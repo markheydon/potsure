@@ -431,3 +431,15 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T126 [US6] Surface persistent over-allocation warnings on `CategoryHealth.razor` from `CategoryPeriodSummary.OverAllocationWarning` per FR-M017a (partial)
 - [X] T127 [US6] [US7] [US8] Add optional mapped-pot breakdown or detail on category health, budget balance (limiting category), and runway report UIs when pots are configured, using existing rollup/projection inputs per US6/US7/AC2/US8 and tasks T073/T082 (partial)
 - [X] T128 [P] Expand `tests/Potsure.E2E/KeyJourneysTests.cs` to exercise CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; document CI or local E2E wiring in `docs/` or repository workflow per Constitution II and T095/T125 (partial)
+
+---
+
+## Phase 18: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, post Phase 17) between spec intent and present codebase behaviour.
+
+- [X] T129 [US2] [US8] Wire `VariableExpenseEstimator` when confirming variable recurring expenses (persist `MonthlyEstimate` and `EstimateCoverageLabel` via `ExpensePatternService` / detection review) and surface coverage labelling on runway, budget balance, and recurring summary UIs per FR-M034 and SC-008 (partial)
+- [X] T130 [US2] Allow confirming income patterns with `IncomeCadence.AdHoc` or `IncomeCadence.Variable` (amount without forced weekly/fortnightly/monthly recurrence) in `DetectionReview` and persistence per US2/AC2 (partial)
+- [X] T131 [US1] Add user-adjustable Monzo column mapping controls in `ImportWizard` before import proceeds (not read-only confirm only) per FR-M002 and US1/AC1 (partial)
+- [X] T132 [US10] Replace typed phrase reauthentication with hosted passkey step-up (Identity) before export and permanent deletion when deployment mode is hosted; keep an appropriate local-only challenge per `research.md`, T026, and `plan.md` reauthentication notes (partial)
+- [X] T133 [P] [US12] Extend `tests/Potsure.E2E/KeyJourneysTests.cs` to confirm at least one suggested recurring pattern in the UI (not only navigate to review) before category health and export when `POTSURE_E2E_BASE_URL` is set per Constitution II and T128 (partial)

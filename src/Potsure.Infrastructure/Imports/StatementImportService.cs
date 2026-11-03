@@ -39,6 +39,7 @@ public sealed class StatementImportService(
         string _,
         bool confirmAccount,
         string? confirmedFingerprint,
+        IReadOnlyDictionary<string, string>? columnMap = null,
         CancellationToken cancellationToken = default)
     {
         string? tempPath = null;
@@ -56,7 +57,7 @@ public sealed class StatementImportService(
                 cancellationToken);
 
             readStream.Seek(0, SeekOrigin.Begin);
-            MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, cancellationToken);
+            MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, columnMap, cancellationToken);
 
             List<string> previewErrors = parseResult.Errors
                 .Select(e => $"Row {e.RowNumber}: {e.Reason}")
@@ -96,6 +97,7 @@ public sealed class StatementImportService(
         string fileName,
         bool confirmAccount,
         string? confirmedFingerprint,
+        IReadOnlyDictionary<string, string>? columnMap = null,
         CancellationToken cancellationToken = default)
     {
         string? tempPath = null;
@@ -111,7 +113,7 @@ public sealed class StatementImportService(
             upload = await uploadRepository.CreatePendingAsync(fileName, cancellationToken);
 
             await using FileStream readStream = File.OpenRead(tempPath);
-            MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, cancellationToken);
+            MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, columnMap, cancellationToken);
 
             List<string> skippedReasons = parseResult.Errors
                 .Select(e => $"Row {e.RowNumber}: {e.Reason}")

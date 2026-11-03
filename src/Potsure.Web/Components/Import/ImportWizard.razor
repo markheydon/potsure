@@ -41,6 +41,7 @@ else
                 <thead>
                     <tr>
                         <th scope="col">Column</th>
+                        <th scope="col">File header</th>
                         <th scope="col">Status</th>
                     </tr>
                 </thead>
@@ -50,6 +51,14 @@ else
                         bool present = !_preview.ColumnMapping.MissingRequiredHeaders.Contains(header);
                         <tr>
                             <th scope="row">@header</th>
+                            <td>
+                                <InputSelect @bind-Value="_columnMapping[header]">
+                                    @foreach (string fileHeader in _preview.ColumnMapping.FileHeaders)
+                                    {
+                                        <option value="@fileHeader">@fileHeader</option>
+                                    }
+                                </InputSelect>
+                            </td>
                             <td>@(present ? "Detected" : "Missing")</td>
                         </tr>
                     }

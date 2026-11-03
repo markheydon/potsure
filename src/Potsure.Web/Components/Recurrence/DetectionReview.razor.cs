@@ -39,6 +39,7 @@ public partial class DetectionReview
     private List<CategoryOption> _categories = [];
     private Dictionary<string, Guid> _expenseCategoryByLabel = [];
     private Dictionary<string, IncomeSplitInput> _incomeSplitsByLabel = [];
+    private Dictionary<string, IncomeCadence> _incomeCadenceByLabel = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
@@ -83,6 +84,11 @@ public partial class DetectionReview
             {
                 _incomeSplitsByLabel[item.Label] = new IncomeSplitInput();
             }
+
+            if (item.IsIncome && !_incomeCadenceByLabel.ContainsKey(item.Label))
+            {
+                _incomeCadenceByLabel[item.Label] = item.IncomeCadence ?? IncomeCadence.Monthly;
+            }
         }
     }
 
@@ -110,13 +116,16 @@ public partial class DetectionReview
             if (item.IsIncome)
             {
                 IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
+                IncomeCadence cadence = _incomeCadenceByLabel[item.Label];
+                decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : item.TypicalAmount;
+                decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? item.TypicalAmount : null;
                 await IncomeService.SaveAsync(
                     new SaveIncomeSourceRequest(
                         item.PersistedId,
                         item.SourceLabelFallback(),
-                        item.IncomeCadence ?? IncomeCadence.Monthly,
-                        item.TypicalAmount,
-                        null,
+                        cadence,
+                        fixedAmount,
+                        estimateAmount,
                         splits.Needs,
                         splits.Wants,
                         splits.SavingsDebt,
@@ -125,18 +134,29 @@ public partial class DetectionReview
             else
             {
                 Guid categoryId = _expenseCategoryByLabel[item.Label];
+                ExpenseCadence cadence = item.ExpenseCadence ?? ExpenseCadence.Monthly;
+                bool isVariable = cadence == ExpenseCadence.Variable;
+                decimal? monthlyEstimate = null;
+                string? coverageLabel = null;
+                if (isVariable)
+                {
+                    VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
+                    monthlyEstimate = estimate.MonthlyEstimate;
+                    coverageLabel = estimate.CoverageLabel;
+                }
+
                 RecurringExpenseEntity saved = await ExpenseService.SaveAsync(
                     new SaveRecurringExpenseRequest(
                         item.PersistedId,
                         item.Label,
                         categoryId,
                         MappedPotId: null,
-                        item.ExpenseCadence ?? ExpenseCadence.Monthly,
+                        cadence,
                         PaymentType: "Card",
-                        AmountKind: "Fixed",
-                        item.TypicalAmount,
-                        null,
-                        null,
+                        AmountKind: isVariable ? "Variable" : "Fixed",
+                        isVariable ? null : item.TypicalAmount,
+                        monthlyEstimate,
+                        coverageLabel,
                         Tag: null,
                         PatternConfirmationState.Confirmed));
 
@@ -325,6 +345,21 @@ public partial class DetectionReview
         public decimal Needs { get; set; } = 50m;
         public decimal Wants { get; set; } = 30m;
         public decimal SavingsDebt { get; set; } = 20m;
+    }
+
+    private async Task<VariableExpenseEstimateResult> BuildVariableEstimateAsync(string vendorLabel)
+    {
+        string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
+        List<TransactionEntity> transactions = await DbContext.Transactions.AsNoTracking().ToListAsync();
+        List<(DateOnly Date, decimal Amount)> debits = transactions
+            .Where(t => t.Kind == TransactionKind.ExpenseDebit)
+            .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
+            .Select(t => (t.TransactionDate, t.Amount))
+            .ToList();
+
+        List<DateOnly> coverageDays = transactions.Select(t => t.TransactionDate).Distinct().OrderBy(d => d).ToList();
+        DateOnly asOf = coverageDays.Count > 0 ? coverageDays[^1] : DateOnly.FromDateTime(DateTime.UtcNow);
+        return VariableExpenseEstimator.Estimate(debits, coverageDays, asOf);
     }
 }
 

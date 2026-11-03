@@ -53,6 +53,11 @@ public sealed class KeyJourneysTests
             ILocator reviewHeading = page.Locator("#recurrence-review-heading");
             await reviewHeading.WaitForAsync();
             Assert.Contains("Review recurring", await reviewHeading.InnerTextAsync());
+            ILocator confirmButton = page.GetByRole(AriaRole.Button, new() { Name = "Confirm" }).First;
+            if (await confirmButton.CountAsync() > 0)
+            {
+                await confirmButton.ClickAsync();
+            }
 
             await page.GotoAsync($"{trimmed}/reports/category-health");
             await page.Locator("h1").Filter(new() { HasText = "Category health" }).WaitForAsync();

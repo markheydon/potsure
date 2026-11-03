@@ -23,6 +23,7 @@ public partial class ImportWizard
     private string? _errorMessage;
     private StatementImportSummary? _summary;
     private StatementImportPreview? _preview;
+    private Dictionary<string, string> _columnMapping = new(StringComparer.Ordinal);
 
     private async Task OnFileSelectedAsync(InputFileChangeEventArgs args)
     {
@@ -72,6 +73,7 @@ public partial class ImportWizard
             }
 
             _awaitingMappingConfirmation = true;
+            _columnMapping = BuildDefaultColumnMapping(_preview);
         }
         catch (Exception ex)
         {
@@ -116,7 +118,8 @@ public partial class ImportWizard
                 stream,
                 _pendingFile.Name,
                 confirmAccount,
-                fingerprint);
+                fingerprint,
+                _columnMapping);
 
             if (result.RequiresAccountConfirmation)
             {
@@ -153,5 +156,31 @@ public partial class ImportWizard
         _mappingConfirmed = false;
         _accountFingerprint = null;
         _errorMessage = null;
+    }
+
+    private static Dictionary<string, string> BuildDefaultColumnMapping(StatementImportPreview preview)
+    {
+        Dictionary<string, string> mapping = new(StringComparer.Ordinal);
+        foreach (string required in preview.ColumnMapping.RequiredHeaders)
+        {
+            string match = required;
+            foreach (string fileHeader in preview.ColumnMapping.FileHeaders)
+            {
+                if (fileHeader == required)
+                {
+                    match = fileHeader;
+                    break;
+                }
+            }
+
+            if (match == required && preview.ColumnMapping.FileHeaders.Count > 0)
+            {
+                match = preview.ColumnMapping.FileHeaders[0];
+            }
+
+            mapping[required] = match;
+        }
+
+        return mapping;
     }
 }

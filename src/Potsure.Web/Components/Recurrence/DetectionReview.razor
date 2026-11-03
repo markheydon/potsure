@@ -50,6 +50,15 @@ else
                         {
                             IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
                             <div>
+                                <label>
+                                    Cadence
+                                    <InputSelect @bind-Value="_incomeCadenceByLabel[item.Label]">
+                                        @foreach (IncomeCadence cadence in Enum.GetValues<IncomeCadence>())
+                                        {
+                                            <option value="@cadence">@cadence</option>
+                                        }
+                                    </InputSelect>
+                                </label>
                                 <label>Needs % <InputNumber @bind-Value="splits.Needs" /></label>
                                 <label>Wants % <InputNumber @bind-Value="splits.Wants" /></label>
                                 <label>Savings &amp; debt % <InputNumber @bind-Value="splits.SavingsDebt" /></label>

@@ -67,6 +67,7 @@ else if (_model is not null)
                         <th scope="col">Category</th>
                         <th scope="col">Cadence</th>
                         <th scope="col">Amount</th>
+                        <th scope="col">Coverage</th>
                         <th scope="col">Tag</th>
                     </tr>
                 </thead>
@@ -78,6 +79,7 @@ else if (_model is not null)
                             <td>@row.CategoryKind</td>
                             <td>@row.Cadence</td>
                             <td>£@((row.FixedAmount ?? row.MonthlyEstimate ?? 0m).ToString("F2"))</td>
+                            <td>@(row.EstimateCoverageLabel ?? "—")</td>
                             <td>@(row.Tag ?? "—")</td>
                         </tr>
                     }

@@ -23,8 +23,18 @@
     {
         <div class="potsure-reauth-panel" aria-labelledby="export-reauth-heading">
             <h3 id="export-reauth-heading">Confirm export</h3>
-            <p>Type @ExportPhrase to confirm you want to download your financial data.</p>
-            <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
+            @if (IsHosted)
+            {
+                <p>Hosted mode requires passkey step-up. <a href="/identity/login" target="_blank" rel="noopener">Verify with passkey</a>, then confirm below.</p>
+                <BbCheckbox @bind-Checked="_hostedPasskeyStepUpConfirmed">
+                    I completed passkey verification on this device
+                </BbCheckbox>
+            }
+            else
+            {
+                <p>Type @ExportPhrase to confirm you want to download your financial data.</p>
+                <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
+            }
             <BbButton Disabled="_busy" OnClick="ConfirmExportReauthAsync">Continue export</BbButton>
         </div>
     }
@@ -61,8 +71,18 @@
     {
         <div class="potsure-reauth-panel" aria-labelledby="delete-reauth-heading">
             <h3 id="delete-reauth-heading">Confirm deletion</h3>
-            <p>Type @DeletePhrase to confirm permanent deletion.</p>
-            <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
+            @if (IsHosted)
+            {
+                <p>Hosted mode requires passkey step-up. <a href="/identity/login" target="_blank" rel="noopener">Verify with passkey</a>, then confirm below.</p>
+                <BbCheckbox @bind-Checked="_hostedPasskeyStepUpConfirmed">
+                    I completed passkey verification on this device
+                </BbCheckbox>
+            }
+            else
+            {
+                <p>Type @DeletePhrase to confirm permanent deletion.</p>
+                <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
+            }
             <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy" OnClick="ConfirmDeleteReauthAsync">
                 Continue deletion
             </BbButton>

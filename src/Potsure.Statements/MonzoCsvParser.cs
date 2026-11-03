@@ -17,8 +17,14 @@ public static class MonzoCsvParser
         "Currency",
     ];
 
+    public static Task<MonzoParseResult> ParseAsync(
+        Stream csvStream,
+        CancellationToken cancellationToken = default) =>
+        ParseAsync(csvStream, columnMap: null, cancellationToken);
+
     public static async Task<MonzoParseResult> ParseAsync(
         Stream csvStream,
+        IReadOnlyDictionary<string, string>? columnMap,
         CancellationToken cancellationToken = default)
     {
         CsvReaderOptions options = CsvReaderOptions.Default with
@@ -38,9 +44,10 @@ public static class MonzoCsvParser
         IReadOnlyList<string> headers = csv.Headers;
         foreach (string required in RequiredHeaders)
         {
-            if (!headers.Contains(required, StringComparer.Ordinal))
+            string mapped = MapHeader(columnMap, required);
+            if (!headers.Contains(mapped, StringComparer.Ordinal))
             {
-                return new MonzoParseResult([], [new MonzoParseError(1, $"Missing required header '{required}'")]);
+                return new MonzoParseResult([], [new MonzoParseError(1, $"Missing required header '{mapped}'")]);
             }
         }
 
@@ -52,14 +59,14 @@ public static class MonzoCsvParser
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                string currency = csv.GetString("Currency");
+                string currency = csv.GetString(MapHeader(columnMap, "Currency"));
                 if (!string.Equals(currency, "GBP", StringComparison.Ordinal))
                 {
                     errors.Add(new MonzoParseError(rowNumber, "Non-GBP currency"));
                     continue;
                 }
 
-                string dateText = csv.GetString("Date");
+                string dateText = csv.GetString(MapHeader(columnMap, "Date"));
                 if (!DateOnly.TryParseExact(dateText, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly date))
                 {
                     errors.Add(new MonzoParseError(rowNumber, "Invalid date"));
@@ -67,7 +74,7 @@ public static class MonzoCsvParser
                 }
 
                 TimeOnly? time = null;
-                if (csv.TryGetFieldIndex("Time", out int timeIndex) && !csv.IsEmpty(timeIndex))
+                if (csv.TryGetFieldIndex(MapHeader(columnMap, "Time"), out int timeIndex) && !csv.IsEmpty(timeIndex))
                 {
                     string timeText = csv.GetString(timeIndex);
                     if (TimeOnly.TryParseExact(timeText, "HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out TimeOnly parsedTime))
@@ -76,18 +83,18 @@ public static class MonzoCsvParser
                     }
                 }
 
-                decimal amount = decimal.Parse(csv.GetString("Amount"), CultureInfo.InvariantCulture);
-                decimal? moneyOut = TryGetOptionalDecimal(csv, "Money Out");
-                decimal? moneyIn = TryGetOptionalDecimal(csv, "Money In");
+                decimal amount = decimal.Parse(csv.GetString(MapHeader(columnMap, "Amount")), CultureInfo.InvariantCulture);
+                decimal? moneyOut = TryGetOptionalDecimal(csv, MapHeader(columnMap, "Money Out"));
+                decimal? moneyIn = TryGetOptionalDecimal(csv, MapHeader(columnMap, "Money In"));
 
                 string? transactionId = null;
-                if (csv.TryGetFieldIndex("Transaction ID", out int transactionIdIndex) && !csv.IsEmpty(transactionIdIndex))
+                if (csv.TryGetFieldIndex(MapHeader(columnMap, "Transaction ID"), out int transactionIdIndex) && !csv.IsEmpty(transactionIdIndex))
                 {
                     transactionId = csv.GetString(transactionIdIndex);
                 }
 
                 string? description = null;
-                if (csv.TryGetFieldIndex("Description", out int descriptionIndex) && !csv.IsEmpty(descriptionIndex))
+                if (csv.TryGetFieldIndex(MapHeader(columnMap, "Description"), out int descriptionIndex) && !csv.IsEmpty(descriptionIndex))
                 {
                     description = csv.GetString(descriptionIndex);
                 }
@@ -96,8 +103,8 @@ public static class MonzoCsvParser
                     transactionId,
                     date,
                     time,
-                    csv.GetString("Type"),
-                    csv.GetString("Name"),
+                    csv.GetString(MapHeader(columnMap, "Type")),
+                    csv.GetString(MapHeader(columnMap, "Name")),
                     amount,
                     currency,
                     description,
@@ -127,6 +134,11 @@ public static class MonzoCsvParser
     }
 
     public static IReadOnlyList<string> StandardHeaders() => RequiredHeaders;
+
+    private static string MapHeader(IReadOnlyDictionary<string, string>? columnMap, string logical) =>
+        columnMap is not null && columnMap.TryGetValue(logical, out string? mapped) && !string.IsNullOrWhiteSpace(mapped)
+            ? mapped
+            : logical;
 
     /// <summary>
     /// Reads CSV headers and validates required Monzo columns for mapping confirmation (FR-M002).

@@ -72,6 +72,19 @@ else
         </tbody>
     </table>
 
+    @if (_variableExpenses.Count > 0)
+    {
+        <section aria-labelledby="runway-variable">
+            <h2 id="runway-variable">Variable expense coverage</h2>
+            <ul>
+                @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
+                {
+                    <li>@expense.VendorLabel: @(expense.EstimateCoverageLabel ?? "Estimate pending")</li>
+                }
+            </ul>
+        </section>
+    }
+
     @if (_potBreakdown.Count > 0)
     {
         <section aria-labelledby="runway-pots">
