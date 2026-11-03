@@ -1,4 +1,6 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
 using Potsure.Infrastructure;
@@ -6,6 +8,7 @@ using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Entities;
 using Potsure.Infrastructure.Persistence.Tenancy;
 using Potsure.Infrastructure.Services;
+using Potsure.Infrastructure.StatementImport;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Tests;
@@ -204,13 +207,100 @@ public sealed class ReimportAssignmentMemoryTests
         Assert.Equal(wants.Id, firstDebit.CategoryId);
     }
 
+    [Fact]
+    public async Task OverlappingImportsThroughStatementImportService_DedupeAndPreserveManualOverride()
+    {
+        const string owner = "test-owner-import-pipeline";
+        const string accountFingerprint = "monzo-import-test-fingerprint";
+        const string overlappingCsv =
+            """
+            Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In
+            tx_pipeline_001,02/10/2026,12:00:00,Card payment,Corner Cafe,,Eating out,-3.50,GBP,,,,,,,,3.50,
+            """;
+
+        ServiceProvider provider = BuildProvider(owner);
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+
+        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        StatementImportService importService = scope.ServiceProvider.GetRequiredService<StatementImportService>();
+        TransactionAttributionService attribution = scope.ServiceProvider.GetRequiredService<TransactionAttributionService>();
+        BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
+
+        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        BudgetCategoryEntity needs = await db.BudgetCategories.SingleAsync(
+            c => c.Kind == BudgetCategoryKind.Needs,
+            TestContext.Current.CancellationToken);
+        BudgetCategoryEntity wants = await db.BudgetCategories.SingleAsync(
+            c => c.Kind == BudgetCategoryKind.Wants,
+            TestContext.Current.CancellationToken);
+
+        db.RecurringExpenses.Add(new RecurringExpenseEntity
+        {
+            Id = Guid.NewGuid(),
+            OwnerKey = owner,
+            VendorLabel = "Corner Cafe",
+            CategoryId = needs.Id,
+            Cadence = ExpenseCadence.Monthly,
+            PaymentType = "Card",
+            AmountKind = "Fixed",
+            FixedAmount = 3.5m,
+            State = PatternConfirmationState.Confirmed,
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        StatementImportSummary firstImport = await importService.ImportAsync(
+            new MemoryStream(Encoding.UTF8.GetBytes(overlappingCsv)),
+            "overlap-first.csv",
+            confirmAccount: true,
+            confirmedFingerprint: accountFingerprint,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(firstImport.RequiresAccountConfirmation);
+        Assert.Equal(1, firstImport.ImportedCount);
+        Assert.Equal(0, firstImport.DedupedCount);
+
+        TransactionEntity importedDebit = await db.Transactions.SingleAsync(
+            t => t.MonzoTransactionId == "tx_pipeline_001",
+            TestContext.Current.CancellationToken);
+        Assert.Equal(needs.Id, importedDebit.CategoryId);
+
+        await attribution.OverrideAttributionAsync(
+            importedDebit.Id,
+            wants.Id,
+            null,
+            null,
+            "manual",
+            TestContext.Current.CancellationToken);
+
+        StatementImportSummary secondImport = await importService.ImportAsync(
+            new MemoryStream(Encoding.UTF8.GetBytes(overlappingCsv)),
+            "overlap-second.csv",
+            confirmAccount: true,
+            confirmedFingerprint: accountFingerprint,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, secondImport.ImportedCount);
+        Assert.Equal(1, secondImport.DedupedCount);
+        Assert.Equal(1, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
+
+        await db.Entry(importedDebit).ReloadAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(wants.Id, importedDebit.CategoryId);
+
+        AssignmentEntity assignment = await db.Assignments.SingleAsync(
+            a => a.TransactionId == importedDebit.Id,
+            TestContext.Current.CancellationToken);
+        Assert.Equal("manual", assignment.Tag);
+    }
+
     private static ServiceProvider BuildProvider(string ownerKey)
     {
         ServiceCollection services = new();
         services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
         services.AddPotsureInfrastructureServices();
         services.AddDbContext<PotsureDbContext>(options =>
-            options.UseInMemoryDatabase($"potsure-attribution-{Guid.NewGuid()}"));
+            options
+                .UseInMemoryDatabase($"potsure-attribution-{Guid.NewGuid()}")
+                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
         return services.BuildServiceProvider();
     }
 

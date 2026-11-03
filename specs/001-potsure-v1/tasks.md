@@ -472,3 +472,11 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, pass 3, post Phase 20) between spec intent and present codebase behaviour.
 
 - [X] T141 [P] [US2] Extend `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (or adjacent import integration tests) to import overlapping Monzo CSV twice via `StatementImportService`, assert auto-attribution to confirmed expense patterns on both passes, and verify manual `OverrideAttributionAsync` corrections persist without re-auto-attribution on the second import per US2/AC7, SC-003, FR-M010a, and T140 (partial)
+
+---
+
+## Phase 22: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, pass 4, post T141) between spec intent and present codebase behaviour.
+
+- [X] T142 [P] [US1] [US2] Add `StatementImportService` integration coverage in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (or a dedicated import integration fixture) that imports overlapping Monzo CSV twice through the full import pipeline, asserts de-duplication on the second pass (US1/AC2, FR-M004), auto-attribution to confirmed expense patterns on both passes, and persistence of manual `OverrideAttributionAsync` without re-auto-attribution after re-import per US2/AC7, SC-003, FR-M010a, T140, and T141 (partial)
