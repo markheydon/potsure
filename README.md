@@ -20,7 +20,7 @@ dotnet test Potsure.slnx -c Release --no-build
 | `.specify/memory/constitution.md` | Project constitution (Spec Kit governance) |
 | `specs/` | Feature specifications (`001-potsure-v1` is active v1 spec) |
 | `.cursor/rules/` | File-scoped agent constraints |
-| `.agents/skills/` | Project skills (ADR, docs, code review, Aspire) |
+| `.agents/skills/` | Project skills (ADR, docs, code review, BlazorBlueprint, Aspire) |
 | `plan/` | Release and PR policy |
 | `adr/` | Architectural decision records |
 
