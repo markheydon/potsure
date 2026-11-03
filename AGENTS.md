@@ -22,6 +22,46 @@ UK English in documentation, comments, and user-facing text.
 - .NET 10.0 (SDK pinned in `global.json`).
 - xUnit v3 with Microsoft.Testing.Platform; NSubstitute when mocks are required; built-in asserts only.
 
+## Aspire & dependencies
+
+Constitution mandates (see `.specify/memory/constitution.md`, *Development Workflow & Quality
+Gates*) apply to all agents. Operational expectations:
+
+### Aspire AppHost resources
+
+When the distributed app is modelled in a .NET Aspire AppHost, consume every integrated
+resource (SQL Server, caches, messaging, and similar) through the dependency-injection
+registrations and client types supplied by the matching Aspire integration package. Do **not**
+construct connections from guessed, assumed, or hard-coded connection strings when AppHost
+already models that resource. Wire AppHost project references and register clients as each
+integration documents—for example,
+[Add the SQL Server client](https://aspire.dev/integrations/databases/sql-server/sql-server-connect/#add-the-sql-server-client).
+
+Use the `aspire`, `aspireify`, and related skills under `.agents/skills/` when wiring or
+changing AppHost resources.
+
+### Central package management
+
+Do not add or remove NuGet packages unless the user has explicitly instructed that work (see
+**Not Allowed Without Explicit Instruction** below). When implementation **does** introduce
+packages, or when you are explicitly maintaining central versions:
+
+- Add package versions only in `Directory.Packages.props` (central package management).
+- Pin each newly introduced package at the **latest stable version available at the time it
+  is added**.
+- Before finishing dependency-related work, run:
+
+```bash
+dotnet package list --outdated
+```
+
+Upgrade centrally managed packages to the latest compatible versions where appropriate, then
+run the full test suite (not only `--no-build`) after any version changes:
+
+```bash
+dotnet test Potsure.slnx -c Release
+```
+
 ## Spec Kit
 
 Workflow commands: `.cursor/commands/` (e.g. `do-implement.md`). Skills: `.cursor/skills/speckit-*`. Do not edit `.specify/` or Spec Kit skill sources unless the user explicitly asks.
@@ -49,7 +89,9 @@ Project skills live in `.agents/skills/`.
 
 ## Not Allowed Without Explicit Instruction
 
-- Add or remove NuGet packages (except central versions in `Directory.Packages.props` when maintaining deps).
+- Add or remove NuGet packages (except updating central versions in `Directory.Packages.props`
+  when the user explicitly asks you to maintain dependencies—then follow **Central package
+  management** above).
 - Modify CI/CD behaviour.
 - Commit secrets or API keys.
 

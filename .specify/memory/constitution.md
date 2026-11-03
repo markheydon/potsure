@@ -1,10 +1,11 @@
 <!--
 Sync Impact Report
-- Version: (template placeholders) → 1.0.0
-- Modified principles: all placeholders replaced with Potsure principles I–VI
-- Added sections: Domain & Product Constraints; Development Workflow & Quality Gates
-- Removed sections: none (initial establishment)
+- Version: 1.0.0 → 1.1.0
+- Modified principles: none (titles unchanged)
+- Added sections: Aspire resource consumption; Central package versioning (under Development Workflow & Quality Gates)
+- Removed sections: none
 - Deferred: none
+- Note: Operational agent steps for these mandates belong in AGENTS.md (see user request); not updated by this command.
 -->
 
 # Potsure Constitution
@@ -103,6 +104,31 @@ documented decisions let users and contributors audit behaviour and intent.
 - Scope or rule changes that affect non-negotiable mandates MUST update this constitution
   or an ADR with explicit rationale.
 
+### Aspire resource consumption
+
+When the distributed application is modelled in a .NET Aspire AppHost, every integrated
+resource (databases, caches, messaging, and similar) MUST be consumed in application
+projects through the dependency-injection registrations and client types supplied by the
+matching Aspire integration package. Application code MUST NOT construct its own
+connections by guessing, assuming, or hard-coding connection strings when AppHost already
+models that resource. Wire AppHost references and register clients as documented for each
+integration (for example, SQL Server via the integration’s client registration and
+injected abstractions—see
+[Aspire SQL Server client integration](https://aspire.dev/integrations/databases/sql-server/sql-server-connect/#add-the-sql-server-client)).
+**Rationale:** AppHost is the single source of truth for connection configuration and
+secrets; bypassing integration DI breaks local, test, and deployed parity and risks
+leaking misconfigured access to financial data stores.
+
+### Central package versioning
+
+All NuGet packages added during implementation work MUST be declared in central package
+management (`Directory.Packages.props`) at the **latest stable version available at the
+time they are introduced**. Before considering dependency-related implementation complete,
+contributors MUST run `dotnet package list --outdated` for the solution, upgrade centrally
+managed packages to the latest available versions where compatible, and run the **full**
+test suite after any version updates. **Rationale:** pinned, current dependencies reduce
+known-vulnerability drift and avoid silent skew between local and CI restores.
+
 ## Governance
 
 - This constitution is the highest-order project governance for Spec Kit phases
@@ -114,8 +140,8 @@ documented decisions let users and contributors audit behaviour and intent.
   - **MINOR:** new principles/sections or material expansion of guidance.
   - **PATCH:** clarifications and non-semantic wording fixes.
 - **Compliance review:** PR authors MUST attest constitution compliance; reviewers MUST
-  verify mandates for budget model, security, testing, documentation, and deployment paths
-  when relevant files change.
+  verify mandates for budget model, security, testing, documentation, deployment paths,
+  Aspire integration consumption, and central package versioning when relevant files change.
 - **Version line** at file footer is authoritative for constitution semver.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+**Version**: 1.1.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-03
