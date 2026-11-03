@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Potsure.Infrastructure.Persistence;
@@ -24,6 +23,11 @@ public static class HostedIdentityConfiguration
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
             })
             .AddIdentityCookies();
+
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/account/sign-in";
+        });
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
@@ -53,12 +57,7 @@ public static class HostedIdentityConfiguration
             }
         });
 
-        services.AddAuthorization(options =>
-        {
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-        });
+        services.AddAuthorization();
         services.AddCascadingAuthenticationState();
 
         return services;

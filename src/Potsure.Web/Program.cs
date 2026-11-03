@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using BlazorBlueprint.Components;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Persistence;
@@ -30,7 +32,7 @@ if (deployment.Mode == DeploymentMode.LocalOnly)
 }
 if (deployment.Mode == DeploymentMode.Hosted)
 {
-    builder.Services.AddScoped<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
+    builder.Services.AddSingleton<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
     builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
 }
 
@@ -41,6 +43,7 @@ builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
+builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>("potsure");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -74,11 +77,15 @@ if (deployment.Mode == DeploymentMode.Hosted)
 
 app.UseAntiforgery();
 
-app.MapStaticAssets();
+app.MapStaticAssets().AllowAnonymous();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapDefaultEndpoints();
+app.MapHealthChecks("/health").AllowAnonymous();
+app.MapHealthChecks("/alive", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live"),
+}).AllowAnonymous();
 
 if (deployment.Mode == DeploymentMode.LocalOnly && !deployment.BindPublicEndpoints)
 {

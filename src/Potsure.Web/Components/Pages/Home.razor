@@ -1,32 +1,46 @@
 ﻿@page "/"
 @attribute [AllowAnonymous]
-@using Potsure.Web.Components.Account
+@using Microsoft.AspNetCore.Components.Authorization
 @using Potsure.Web.Configuration
 @inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Home</PageTitle>
 
-<h1>Potsure</h1>
-
-<p>Budgeting and statement import for your Monzo exports.</p>
-
 @if (_isHosted)
 {
-    <PasskeySignIn />
+    <p>Redirecting to sign in…</p>
 }
 else
 {
+    <h1>Potsure</h1>
+    <p>Budgeting and statement import for your Monzo exports.</p>
     <p>Use the navigation links to import statements, plan pots, and view reports.</p>
 }
 
 @code {
     private bool _isHosted;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         DeploymentModeOptions deployment = Configuration
             .GetSection(DeploymentModeOptions.SectionName)
             .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
         _isHosted = deployment.Mode == DeploymentMode.Hosted;
+
+        if (!_isHosted)
+        {
+            return;
+        }
+
+        AuthenticationState state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/reports/category-health", replace: true);
+            return;
+        }
+
+        Navigation.NavigateTo("/account/sign-in", replace: true);
     }
 }

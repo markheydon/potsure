@@ -44,7 +44,7 @@ public static class DependencyInjection
         services.AddScoped<UserDataDeletionService>();
 
         services.AddDataProtection()
-            .PersistKeysToDbContext<PotsureDbContext>();
+            .PersistKeysToDbContext<PotsureDataProtectionDbContext>();
 
         return services;
     }

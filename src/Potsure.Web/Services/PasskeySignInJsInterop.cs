@@ -14,6 +14,10 @@ public sealed class PasskeySignInJsInterop(IJSRuntime jsRuntime)
         {
             return false;
         }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     public async Task<(bool Ok, string? Message)> SignInAsync(

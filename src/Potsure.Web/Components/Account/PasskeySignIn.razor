@@ -40,8 +40,8 @@
             {
                 <EditForm Model="_form" OnValidSubmit="SignInAsync">
                     <div class="potsure-form-field">
-                        <label for="passkey-email">Email (optional for sign-in)</label>
-                        <InputText id="passkey-email" @bind-Value="_form.Email" autocomplete="username webauthn" />
+                        <BbLabel For="passkey-email">Email (optional for sign-in)</BbLabel>
+                        <BbInput Id="passkey-email" @bind-Value="_form.Email" autocomplete="username webauthn" />
                     </div>
 
                     @if (!string.IsNullOrWhiteSpace(_message))
@@ -79,20 +79,28 @@
     private bool _busy;
     private string? _message;
     private bool _messageIsError;
+    private bool _passkeyAvailabilityChecked;
     private readonly PasskeySignInForm _form = new();
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         DeploymentModeOptions deployment = Configuration
             .GetSection(DeploymentModeOptions.SectionName)
             .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
         _isHosted = deployment.Mode == DeploymentMode.Hosted;
         _passkeyUnavailable = PasskeyUnavailable;
+    }
 
-        if (_isHosted && !_passkeyUnavailable)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_isHosted || _passkeyUnavailable || _passkeyAvailabilityChecked)
         {
-            _passkeyUnavailable = !await PasskeySignInJs.IsAvailableAsync();
+            return;
         }
+
+        _passkeyAvailabilityChecked = true;
+        _passkeyUnavailable = !await PasskeySignInJs.IsAvailableAsync();
+        StateHasChanged();
     }
 
     private async Task SignInAsync()

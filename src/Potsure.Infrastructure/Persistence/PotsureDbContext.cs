@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Infrastructure.Persistence.Entities;
@@ -7,7 +6,7 @@ using Potsure.Infrastructure.Persistence.Tenancy;
 
 namespace Potsure.Infrastructure.Persistence;
 
-public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
+public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>
 {
     private readonly ICurrentOwnerAccessor ownerAccessor;
 
@@ -16,8 +15,6 @@ public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>, IData
     {
         this.ownerAccessor = ownerAccessor;
     }
-
-    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public DbSet<BudgetProfileEntity> BudgetProfiles => Set<BudgetProfileEntity>();
 
