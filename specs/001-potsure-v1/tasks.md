@@ -28,15 +28,15 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 **Purpose**: Replace placeholder solution with layered projects and tooling.
 
-- [ ] T001 Create `src/Potsure.AppHost`, `src/Potsure.Web`, `src/Potsure.Budgeting`, `src/Potsure.Statements`, `src/Potsure.Recurrence`, `src/Potsure.Reporting`, `src/Potsure.Infrastructure` class-library/web projects per plan.md structure
-- [ ] T002 Update `Potsure.slnx` to reference all new projects and retire or migrate `src/Potsure/Potsure.csproj` placeholder
-- [ ] T003 Add central package versions in `Directory.Packages.props` for CsvHelper, EF Core 10 SQL Server, Aspire hosting integrations, BlazorBlueprint Components/Primitives/Icons, ASP.NET Core Identity passkeys, and Microsoft.Extensions.Http.Resilience (versions pinned per CONVENTIONS.md)
-- [ ] T004 [P] Wire project references: Web → Infrastructure, Reporting; Infrastructure → Statements, Recurrence, EF; Reporting → Budgeting; Recurrence → Budgeting; Statements standalone
-- [ ] T005 [P] Create test projects `tests/Potsure.Budgeting.Tests`, `tests/Potsure.Statements.Tests`, `tests/Potsure.Recurrence.Tests`, `tests/Potsure.Reporting.Tests`, `tests/Potsure.Infrastructure.Tests`, `tests/Potsure.Web.Tests`, `tests/Potsure.E2E` and add to `Potsure.slnx`
-- [ ] T006 [P] Add `samples/monzo/` with README stating anonymised fixtures only; no personal exports in repo
-- [ ] T007 Scaffold `src/Potsure.AppHost/Program.cs` with `AddAzureContainerAppEnvironment`, `AddAzureSqlServer`, `RunAsContainer`, `AddDatabase`, web project reference, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp` per plan.md
-- [ ] T008 Configure `src/Potsure.Web` for Blazor Server InteractiveServer, `net10.0`, nullable, analysers aligned with `CONVENTIONS.md`
-- [ ] T009 [P] Add `docs/` placeholder structure for self-host, encryption, and deployment stages (implement content in Polish phase)
+- [X] T001 Create `src/Potsure.AppHost`, `src/Potsure.Web`, `src/Potsure.Budgeting`, `src/Potsure.Statements`, `src/Potsure.Recurrence`, `src/Potsure.Reporting`, `src/Potsure.Infrastructure` class-library/web projects per plan.md structure
+- [X] T002 Update `Potsure.slnx` to reference all new projects and retire or migrate `src/Potsure/Potsure.csproj` placeholder
+- [X] T003 Add central package versions in `Directory.Packages.props` for CsvHelper, EF Core 10 SQL Server, Aspire hosting integrations, BlazorBlueprint Components/Primitives/Icons, ASP.NET Core Identity passkeys, and Microsoft.Extensions.Http.Resilience (versions pinned per CONVENTIONS.md)
+- [X] T004 [P] Wire project references: Web → Infrastructure, Reporting; Infrastructure → Statements, Recurrence, EF; Reporting → Budgeting; Recurrence → Budgeting; Statements standalone
+- [X] T005 [P] Create test projects `tests/Potsure.Budgeting.Tests`, `tests/Potsure.Statements.Tests`, `tests/Potsure.Recurrence.Tests`, `tests/Potsure.Reporting.Tests`, `tests/Potsure.Infrastructure.Tests`, `tests/Potsure.Web.Tests`, `tests/Potsure.E2E` and add to `Potsure.slnx`
+- [X] T006 [P] Add `samples/monzo/` with README stating anonymised fixtures only; no personal exports in repo
+- [X] T007 Scaffold `src/Potsure.AppHost/Program.cs` with `AddAzureContainerAppEnvironment`, `AddAzureSqlServer`, `RunAsContainer`, `AddDatabase`, web project reference, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp` per plan.md
+- [X] T008 Configure `src/Potsure.Web` for Blazor Server InteractiveServer, `net10.0`, nullable, analysers aligned with `CONVENTIONS.md`
+- [X] T009 [P] Add `docs/` placeholder structure for self-host, encryption, and deployment stages (implement content in Polish phase)
 
 **Checkpoint**: Solution builds with empty project shells.
 
@@ -48,25 +48,25 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 **⚠️ CRITICAL**: No user story feature work until this phase completes.
 
-- [ ] T010 Define shared enums and records in `src/Potsure.Budgeting/` matching data-model.md (`BudgetCategoryKind`, `AllocationPreset`, `TransactionKind`, `PatternConfirmationState`, etc.)
-- [ ] T011 Implement `Money` and rounding rules (GBP 2dp at report emission; banker's rounding) in `src/Potsure.Budgeting/Money.cs` per contracts/budgeting-core.md
-- [ ] T012 Implement preset allocation from budgeted income in `src/Potsure.Budgeting/AllocationCalculator.cs` (50/30/20 default, 75/15/10 alternative; category-level only)
-- [ ] T013 Implement category health lines (`UnderOver` = allocation − actual activity; recorded funding excluded) in `src/Potsure.Budgeting/CategoryHealthCalculator.cs` per FR-M017
-- [ ] T014 Implement required income, limiting category (tie: Needs → Wants → Savings & Debt), shortfall, yes/no conclusion in `src/Potsure.Budgeting/RequiredIncomeCalculator.cs` per contracts/budgeting-core.md and FR-M018
-- [ ] T015 Implement runway comparison (`ProjectedRemainingSpend > allocation − actual activity + recorded funding`) in `src/Potsure.Budgeting/RunwayCalculator.cs` per FR-M020
+- [X] T010 Define shared enums and records in `src/Potsure.Budgeting/` matching data-model.md (`BudgetCategoryKind`, `AllocationPreset`, `TransactionKind`, `PatternConfirmationState`, etc.)
+- [X] T011 Implement `Money` and rounding rules (GBP 2dp at report emission; banker's rounding) in `src/Potsure.Budgeting/Money.cs` per contracts/budgeting-core.md
+- [X] T012 Implement preset allocation from budgeted income in `src/Potsure.Budgeting/AllocationCalculator.cs` (50/30/20 default, 75/15/10 alternative; category-level only)
+- [X] T013 Implement category health lines (`UnderOver` = allocation − actual activity; recorded funding excluded) in `src/Potsure.Budgeting/CategoryHealthCalculator.cs` per FR-M017
+- [X] T014 Implement required income, limiting category (tie: Needs → Wants → Savings & Debt), shortfall, yes/no conclusion in `src/Potsure.Budgeting/RequiredIncomeCalculator.cs` per contracts/budgeting-core.md and FR-M018
+- [X] T015 Implement runway comparison (`ProjectedRemainingSpend > allocation − actual activity + recorded funding`) in `src/Potsure.Budgeting/RunwayCalculator.cs` per FR-M020
 - [ ] T016 [P] Add golden scenario fixtures and tests in `tests/Potsure.Budgeting.Tests/` covering contracts/budgeting-core.md minimum catalogue (8 scenarios)
 - [ ] T017 Define EF entity types and configurations in `src/Potsure.Infrastructure/Persistence/` from data-model.md (`BudgetProfile`, `BudgetPeriod`, `BudgetCategory`, `BankPot`, `Transaction`, `IncomeSource`, `RecurringExpense`, `Assignment`, `StatementUpload`, `MonzoAccountAssociation`)
 - [ ] T018 Add `UserId` on user-owned entities, global query filters, and ownership validation helpers in `src/Potsure.Infrastructure/Persistence/Tenancy/` per research.md
 - [ ] T019 Create initial EF migration in `src/Potsure.Infrastructure/Persistence/Migrations/` and document idempotent deploy approach in `docs/deployment-database.md`
 - [ ] T020 Configure ASP.NET Core Data Protection key ring persistence to SQL in `src/Potsure.Infrastructure/` reconciled with Aspire SQL resource
-- [ ] T021 Implement deployment mode options (local-only vs hosted) in `src/Potsure.Web/Configuration/DeploymentModeOptions.cs` with FR-M024 network non-exposure for local-only
+- [X] T021 Implement deployment mode options (local-only vs hosted) in `src/Potsure.Web/Configuration/DeploymentModeOptions.cs` with FR-M024 network non-exposure for local-only
 - [ ] T022 Configure ASP.NET Core Identity with passkey support and SQL persistence in `src/Potsure.Web/` for hosted mode (FR-M025; no password fallback v1)
 - [ ] T023 Implement local-only single-user profile key path without remote account in `src/Potsure.Infrastructure/` when deployment mode is local-only
-- [ ] T024 Register `AddBlazorBlueprintComponents()`, `App.razor` theme assets, `_Imports.razor`, and `BbPortalHost` in interactive root layout under `src/Potsure.Web/`
-- [ ] T025 Create base interactive layout and navigation shell in `src/Potsure.Web/Components/Layout/` (UK English labels)
-- [ ] T026 Implement reauthentication gate service in `src/Potsure.Web/Services/ReauthenticationService.cs` for export, deletion, and credential changes
+- [X] T024 Register `AddBlazorBlueprintComponents()`, `App.razor` theme assets, `_Imports.razor`, and `BbPortalHost` in interactive root layout under `src/Potsure.Web/`
+- [X] T025 Create base interactive layout and navigation shell in `src/Potsure.Web/Components/Layout/` (UK English labels)
+- [X] T026 Implement reauthentication gate service in `src/Potsure.Web/Services/ReauthenticationService.cs` for export, deletion, and credential changes
 - [ ] T027 Configure OpenTelemetry in `src/Potsure.Web/` excluding upload bodies, payee text, account refs, and export payloads per research.md
-- [ ] T028 Register DI composition root in `src/Potsure.Web/Program.cs` and `src/Potsure.Infrastructure/DependencyInjection.cs`
+- [X] T028 Register DI composition root in `src/Potsure.Web/Program.cs` and `src/Potsure.Infrastructure/DependencyInjection.cs`
 
 **Checkpoint**: AppHost starts; hosted passkey or local-only path loads shell; budgeting golden tests pass in CI.
 
@@ -80,17 +80,17 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Tests for User Story 1
 
-- [ ] T029 [P] [US1] Add anonymised golden CSV fixtures under `tests/Potsure.Statements.Tests/Fixtures/` per contracts/monzo-import.md
-- [ ] T030 [P] [US1] Implement golden-file parser tests in `tests/Potsure.Statements.Tests/MonzoCsvParserTests.cs` (constitution II)
+- [X] T029 [P] [US1] Add anonymised golden CSV fixtures under `tests/Potsure.Statements.Tests/Fixtures/` per contracts/monzo-import.md
+- [X] T030 [P] [US1] Implement golden-file parser tests in `tests/Potsure.Statements.Tests/MonzoCsvParserTests.cs` (constitution II)
 
 ### Implementation for User Story 1
 
-- [ ] T031 [P] [US1] Implement description normalisation for de-dupe in `src/Potsure.Statements/Deduplication/DescriptionNormalizer.cs` (trim; collapse internal whitespace to one space; strip non-alphanumeric; case-insensitive compare per FR-M004)
-- [ ] T032 [P] [US1] Implement Monzo column map and CsvHelper streaming reader in `src/Potsure.Statements/MonzoCsvParser.cs` per contracts/monzo-import.md and FR-M002 (auto-detect; reject unsupported layouts)
-- [ ] T033 [US1] Implement `TransactionKind` classification rules in `src/Potsure.Statements/TransactionClassifier.cs` per contracts/monzo-import.md classification table
-- [ ] T034 [US1] Reject non-GBP rows with clear errors (no user override) in `src/Potsure.Statements/MonzoImportValidator.cs` per FR-M026
-- [ ] T035 [US1] Implement account fingerprint validation and different-account rejection in `src/Potsure.Statements/MonzoAccountValidator.cs` per FR-M005 and FR-M006
-- [ ] T036 [US1] Implement de-duplication by Monzo Transaction ID else date+amount+normalised description in `src/Potsure.Statements/TransactionDeduplicator.cs` per FR-M004
+- [X] T031 [P] [US1] Implement description normalisation for de-dupe in `src/Potsure.Statements/Deduplication/DescriptionNormalizer.cs` (trim; collapse internal whitespace to one space; strip non-alphanumeric; case-insensitive compare per FR-M004)
+- [X] T032 [P] [US1] Implement Monzo column map and CsvHelper streaming reader in `src/Potsure.Statements/MonzoCsvParser.cs` per contracts/monzo-import.md and FR-M002 (auto-detect; reject unsupported layouts)
+- [X] T033 [US1] Implement `TransactionKind` classification rules in `src/Potsure.Statements/TransactionClassifier.cs` per contracts/monzo-import.md classification table
+- [X] T034 [US1] Reject non-GBP rows with clear errors (no user override) in `src/Potsure.Statements/MonzoImportValidator.cs` per FR-M026
+- [X] T035 [US1] Implement account fingerprint validation and different-account rejection in `src/Potsure.Statements/MonzoAccountValidator.cs` per FR-M005 and FR-M006
+- [X] T036 [US1] Implement de-duplication by Monzo Transaction ID else date+amount+normalised description in `src/Potsure.Statements/TransactionDeduplicator.cs` per FR-M004
 - [ ] T037 [US1] Implement upload pipeline (stream parse → validate → stage → dedupe → atomic commit; temp cleanup on all exits) in `src/Potsure.Infrastructure/Imports/StatementImportService.cs` per research.md
 - [ ] T038 [US1] Persist `StatementUpload`, `ImportStatistics`, and remembered `MonzoColumnMapping` in `src/Potsure.Infrastructure/Persistence/Repositories/StatementUploadRepository.cs`
 - [ ] T039 [US1] Build import wizard UI (mapping confirm/adjust, account confirm, summary with skip reasons and transfer counts) in `src/Potsure.Web/Components/Import/`
@@ -143,7 +143,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Tests for User Story 2
 
-- [ ] T052 [P] [US2] Add detection unit tests excluding internal transfers from input in `tests/Potsure.Recurrence.Tests/RecurrenceDetectionTests.cs`
+- [X] T052 [P] [US2] Add detection unit tests excluding internal transfers from input in `tests/Potsure.Recurrence.Tests/RecurrenceDetectionTests.cs`
 
 ### Implementation for User Story 2
 
