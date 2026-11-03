@@ -32,7 +32,8 @@ public sealed class StatementImportService(
     PotsureDbContext dbContext,
     StatementUploadRepository uploadRepository,
     ICurrentOwnerAccessor ownerAccessor,
-    TransactionAttributionService attributionService)
+    TransactionAttributionService attributionService,
+    BudgetProfileSeeder profileSeeder)
 {
     public async Task<RememberedMonzoColumnMapping?> GetRememberedColumnMappingAsync(
         CancellationToken cancellationToken = default)
@@ -251,6 +252,7 @@ public sealed class StatementImportService(
                 ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
                 : BuildDefaultColumnMap(layout);
             RememberedMonzoColumnMapping remembered = new(layout.FileHeaders, mapToRemember);
+            await profileSeeder.EnsureProfileAsync(cancellationToken);
             await uploadRepository.SaveRememberedColumnMappingJsonAsync(
                 JsonSerializer.Serialize(remembered),
                 cancellationToken);

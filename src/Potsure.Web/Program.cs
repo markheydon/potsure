@@ -23,6 +23,8 @@ DeploymentModeOptions deployment = builder.Configuration
 if (deployment.Mode == DeploymentMode.LocalOnly)
 {
     builder.Services.AddSingleton<ICurrentOwnerAccessor, LocalOnlyOwnerAccessor>();
+    builder.Services.AddAuthorization();
+    builder.Services.AddCascadingAuthenticationState();
 }
 if (deployment.Mode == DeploymentMode.Hosted)
 {

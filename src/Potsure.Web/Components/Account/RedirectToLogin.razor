@@ -1,0 +1,18 @@
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        string returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (string.IsNullOrEmpty(returnUrl))
+        {
+            returnUrl = "/";
+        }
+
+        string signInUrl = Navigation.GetUriWithQueryParameters(
+            Navigation.ToAbsoluteUri("/account/sign-in").AbsolutePath,
+            new Dictionary<string, object?> { ["returnUrl"] = returnUrl });
+
+        Navigation.NavigateTo(signInUrl, replace: true);
+    }
+}
