@@ -27,7 +27,7 @@ For hosted mode on your own infrastructure:
 
 1. Provide HTTPS termination at the ingress (TLS 1.2 or later).
 2. Configure a SQL Server connection string for `ConnectionStrings:potsure`.
-3. Run database migrations idempotently (see `docs/deployment-database.md`).
+3. Run database migrations idempotently using a single job or published script (see `docs/deployment-database.md` — not automatic migrate on every web replica).
 4. Enable passkey registration and sign-in; do not enable password fallback in v1.
 5. Complete the encryption verification checklist in `docs/encryption.md`.
 
@@ -35,7 +35,7 @@ For hosted mode on your own infrastructure:
 
 | Stage | Intent | Notes |
 |-------|--------|-------|
-| Local Aspire | Developer validation | SQL container, single web replica, loopback or hosted mode in `appsettings.Development.json` |
+| Local Aspire | Developer validation | SQL container; **ef-migrations** applies schema before web starts (`RunDatabaseUpdateOnStart`); see `docs/deployment-database.md` |
 | Dev / test ACA | Hosted smoke | Azure SQL free/low tier, min replicas 0–1, passkey sign-in required |
 | Production ACA | v1.0.0 gate | TLS ingress, TDE-enabled SQL, migration job before traffic, no password fallback |
 

@@ -4,30 +4,57 @@ Potsure stores application data, ASP.NET Core Identity (hosted mode, including p
 
 ## Migrations
 
-EF Core migrations live in `src/Potsure.Infrastructure/Persistence/Migrations/`. Apply them **once** before serving user traffic on a new environment:
+EF Core migrations live in `src/Potsure.Infrastructure/Persistence/Migrations/`.
+
+### Developer commands
+
+Create a new migration or apply pending migrations manually:
 
 ```bash
+dotnet ef migrations add <Name> \
+  --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
+  --startup-project src/Potsure.Web/Potsure.Web.csproj
+
 dotnet ef database update \
   --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
   --startup-project src/Potsure.Web/Potsure.Web.csproj
 ```
 
-With Aspire running locally, use the connection string emitted for the `potsure` database resource.
+The design-time factory in `PotsureDbContextFactory` may use a local connection string from configuration; runtime uses Aspire `AddSqlServerDbContext` with the `potsure` database reference name.
 
-## Idempotent production apply
+## Local Aspire (automatic schema apply)
 
-For hosted stages, prefer a controlled migration job (single runner) rather than letting every replica migrate on startup:
+When you run the AppHost locally (`aspire run` or F5 on `Potsure.AppHost`), schema is applied **before** the web app starts:
+
+1. SQL container becomes healthy.
+2. The **ef-migrations** resource runs `dotnet ef database update` once and exits (`RunDatabaseUpdateOnStart`).
+3. The web project waits for that migration resource to complete (`WaitForCompletion`).
+
+The migration resource is hidden in the Aspire dashboard by default. Inspect it with:
+
+```bash
+aspire describe --include-hidden
+```
+
+`Potsure.Web` does **not** call `Database.MigrateAsync()` at startup. Application data seeding (for example default budget categories via `BudgetProfileSeeder`) runs in the web process after schema exists, not inside the migration job.
+
+## Hosted deployment (controlled apply)
+
+For hosted stages, use a **single runner** — not `RunDatabaseUpdateOnStart` on publish and not concurrent migrate on every web replica:
 
 1. Take a backup or confirm restore point (Azure SQL point-in-time restore).
-2. Run `dotnet ef database update` from CI or a one-off deployment job against the target connection string.
+2. Apply schema using one of:
+   - The idempotent SQL script generated at publish time (`PublishAsMigrationScript()` on the AppHost migration resource — output under `efmigrations/` in the publish directory), reviewed in staging first; or
+   - `dotnet ef database update` from CI or a one-off deployment job against the target connection string; or
+   - A published EF migration bundle executed once with the target connection string.
 3. Verify schema version (`__EFMigrationsHistory`) before shifting traffic.
 4. Roll forward only; do not edit applied migration files.
 
 Review generated SQL in staging (`dotnet ef migrations script`) before the first public environment.
 
-## Local development
+## Idempotent production apply
 
-The AppHost provisions SQL with `RunAsContainer`. The web project references the `potsure` database via Aspire service discovery; migrations use the same connection as runtime when `dotnet ef` is invoked with the web startup project.
+Prefer idempotent scripts (`IF NOT EXISTS` checks) when using `PublishAsMigrationScript()` so a partially applied database can be retried safely.
 
 ## Data Protection keys
 

@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.0.0](../../.specify/memory/constitution.md).
+**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.1.0](../../.specify/memory/constitution.md).
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 
@@ -27,7 +27,7 @@
 - Q: For a user-selected budget period with a start date and an end date, should imported transactions and period-scoped totals include activity on both the first and last day of that range? → A: Both start and end dates inclusive (full calendar days) for imports, actual activity, and period reports.
 - Q: If the user switches allocation preset (50/30/20 ↔ 75/15/10) while the same budget period is still selected, should category allocation amounts update straight away from the current budgeted income using the new preset? → A: Immediate recalculation of category allocations for the selected period from budgeted income; recorded funding, actual activity, and commitments unchanged until the user edits them.
 - Q: For the budget balance and required-income report (FR-M018), what should count as a period commitment when comparing planned income to the chosen preset? → A: Confirmed recurring expense patterns only, each projected into the selected period (cadence-aware); used with planned income and preset percentages for required income, limiting category, and yes/no balance.
-- Q: Must genuine one-off transaction categorisation (FR-S001) ship in v1.0.0, or can that release rely on recurring match plus uncategorised-spend warnings until one-offs are added? → A: Required for v1.0.0 — one-off categorisation is part of the first release (release gate for v1.0.0).
+- Q: Must genuine one-off transaction categorisation (**FR-M037**) ship in v1.0.0, or can that release rely on recurring match plus uncategorised-spend warnings until one-offs are added? → A: Required for v1.0.0 — one-off categorisation is part of the first release (release gate for v1.0.0).
 - Q: When a user adds an optional tag to a confirmed recurring expense (FR-M009), what should that tag represent in v1? → A: Optional free-text label for display and user reference in the recurring summary (and related lists); no effect on allocations, actuals, commitments, or budget balance calculations.
 - Q: When a user defines allocation splits for a confirmed recurring income pattern across Needs, Wants, and Savings & Debt, what rule should v1 enforce on those split percentages? → A: Must sum to 100% across the three categories for each confirmed income pattern (validation blocks save otherwise).
 - Q: In v1, should users be able to keep multiple saved budget periods (each with its own dates and budgeted income), or only one working period whose date range and income they change in place? → A: Single working period — one active date range and budgeted income; adjusting dates or income updates that same period (no saved period library).
@@ -96,7 +96,7 @@ As a pots-method budgeter, I choose 50/30/20 (default) or 75/15/10, select a bud
 2. **Given** the user selects 75/15/10, **When** allocations are calculated for the period, **Then** category percentages change accordingly and no custom ratios are offered, **And** switching preset again during the same selected period immediately recalculates category allocation amounts from the current budgeted income while leaving recorded funding, actual activity, and commitments unchanged until edited.
 3. **Given** the single working budget period, **When** the user confirms expected or estimated income for that period, **Then** category allocation amounts equal the preset percentages of that total budgeted income, **And** transactions dated on the period start or end date are included in period-scoped totals, **And** the system MAY suggest budgeted income from confirmed income patterns projected into the period but MUST NOT apply that suggestion to allocations until the user explicitly confirms or edits the figure.
 4. **Given** the user changes the working period’s start or end dates, **When** reports reload, **Then** period-scoped totals use the updated inclusive range and there is no separate library of alternate saved periods in v1.
-4. **Given** actual receipts in statements, **When** reports show income, **Then** actual receipts remain distinct from planned or forecast income and are not treated as already covering future costs.
+5. **Given** actual receipts in statements, **When** reports show income, **Then** actual receipts remain distinct from planned or forecast income and are not treated as already covering future costs.
 
 ---
 
@@ -325,7 +325,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 
 ### Functional Requirements — Should
 
-- **FR-S002**: The system SHOULD provide transaction-level actual-spend breakdown with optional mapped pot detail.
+- **FR-S002**: The system SHOULD provide transaction-level actual-spend breakdown with optional mapped pot detail. **Deferred for v1.0.0** unless explicitly pulled into scope — aggregate category actuals on category health (FR-M017) are in scope; see [tasks.md](./tasks.md) Notes.
 - **FR-S003**: One-off categorisation (FR-M037) MUST NOT create forecast or guessed future purchases (Must-level constraint on one-off behaviour).
 
 ### Functional Requirements — Could

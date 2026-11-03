@@ -7,12 +7,22 @@ var sql = builder.AddAzureSqlServer("sql")
 
 var database = sql.AddDatabase("potsure");
 
-builder.AddProject<Projects.Potsure_Web>("web")
+var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(database)
-    .WaitFor(database)
     .WithComputeEnvironment(aca)
     .PublishAsAzureContainerApp((_, _) => { });
+
+var migrations = web.AddEFMigrations(
+        "ef-migrations",
+        "Potsure.Infrastructure.Persistence.PotsureDbContext")
+    .WithReference(database)
+    .WaitFor(database)
+    .WithMigrationsProject<Projects.Potsure_Infrastructure>()
+    .RunDatabaseUpdateOnStart()
+    .PublishAsMigrationScript();
+
+web.WaitForCompletion(migrations);
 
 builder.Build().Run();

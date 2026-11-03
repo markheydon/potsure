@@ -5,11 +5,15 @@ description: "Task list for Potsure v1 implementation"
 
 # Tasks: Potsure v1
 
+**Plan sync**: 2026-11-03 (Aspire SQL client consumption, central package gates, EF `AddEFMigrations` orchestration per [plan.md](./plan.md))
+
 **Input**: Design documents from `/specs/001-potsure-v1/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
-**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, plus Playwright E2E for key journeys. Test tasks are included with those areas (not strict TDD ordering unless noted).
+**Governance**: [constitution v1.1.0](../../.specify/memory/constitution.md) (Aspire resource consumption, central package versioning); operational steps in [AGENTS.md](../../AGENTS.md).
+
+**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, plus Playwright E2E for key journeys. Constitution 1.1.0 adds dependency hygiene (Scenario 8b), Aspire SQL client consumption smoke, and **EF migration ordering** (Scenario 8c) in quickstart local run. Test tasks are included with those areas (not strict TDD ordering unless noted).
 
 **Organization**: Tasks grouped by user story for independent increments; Phase 2 covers shared auth, persistence, and pure core.
 
@@ -22,6 +26,8 @@ description: "Task list for Potsure v1 implementation"
 
 Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `samples/monzo/`, `docs/`.
 
+**Task ID notes**: IDs **T107**–**T108**, **T102**–**T106**, and **T110**–**T116** were appended after the initial T001–T101 pass; document order follows phases, not numeric order. **T109** is intentionally unused (reserved).
+
 ---
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -30,11 +36,11 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 - [X] T001 Create `src/Potsure.AppHost`, `src/Potsure.Web`, `src/Potsure.Budgeting`, `src/Potsure.Statements`, `src/Potsure.Recurrence`, `src/Potsure.Reporting`, `src/Potsure.Infrastructure` class-library/web projects per plan.md structure
 - [X] T002 Update `Potsure.slnx` to reference all new projects and retire or migrate `src/Potsure/Potsure.csproj` placeholder
-- [X] T003 Add central package versions in `Directory.Packages.props` for CsvHelper, EF Core 10 SQL Server, Aspire hosting integrations, BlazorBlueprint Components/Primitives/Icons, ASP.NET Core Identity passkeys, and Microsoft.Extensions.Http.Resilience (versions pinned per CONVENTIONS.md)
+- [X] T003 Add central package versions in `Directory.Packages.props` for CsvHelper, EF Core 10 SQL Server, Aspire hosting integrations, BlazorBlueprint Components/Primitives/Icons, ASP.NET Core Identity passkeys, and Microsoft.Extensions.Http.Resilience (latest stable at introduction; constitution 1.1.0 + AGENTS.md outdated sweep before dependency work complete)
 - [X] T004 [P] Wire project references: Web → Infrastructure, Reporting; Infrastructure → Statements, Recurrence, EF; Reporting → Budgeting; Recurrence → Budgeting; Statements standalone
 - [X] T005 [P] Create test projects `tests/Potsure.Budgeting.Tests`, `tests/Potsure.Statements.Tests`, `tests/Potsure.Recurrence.Tests`, `tests/Potsure.Reporting.Tests`, `tests/Potsure.Infrastructure.Tests`, `tests/Potsure.Web.Tests`, `tests/Potsure.E2E` and add to `Potsure.slnx`
 - [X] T006 [P] Add `samples/monzo/` with README stating anonymised fixtures only; no personal exports in repo
-- [X] T007 Scaffold `src/Potsure.AppHost/Program.cs` with `AddAzureContainerAppEnvironment`, `AddAzureSqlServer`, `RunAsContainer`, `AddDatabase`, web project reference, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp` per plan.md
+- [X] T007 Scaffold `src/Potsure.AppHost/Program.cs` with `AddAzureContainerAppEnvironment`, `AddAzureSqlServer`, `RunAsContainer`, `AddDatabase("potsure")`, web project reference, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp` per plan.md (database reference name must match web `AddSqlServerDbContext` client name). **Superseded for schema readiness** by **T113** (plan 2026-11-03): add `AddEFMigrations` and web `WaitForCompletion(migrations)` — do not treat database `WaitFor` alone as sufficient after T113 lands
 - [X] T008 Configure `src/Potsure.Web` for Blazor Server InteractiveServer, `net10.0`, nullable, analysers aligned with `CONVENTIONS.md`
 - [X] T009 [P] Add `docs/` placeholder structure for self-host, encryption, and deployment stages (implement content in Polish phase)
 
@@ -67,8 +73,18 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T026 Implement reauthentication gate service in `src/Potsure.Web/Services/ReauthenticationService.cs` for export, deletion, and credential changes
 - [X] T027 Configure OpenTelemetry in `src/Potsure.Web/` excluding upload bodies, payee text, account refs, and export payloads per research.md
 - [X] T028 Register DI composition root in `src/Potsure.Web/Program.cs` and `src/Potsure.Infrastructure/DependencyInjection.cs`
+- [X] T107 [P] Register runtime SQL via `builder.AddSqlServerDbContext<PotsureDbContext>("potsure")` in `src/Potsure.Web/Program.cs` aligned with AppHost `AddDatabase("potsure")`; no runtime `UseSqlServer` or hand-authored connection strings in web startup (constitution 1.1.0, plan.md AppHost resource model)
+- [X] T108 [P] Restrict `UseSqlServer(connectionString)` to `src/Potsure.Infrastructure/Persistence/PotsureDbContextFactory.cs` for EF design-time migrations only; document fallback connection for local `dotnet ef` in `docs/deployment-database.md`
 
-**Checkpoint**: AppHost starts; hosted passkey or local-only path loads shell; budgeting golden tests pass in CI.
+### EF migration orchestration (plan amend 2026-11-03)
+
+- [X] T111 Add `Aspire.Hosting.EntityFrameworkCore` to central `Directory.Packages.props` (13.6.4, aligned with existing Aspire packages) and reference from `src/Potsure.AppHost/Potsure.AppHost.csproj`
+- [X] T112 Add AppHost project reference to `src/Potsure.Infrastructure/Potsure.Infrastructure.csproj` only as needed for `WithMigrationsProject<Projects.Potsure_Infrastructure>()` (no Infrastructure → AppHost reference)
+- [X] T113 Wire `AddEFMigrations` on the web resource in `src/Potsure.AppHost/Program.cs`: `WithReference(database)`, `WaitFor(database)`, `WithMigrationsProject<Projects.Potsure_Infrastructure>()`, explicit DbContext `Potsure.Infrastructure.Persistence.PotsureDbContext`, `RunDatabaseUpdateOnStart()` for local AppHost only; web keeps `WithReference(database)` and uses `WaitForCompletion(migrations)` instead of schema readiness via `WaitFor(database)` alone; confirm no `Database.MigrateAsync()` (or equivalent) in `src/Potsure.Web/Program.cs`; confirm `BudgetProfileSeeder` and other app-data init are not invoked from the migration resource (plan.md AppHost resource model and EF Core migrations architecture)
+- [X] T114 [P] Update `docs/deployment-database.md` and `docs/self-host.md` to distinguish local Aspire auto-apply vs hosted controlled migration job; document unchanged `dotnet ef migrations add` / `database update` commands (`--project` Infrastructure, `--startup-project` Web); note migration resource hidden in Aspire dashboard by default (`aspire describe --include-hidden`)
+- [X] T116 [P] Wire hosted publish migration artefact path (`PublishAsMigrationScript()` and/or documented migration bundle) on AppHost publish model in `src/Potsure.AppHost/Program.cs` and single-runner apply steps in `docs/deployment-database.md` (no concurrent migrate on all replicas; `RunDatabaseUpdateOnStart` local-only) per plan.md hosted publish bullet
+
+**Checkpoint**: AppHost starts; migrations complete before web; web resolves SQL via Aspire client DI; hosted passkey or local-only path loads shell; budgeting golden tests pass in CI.
 
 ---
 
@@ -155,6 +171,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T058 [US2] Implement auto-attribution of matching debits to confirmed expense patterns with per-transaction override persistence in `src/Potsure.Infrastructure/Services/TransactionAttributionService.cs` per FR-M010a
 - [X] T106 [US2] Add re-import integration test asserting remembered pattern assignments and auto-attribution without manual re-entry in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (SC-003)
 - [X] T059 [US2] Build detection review UI (suggested vs confirmed, income vs expense) in `src/Potsure.Web/Components/Recurrence/`
+- [X] T117 [P] [US2] Add UK English onboarding copy that three months of statement history is recommended for automatic recurring detection (FR-M035 SHOULD) in `src/Potsure.Web/Components/Recurrence/` and/or import completion summary without blocking one-month onboarding
 - [X] T060 [US2] Project confirmed expense commitments cadence-aware into selected period in `src/Potsure.Reporting/CommitmentProjector.cs` for FR-M018 inputs
 
 **Checkpoint**: US2 independent test; quickstart Scenario 2.
@@ -231,7 +248,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 **Independent Test**: Trigger shortfall; see disclosure for history gaps (spec US8).
 
-- [X] T079 [P] [US8] Implement forecast horizon setting on `BudgetProfile` (`ForecastHorizonMonths` default 3) in `src/Potsure.Infrastructure/Services/ForecastHorizonService.cs` per FR-M035
+- [X] T079 [P] [US8] Implement forecast horizon setting on `BudgetProfile` (`ForecastHorizonMonths` default 3) in `src/Potsure.Infrastructure/Services/ForecastHorizonService.cs` per FR-M035 (Must: default 3 months and user override)
 - [X] T080 [US8] Compute projected remaining spend including variable estimates in `src/Potsure.Reporting/RunwayProjector.cs` per FR-M020 and FR-M034
 - [X] T081 [US8] Surface uncertainty flags for statement gaps and uncertain income in `src/Potsure.Reporting/UncertaintyFlagsBuilder.cs` per FR-M032
 - [X] T082 [US8] Build runway warnings UI with optional pot detail in `src/Potsure.Web/Components/Reports/RunwayWarnings.razor`
@@ -294,8 +311,11 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T097 Complete `docs/self-host.md`, `docs/encryption.md`, and deployment stage notes aligned with AppHost SKU/replica policy in plan.md
 - [X] T098 Review input validation and sanitisation for uploads and forms across `src/Potsure.Web/` and Infrastructure (FR-M028)
 - [X] T099 Verify logging excludes raw statements, full account numbers, and secrets (FR-M029) in `src/Potsure.Web/` and Infrastructure
-- [X] T100 Run full quickstart.md validation checklist and record results in `specs/001-potsure-v1/quickstart.md` (add “Validation log” subsection)
-- [X] T101 Final `dotnet format Potsure.slnx --verify-no-changes`, Release build `-warnaserror`, and full test suite per AGENTS.md
+- [X] T100 Record quickstart.md validation log for scenarios exercised to date in `specs/001-potsure-v1/quickstart.md` (manual journeys may remain **Partial** until release QA). **Scenario 8b** (dependency hygiene): satisfied when **T110** last ran; re-run **T110** after **T111** adds packages. **Scenario 8c** (EF migration ordering): out of scope for T100 — close via **T115** after **T113**
+- [X] T115 Re-run quickstart Scenario 8c (migration ordering: database healthy → migrations finished → web healthy) and refresh validation log in `specs/001-potsure-v1/quickstart.md` after T113; optionally verify hidden migration resource via `aspire describe --include-hidden`
+- [X] T118 [P] Add reporting or integration test asserting variable recurring estimates expose coverage labelling when history is shorter than three months (SC-008) in `tests/Potsure.Recurrence.Tests/` or `tests/Potsure.Reporting.Tests/`; spot-check quickstart “Partial-month labelling” scenario
+- [X] T110 Run `dotnet package list --outdated`, upgrade compatible versions in `Directory.Packages.props` where needed, then `dotnet test Potsure.slnx -c Release` (full suite, not `--no-build` only) after any package changes per constitution 1.1.0 and AGENTS.md
+- [X] T101 Final `dotnet format Potsure.slnx --verify-no-changes`, Release build `-warnaserror`, and `dotnet test Potsure.slnx -c Release --no-build` per AGENTS.md PR workflow (re-run full test without `--no-build` when `Directory.Packages.props` changed since last build)
 
 ---
 
@@ -324,7 +344,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 | US10 | Persistence populated | Export/delete |
 | US12 | Core UI pages exist | Polish pass |
 
-Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → US3 → US2 → US6 → US7. **v1.0.0 release gate** (constitution + spec P1): also US10, US11, FR-M037 (`T071`), hosted encryption verification (`T102`), and quickstart validation (`T100`).
+Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → US3 → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.1.0 + spec P1): also US10, US11, FR-M037 (`T071`), hosted encryption verification (`T102`), Aspire SQL client consumption (`T107`–`T108`), EF migration orchestration (`T111`–`T114`, `T116`), dependency hygiene (`T110` after any package add including `T111`), migration orchestration validation (`T115`), and quickstart validation (`T100`).
 
 ### Parallel Opportunities
 
@@ -361,7 +381,7 @@ T032 src/Potsure.Statements/MonzoCsvParser.cs
 
 ### v1.0.0 release (full Must scope)
 
-Before tagging v1.0.0, also complete Phase 4 (US11, including `T102`), Phase 13 (US10), one-offs (`T071`), Phase 15 (`T100`–`T101`), and remaining P1/P2 stories as scheduled in spec.
+Before tagging v1.0.0, also complete Phase 4 (US11, including `T102`), Phase 13 (US10), one-offs (`T071`), Phase 2 Aspire consumption (`T107`–`T108`) and migration orchestration (`T111`–`T114`, `T116`), US2 **FR-M035** copy (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`), and remaining P1/P2 stories as scheduled in spec.
 
 ### Incremental Delivery
 
@@ -382,5 +402,8 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - **Under/over** = allocation − actual activity; recorded funding **must not** enter under/over (FR-M017)
 - De-dupe normalisation rules quoted in T031 must match FR-M004 verbatim
 - Do not add Redis, Blob staging, or Key Vault in v1 unless release gates change (research.md)
+- AppHost is the source of truth for SQL configuration; use `aspire` / `aspireify` skills when changing AppHost wiring (AGENTS.md)
+- EF schema apply: AppHost `AddEFMigrations` + `WaitForCompletion` on web — not `MigrateAsync` at web startup; app seeding (`BudgetProfileSeeder`) stays in web/runtime, not the migration job (plan.md EF migrations architecture; [data-model.md](./data-model.md) schema evolution)
+- Hosted schema: `PublishAsMigrationScript()` / controlled job (`T116`) — not `RunDatabaseUpdateOnStart` on publish
 - Retire placeholder `src/Potsure/` when T002 completes
 - **FR-S002** (transaction-level actual-spend drill-down) is Should-level; deferred unless explicitly pulled into scope — category health (`T073`) covers aggregate actuals only

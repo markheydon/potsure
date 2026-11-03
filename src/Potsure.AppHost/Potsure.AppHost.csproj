@@ -6,16 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AspireUseCliBundle>true</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIRE004</NoWarn>
     <UserSecretsId>potsure-apphost-secrets</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Azure.AppContainers" />
     <PackageReference Include="Aspire.Hosting.Azure.Sql" />
+    <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Potsure.Infrastructure\Potsure.Infrastructure.csproj" />
     <ProjectReference Include="..\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 

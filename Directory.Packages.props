@@ -6,6 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.4-preview.1.26523.11" />
     <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.6.4" />
     <PackageVersion Include="BlazorBlueprint.Components" Version="4.1.0" />
     <PackageVersion Include="BlazorBlueprint.Icons.Lucide" Version="2.0.2" />

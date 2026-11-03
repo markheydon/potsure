@@ -18,7 +18,10 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 
 - Open Aspire dashboard URL from console.
 - Launch web resource; confirm HTTPS and local-only mode restrictions per docs.
-- SQL container healthy via `WaitFor` reference.
+- SQL container and `potsure` database healthy before migrations run.
+- **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
+- **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.1.0).
+- **Migration ordering smoke** (post T111–T114): In the Aspire dashboard, the EF migrations resource reaches **Finished/Active** before the web resource starts; web must not crash on missing tables on cold SQL container. Hidden migration resource visible via `aspire describe --include-hidden` if needed.
 
 ## Scenario 1 — Safe Monzo import (US1)
 
@@ -75,6 +78,26 @@ dotnet test tests/Potsure.Statements.Tests -c Release
 
 **Expect**: Golden parsing files pass; budgeting golden scenarios match independently verified expected results.
 
+## Scenario 8b — Dependency hygiene (constitution 1.1.0)
+
+After any change to `Directory.Packages.props`:
+
+```bash
+dotnet package list --outdated
+dotnet test Potsure.slnx -c Release
+```
+
+**Expect**: Outdated packages reviewed/upgraded where compatible; full test suite green after version bumps (AGENTS.md — not `--no-build` only).
+
+## Scenario 8c — EF migration orchestration (Aspire local)
+
+1. Stop AppHost; remove local SQL container/volume if reproducing cold start (optional).
+2. Start AppHost (`dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj`).
+3. Observe dashboard ordering: `potsure` database healthy → migration resource runs and **completes** → web becomes healthy.
+4. Confirm no `Database.MigrateAsync` (or similar) in `Potsure.Web` startup — schema apply is AppHost-only locally per [plan.md](plan.md).
+
+**Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with Infrastructure project + Web startup per plan.
+
 ## Scenario 9 — Accessibility smoke (US12)
 
 1. Keyboard-only: import wizard → recurring summary → category health.
@@ -95,7 +118,7 @@ After deploy to dev/test ACA + Azure SQL free tier:
 
 ## Validation log
 
-Last run: 2026-11-03 (automated build/test; manual scenarios partially verified).
+Last run: 2026-11-03 (automated build/test; Aspire migration ordering verified). **T100** records this log; **Scenario 8c** closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
@@ -107,8 +130,10 @@ Last run: 2026-11-03 (automated build/test; manual scenarios partially verified)
 | 6 — Export and delete | Partial | Export/delete UI and contract tests pass in CI |
 | 7 — Determinism | Pass | `DeterminismTests` in Release |
 | 8 — Unit/core CI | Pass | Budgeting and Statements golden tests |
+| 8b — Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
+| 8c — EF migration ordering | Pass | **T115** 2026-11-03: `aspire run` — `sql`/`potsure` Healthy, `ef-migrations` Finished before web start; `aspire describe --include-hidden` lists hidden migration resource |
 | 9 — Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
-| Partial-month labelling | Not run | Variable estimate logic covered by unit tests |
+| Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
 | Hosted stage smoke | Not run | Requires deployed ACA and passkey device |
 
 Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test` — see Phase 15 task T101.
