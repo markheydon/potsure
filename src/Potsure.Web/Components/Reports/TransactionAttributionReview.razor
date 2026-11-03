@@ -1,0 +1,98 @@
+@page "/reports/attribution"
+@rendermode InteractiveServer
+
+<PageTitle>Reassign transactions</PageTitle>
+
+<h1 id="attribution-heading">Reassign attributed transactions</h1>
+
+<p class="potsure-muted">
+    Override auto-attribution or change category, optional pot, pattern link, or tag for individual debits (FR-M010a).
+</p>
+
+@if (_loading)
+{
+    <p>Loading transactions…</p>
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_transactions.Count == 0)
+{
+    <p>No attributed expense debits in the current budget period.</p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <BbAlert Variant="AlertVariant.Default">
+            <BbAlertDescription>@_statusMessage</BbAlertDescription>
+        </BbAlert>
+    }
+
+    <table>
+        <caption>Attributed expense debits</caption>
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Name</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Category</th>
+                <th scope="col">Pot</th>
+                <th scope="col">Pattern</th>
+                <th scope="col">Tag</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (AttributedTransactionRow row in _transactions)
+            {
+                <tr>
+                    <td>@row.TransactionDate.ToString("dd/MM/yyyy")</td>
+                    <td>@row.Name</td>
+                    <td>£@Math.Abs(row.Amount).ToString("F2")</td>
+                    <td>
+                        <InputSelect @bind-Value="_categoryByTransaction[row.TransactionId]">
+                            @foreach (CategoryOption category in _categories)
+                            {
+                                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                            }
+                        </InputSelect>
+                    </td>
+                    <td>
+                        <InputSelect @bind-Value="_potByTransaction[row.TransactionId]">
+                            <option value="">None</option>
+                            @foreach (PotOption pot in PotsForCategory(_categoryByTransaction[row.TransactionId]))
+                            {
+                                <option value="@pot.Id">@pot.Name</option>
+                            }
+                        </InputSelect>
+                    </td>
+                    <td>
+                        <InputSelect @bind-Value="_patternByTransaction[row.TransactionId]">
+                            <option value="">None</option>
+                            @foreach (PatternOption pattern in _patterns)
+                            {
+                                <option value="@pattern.Id">@pattern.Label</option>
+                            }
+                        </InputSelect>
+                    </td>
+                    <td>
+                        <BbInput @bind-Value="_tagByTransaction[row.TransactionId]" Placeholder="Optional" />
+                    </td>
+                    <td>
+                        <BbButton OnClick="() => SaveOverrideAsync(row.TransactionId)">Save override</BbButton>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<nav aria-label="Related">
+    <a href="/reports/category-health">Back to category health</a>
+    · <a href="/reports/categorise">Assign uncategorised transactions</a>
+</nav>

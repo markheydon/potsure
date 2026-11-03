@@ -450,6 +450,17 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, post Phase 18) between spec intent and present codebase behaviour.
 
-- [ ] T134 [US1] Persist the user-confirmed column map from `ImportWizard` / `StatementImportService.ImportAsync` to `BudgetProfile.RememberedColumnMappingJson` and pre-fill mapping on subsequent uploads when the file header layout is unchanged per FR-M002, US1/AC1, and T038 (partial)
-- [ ] T135 [US2] Add optional mapped bank pot and free-text tag inputs on `DetectionReview` for expense confirm, merge, and split; when merging confirmed patterns with differing category, pot, or tag, require explicit resolution (and validate in `PatternMergeSplitService`) before save per FR-M008, FR-M009, and US2 acceptance scenarios 3, 5, and 6 (partial)
-- [ ] T136 [US10] Wire hosted export and permanent deletion reauthentication to an Identity passkey step-up challenge (not self-attestation checkbox only) before granting `ReauthenticationService` per T132, `research.md`, and `plan.md` reauthentication notes (partial)
+- [X] T134 [US1] Persist the user-confirmed column map from `ImportWizard` / `StatementImportService.ImportAsync` to `BudgetProfile.RememberedColumnMappingJson` and pre-fill mapping on subsequent uploads when the file header layout is unchanged per FR-M002, US1/AC1, and T038 (partial)
+- [X] T135 [US2] Add optional mapped bank pot and free-text tag inputs on `DetectionReview` for expense confirm, merge, and split; when merging confirmed patterns with differing category, pot, or tag, require explicit resolution (and validate in `PatternMergeSplitService`) before save per FR-M008, FR-M009, and US2 acceptance scenarios 3, 5, and 6 (partial)
+- [X] T136 [US10] Wire hosted export and permanent deletion reauthentication to an Identity passkey step-up challenge (not self-attestation checkbox only) before granting `ReauthenticationService` per T132, `research.md`, and `plan.md` reauthentication notes (partial)
+
+---
+
+## Phase 20: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, post Phase 19) between spec intent and present codebase behaviour.
+
+- [X] T137 [US2] Add UI to reassign individual imported transactions (including auto-attributed debits) via `TransactionAttributionService.OverrideAttributionAsync`, with optional pot and pattern link, and navigation from category health or a dedicated review list per FR-M010a and US2 acceptance scenario 7 (missing)
+- [X] T138 [US1] When a remembered Monzo column map pre-fills on unchanged layout, still require an explicit mapping confirm-or-adjust step before import proceeds (do not skip the mapping panel solely because `RememberedMonzoColumnMapping` matched) per FR-M002 and US1/AC1 (partial)
+- [X] T139 [US7] [US8] Surface confirmed variable recurring expense `EstimateCoverageLabel` on `BudgetBalance.razor` (matching runway and recurring summary disclosure) per FR-M034 and SC-008 (partial)
+- [X] T140 [P] [US2] Replace placeholder assertions in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` with an integration test that re-imports overlapping CSV, asserts auto-attribution to confirmed patterns, and verifies manual overrides persist without re-auto-attribution per SC-003 and FR-M010a (partial)

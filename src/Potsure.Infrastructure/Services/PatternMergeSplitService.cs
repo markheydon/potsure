@@ -19,7 +19,8 @@ public sealed record MergeRecurringExpensesRequest(
     string AmountKind,
     decimal? FixedAmount,
     decimal? MonthlyEstimate,
-    string? EstimateCoverageLabel);
+    string? EstimateCoverageLabel,
+    bool UserResolvedAssignments);
 
 public sealed record SplitRecurringExpenseRequest(
     Guid SourceExpenseId,
@@ -66,6 +67,12 @@ public sealed class PatternMergeSplitService(
         foreach (RecurringExpenseEntity source in sources)
         {
             EntityOwnershipValidator.EnsureOwnedBy(source.OwnerKey, ownerAccessor.OwnerKey);
+        }
+
+        if (SourcesHaveAssignmentConflict(sources) && !request.UserResolvedAssignments)
+        {
+            throw new InvalidOperationException(
+                "Merged patterns disagree on category, pot, or tag. Choose assignments before saving.");
         }
 
         RecurringExpenseEntity merged = await expensePatternService.SaveAsync(
@@ -129,5 +136,29 @@ public sealed class PatternMergeSplitService(
         dbContext.RecurringExpenses.Remove(source);
         await dbContext.SaveChangesAsync(cancellationToken);
         return created;
+    }
+
+    public static bool SourcesHaveAssignmentConflict(IReadOnlyList<RecurringExpenseEntity> sources)
+    {
+        if (sources.Count < 2)
+        {
+            return false;
+        }
+
+        Guid firstCategory = sources[0].CategoryId;
+        Guid? firstPot = sources[0].MappedPotId;
+        string? firstTag = sources[0].Tag;
+
+        foreach (RecurringExpenseEntity source in sources.Skip(1))
+        {
+            if (source.CategoryId != firstCategory
+                || source.MappedPotId != firstPot
+                || !string.Equals(source.Tag, firstTag, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -82,6 +82,19 @@ else if (_report is not null)
         }
     </section>
 
+    @if (_variableExpenses.Count > 0)
+    {
+        <section aria-labelledby="balance-variable">
+            <h2 id="balance-variable">Variable expense coverage</h2>
+            <ul>
+                @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
+                {
+                    <li>@expense.VendorLabel: @(expense.EstimateCoverageLabel ?? "Estimate pending")</li>
+                }
+            </ul>
+        </section>
+    }
+
     <p class="potsure-sr-table-summary" id="balance-text-summary">
         Textual summary: planned income £@_report.Value.BudgetedIncome.Amount.ToString("F2");
         actual receipts £@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2");

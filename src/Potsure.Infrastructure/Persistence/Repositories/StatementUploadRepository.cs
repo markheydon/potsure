@@ -63,6 +63,14 @@ public sealed class StatementUploadRepository(
         profile.RememberedColumnMappingJson = mappingJson;
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<string?> GetRememberedColumnMappingJsonAsync(CancellationToken cancellationToken)
+    {
+        BudgetProfileEntity? profile = await dbContext.BudgetProfiles
+            .AsNoTracking()
+            .SingleOrDefaultAsync(cancellationToken);
+        return profile?.RememberedColumnMappingJson;
+    }
 }
 
 public readonly record struct ImportStatistics(

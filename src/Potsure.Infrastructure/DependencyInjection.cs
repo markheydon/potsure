@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<ForecastHorizonService>();
         services.AddScoped<RecurrenceReviewService>();
         services.AddScoped<UncategorisedTransactionQuery>();
+        services.AddScoped<AttributedTransactionQuery>();
         services.AddScoped<CategoryPotBreakdownQuery>();
         services.AddScoped<RecurringSummaryQuery>();
         services.AddScoped<PeriodReportService>();

@@ -25,10 +25,7 @@
             <h3 id="export-reauth-heading">Confirm export</h3>
             @if (IsHosted)
             {
-                <p>Hosted mode requires passkey step-up. <a href="/identity/login" target="_blank" rel="noopener">Verify with passkey</a>, then confirm below.</p>
-                <BbCheckbox @bind-Checked="_hostedPasskeyStepUpConfirmed">
-                    I completed passkey verification on this device
-                </BbCheckbox>
+                <p>Use your passkey on this device to confirm export. You may be prompted for biometrics or your device PIN.</p>
             }
             else
             {
@@ -73,10 +70,7 @@
             <h3 id="delete-reauth-heading">Confirm deletion</h3>
             @if (IsHosted)
             {
-                <p>Hosted mode requires passkey step-up. <a href="/identity/login" target="_blank" rel="noopener">Verify with passkey</a>, then confirm below.</p>
-                <BbCheckbox @bind-Checked="_hostedPasskeyStepUpConfirmed">
-                    I completed passkey verification on this device
-                </BbCheckbox>
+                <p>Use your passkey on this device to confirm permanent deletion. You may be prompted for biometrics or your device PIN.</p>
             }
             else
             {

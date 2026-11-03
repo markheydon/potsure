@@ -74,6 +74,16 @@ public partial class ImportWizard
 
             _awaitingMappingConfirmation = true;
             _columnMapping = BuildDefaultColumnMapping(_preview);
+
+            RememberedMonzoColumnMapping? remembered =
+                await ImportService.GetRememberedColumnMappingAsync();
+            if (remembered is not null && remembered.MatchesLayout(_preview.ColumnMapping.FileHeaders))
+            {
+                _columnMapping = remembered.ColumnMap.ToDictionary(
+                    static pair => pair.Key,
+                    static pair => pair.Value,
+                    StringComparer.Ordinal);
+            }
         }
         catch (Exception ex)
         {

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Potsure.Infrastructure.Deletion;
@@ -20,6 +21,15 @@ public partial class PrivacyDataPanel
     private ReauthenticationService ReauthenticationService { get; set; } = null!;
 
     [Inject]
+    private PasskeyStepUpJsInterop PasskeyStepUp { get; set; } = null!;
+
+    [Inject]
+    private IAntiforgery Antiforgery { get; set; } = null!;
+
+    [Inject]
+    private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
+
+    [Inject]
     private IOptions<DeploymentModeOptions> DeploymentOptions { get; set; } = null!;
 
     private bool IsHosted => DeploymentOptions.Value.Mode == DeploymentMode.Hosted;
@@ -30,7 +40,6 @@ public partial class PrivacyDataPanel
     private bool _showDeleteReauth;
     private string _exportChallengePhrase = string.Empty;
     private string _deleteChallengePhrase = string.Empty;
-    private bool _hostedPasskeyStepUpConfirmed;
     private string? _exportMessage;
     private string? _deleteMessage;
     private string? _downloadBase64;
@@ -51,7 +60,6 @@ public partial class PrivacyDataPanel
         }
 
         _exportChallengePhrase = string.Empty;
-        _hostedPasskeyStepUpConfirmed = false;
         _showExportReauth = true;
     }
 
@@ -65,50 +73,68 @@ public partial class PrivacyDataPanel
         }
 
         _deleteChallengePhrase = string.Empty;
-        _hostedPasskeyStepUpConfirmed = false;
         _showDeleteReauth = true;
     }
 
-    private Task ConfirmExportReauthAsync()
+    private async Task ConfirmExportReauthAsync()
     {
         if (IsHosted)
         {
-            if (!_hostedPasskeyStepUpConfirmed)
+            (bool ok, string? message) = await RunHostedPasskeyStepUpAsync();
+            if (!ok)
             {
-                _exportMessage = "Complete passkey step-up before export.";
-                return Task.CompletedTask;
+                _exportMessage = message ?? "Complete passkey step-up before export.";
+                return;
             }
         }
         else if (!string.Equals(_exportChallengePhrase.Trim(), ExportPhrase, StringComparison.Ordinal))
         {
             _exportMessage = $"Type {ExportPhrase} to confirm export.";
-            return Task.CompletedTask;
+            return;
         }
 
         ReauthenticationService.GrantReauthentication();
         _showExportReauth = false;
-        return ExportAsync();
+        await ExportAsync();
     }
 
-    private Task ConfirmDeleteReauthAsync()
+    private async Task ConfirmDeleteReauthAsync()
     {
         if (IsHosted)
         {
-            if (!_hostedPasskeyStepUpConfirmed)
+            (bool ok, string? message) = await RunHostedPasskeyStepUpAsync();
+            if (!ok)
             {
-                _deleteMessage = "Complete passkey step-up before deletion.";
-                return Task.CompletedTask;
+                _deleteMessage = message ?? "Complete passkey step-up before deletion.";
+                return;
             }
         }
         else if (!string.Equals(_deleteChallengePhrase.Trim(), DeletePhrase, StringComparison.Ordinal))
         {
             _deleteMessage = $"Type {DeletePhrase} to confirm deletion.";
-            return Task.CompletedTask;
+            return;
         }
 
         ReauthenticationService.GrantReauthentication();
         _showDeleteReauth = false;
-        return DeleteAsync();
+        await DeleteAsync();
+    }
+
+    private async Task<(bool Ok, string? Message)> RunHostedPasskeyStepUpAsync()
+    {
+        HttpContext? httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            return (false, "Passkey step-up is unavailable.");
+        }
+
+        AntiforgeryTokenSet tokens = Antiforgery.GetAndStoreTokens(httpContext);
+        if (string.IsNullOrEmpty(tokens.RequestToken))
+        {
+            return (false, "Passkey step-up is unavailable.");
+        }
+
+        return await PasskeyStepUp.PerformStepUpAsync(tokens.RequestToken);
     }
 
     private async Task ExportAsync()

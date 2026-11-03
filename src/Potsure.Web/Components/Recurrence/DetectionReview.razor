@@ -76,6 +76,20 @@ else
                                         }
                                     </InputSelect>
                                 </label>
+                                <label>
+                                    Mapped pot (optional)
+                                    <InputSelect @bind-Value="_expensePotByLabel[item.Label]">
+                                        <option value="">None</option>
+                                        @foreach (PotOption pot in PotsForCategory(_expenseCategoryByLabel[item.Label]))
+                                        {
+                                            <option value="@pot.Id">@pot.Name</option>
+                                        }
+                                    </InputSelect>
+                                </label>
+                                <label>
+                                    Tag (optional)
+                                    <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
+                                </label>
                             </div>
                         }
                         <BbButton OnClick="() => ConfirmAsync(item)">Confirm</BbButton>
@@ -112,6 +126,14 @@ else
     <section aria-labelledby="recurrence-merge">
         <h2 id="recurrence-merge">Merge expense patterns</h2>
         <p class="potsure-muted">Select confirmed expenses above, then merge into one pattern.</p>
+        @if (_mergeRequiresExplicitResolution)
+        {
+            <BbAlert Variant="AlertVariant.Warning">
+                <BbAlertDescription>
+                    Selected patterns disagree on category, pot, or tag. Choose one assignment for the merged pattern.
+                </BbAlertDescription>
+            </BbAlert>
+        }
         <BbInput @bind-Value="_mergeLabel" Placeholder="Merged vendor label (optional)" />
         <label>
             Category
@@ -121,6 +143,20 @@ else
                     <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
                 }
             </InputSelect>
+        </label>
+        <label>
+            Mapped pot (optional)
+            <InputSelect @bind-Value="_mergePotId">
+                <option value="">None</option>
+                @foreach (PotOption pot in PotsForCategory(_mergeCategoryId))
+                {
+                    <option value="@pot.Id">@pot.Name</option>
+                }
+            </InputSelect>
+        </label>
+        <label>
+            Tag (optional)
+            <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
         </label>
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
     </section>
@@ -144,6 +180,14 @@ else
                 <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
             }
         </InputSelect>
+        <InputSelect @bind-Value="_splitPartOnePotId">
+            <option value="">None</option>
+            @foreach (PotOption pot in PotsForCategory(_splitPartOneCategoryId))
+            {
+                <option value="@pot.Id">@pot.Name</option>
+            }
+        </InputSelect>
+        <BbInput @bind-Value="_splitPartOneTag" Placeholder="First part tag (optional)" />
         <BbInput @bind-Value="_splitPartTwoLabel" Placeholder="Second part label" />
         <InputSelect @bind-Value="_splitPartTwoCategoryId">
             @foreach (CategoryOption category in _categories)
@@ -151,6 +195,14 @@ else
                 <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
             }
         </InputSelect>
+        <InputSelect @bind-Value="_splitPartTwoPotId">
+            <option value="">None</option>
+            @foreach (PotOption pot in PotsForCategory(_splitPartTwoCategoryId))
+            {
+                <option value="@pot.Id">@pot.Name</option>
+            }
+        </InputSelect>
+        <BbInput @bind-Value="_splitPartTwoTag" Placeholder="Second part tag (optional)" />
         <BbButton OnClick="SplitPatternAsync">Split pattern</BbButton>
     </section>
 

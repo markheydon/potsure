@@ -31,23 +31,36 @@ public partial class DetectionReview
     [Inject]
     private PotsureDbContext DbContext { get; set; } = null!;
 
+    [Inject]
+    private BankPotService PotService { get; set; } = null!;
+
     private bool _loading = true;
     private string? _error;
     private string? _statusMessage;
     private List<RecurrenceReviewItem> _suggested = [];
     private List<RecurrenceReviewItem> _confirmedOrRejected = [];
     private List<CategoryOption> _categories = [];
+    private List<PotOption> _pots = [];
     private Dictionary<string, Guid> _expenseCategoryByLabel = [];
+    private Dictionary<string, Guid?> _expensePotByLabel = [];
+    private Dictionary<string, string?> _expenseTagByLabel = [];
     private Dictionary<string, IncomeSplitInput> _incomeSplitsByLabel = [];
     private Dictionary<string, IncomeCadence> _incomeCadenceByLabel = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
+    private Guid? _mergePotId;
+    private string? _mergeTag;
+    private bool _mergeRequiresExplicitResolution;
     private string? _splitSourceLabel;
     private string _splitPartOneLabel = string.Empty;
     private string _splitPartTwoLabel = string.Empty;
     private Guid _splitPartOneCategoryId;
+    private Guid? _splitPartOnePotId;
+    private string? _splitPartOneTag;
     private Guid _splitPartTwoCategoryId;
+    private Guid? _splitPartTwoPotId;
+    private string? _splitPartTwoTag;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,6 +68,7 @@ public partial class DetectionReview
         {
             await ProfileSeeder.EnsureProfileAsync();
             await LoadCategoriesAsync();
+            await LoadPotsAsync();
             await ReloadAsync();
         }
         catch (Exception ex)
@@ -65,6 +79,12 @@ public partial class DetectionReview
         {
             _loading = false;
         }
+    }
+
+    private async Task LoadPotsAsync()
+    {
+        IReadOnlyList<BankPotReadModel> pots = await PotService.ListAsync();
+        _pots = pots.Select(p => new PotOption(p.Id, p.Name, p.CategoryKind)).ToList();
     }
 
     private async Task ReloadAsync()
@@ -78,6 +98,8 @@ public partial class DetectionReview
             if (!item.IsIncome && !_expenseCategoryByLabel.ContainsKey(item.Label) && _categories.Count > 0)
             {
                 _expenseCategoryByLabel[item.Label] = _categories[0].Id;
+                _expensePotByLabel[item.Label] = null;
+                _expenseTagByLabel[item.Label] = null;
             }
 
             if (item.IsIncome && !_incomeSplitsByLabel.ContainsKey(item.Label))
@@ -134,6 +156,8 @@ public partial class DetectionReview
             else
             {
                 Guid categoryId = _expenseCategoryByLabel[item.Label];
+                Guid? potId = _expensePotByLabel[item.Label];
+                string? tag = NullIfWhiteSpace(_expenseTagByLabel[item.Label]);
                 ExpenseCadence cadence = item.ExpenseCadence ?? ExpenseCadence.Monthly;
                 bool isVariable = cadence == ExpenseCadence.Variable;
                 decimal? monthlyEstimate = null;
@@ -150,14 +174,14 @@ public partial class DetectionReview
                         item.PersistedId,
                         item.Label,
                         categoryId,
-                        MappedPotId: null,
+                        potId,
                         cadence,
                         PaymentType: "Card",
                         AmountKind: isVariable ? "Variable" : "Fixed",
                         isVariable ? null : item.TypicalAmount,
                         monthlyEstimate,
                         coverageLabel,
-                        Tag: null,
+                        tag,
                         PatternConfirmationState.Confirmed));
 
                 await AttributionService.AttributeMatchingDebitsAsync(saved.Id);
@@ -225,6 +249,29 @@ public partial class DetectionReview
         {
             _mergeSelection.Add(label);
         }
+
+        UpdateMergeConflictState();
+    }
+
+    private void UpdateMergeConflictState()
+    {
+        List<RecurringExpenseEntity> selected = GetSelectedMergeSources();
+        _mergeRequiresExplicitResolution = PatternMergeSplitService.SourcesHaveAssignmentConflict(selected);
+    }
+
+    private List<RecurringExpenseEntity> GetSelectedMergeSources()
+    {
+        List<Guid> ids = _confirmedOrRejected
+            .Where(i => !i.IsIncome && _mergeSelection.Contains(i.Label) && i.PersistedId is not null)
+            .Select(i => i.PersistedId!.Value)
+            .ToList();
+
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        return DbContext.RecurringExpenses.AsNoTracking().Where(e => ids.Contains(e.Id)).ToList();
     }
 
     private async Task MergeSelectedAsync()
@@ -256,12 +303,13 @@ public partial class DetectionReview
                 new MergeRecurringExpensesRequest(
                     selected.Select(s => s.PersistedId!.Value).ToList(),
                     mergedLabel,
-                    new PatternResolution(_mergeCategoryId, null, null),
+                    new PatternResolution(_mergeCategoryId, _mergePotId, NullIfWhiteSpace(_mergeTag)),
                     selected[0].ExpenseCadence ?? ExpenseCadence.Monthly,
                     "Fixed",
                     selected[0].TypicalAmount,
                     null,
-                    null));
+                    null,
+                    UserResolvedAssignments: true));
 
             _mergeSelection.Clear();
             _statusMessage = $"Merged patterns into {mergedLabel}.";
@@ -299,7 +347,10 @@ public partial class DetectionReview
                     [
                         new SplitExpensePart(
                             _splitPartOneLabel.Trim(),
-                            new PatternResolution(_splitPartOneCategoryId, null, null),
+                            new PatternResolution(
+                                _splitPartOneCategoryId,
+                                _splitPartOnePotId,
+                                NullIfWhiteSpace(_splitPartOneTag)),
                             source.ExpenseCadence ?? ExpenseCadence.Monthly,
                             "Fixed",
                             source.TypicalAmount / 2m,
@@ -307,7 +358,10 @@ public partial class DetectionReview
                             null),
                         new SplitExpensePart(
                             _splitPartTwoLabel.Trim(),
-                            new PatternResolution(_splitPartTwoCategoryId, null, null),
+                            new PatternResolution(
+                                _splitPartTwoCategoryId,
+                                _splitPartTwoPotId,
+                                NullIfWhiteSpace(_splitPartTwoTag)),
                             source.ExpenseCadence ?? ExpenseCadence.Monthly,
                             "Fixed",
                             source.TypicalAmount / 2m,
@@ -339,6 +393,14 @@ public partial class DetectionReview
         };
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
+
+    private sealed record PotOption(Guid Id, string Name, BudgetCategoryKind CategoryKind);
+
+    private static string? NullIfWhiteSpace(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
+        _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
 
     private sealed class IncomeSplitInput
     {

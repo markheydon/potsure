@@ -24,12 +24,14 @@ if (deployment.Mode == DeploymentMode.LocalOnly)
 {
     builder.Services.AddSingleton<ICurrentOwnerAccessor, LocalOnlyOwnerAccessor>();
 }
-else
+if (deployment.Mode == DeploymentMode.Hosted)
 {
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
     builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
 }
+
+builder.Services.AddScoped<PasskeyStepUpJsInterop>();
 
 builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
@@ -58,6 +60,7 @@ if (deployment.Mode == DeploymentMode.Hosted)
     app.UseAuthorization();
     app.UseMiddleware<HostedFinancialDataAuthorizationMiddleware>();
     app.MapHostedPasskeyEndpoints();
+    app.MapHostedPasskeyStepUpEndpoints();
 }
 
 app.UseAntiforgery();

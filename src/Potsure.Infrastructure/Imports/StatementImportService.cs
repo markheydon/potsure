@@ -34,6 +34,25 @@ public sealed class StatementImportService(
     ICurrentOwnerAccessor ownerAccessor,
     TransactionAttributionService attributionService)
 {
+    public async Task<RememberedMonzoColumnMapping?> GetRememberedColumnMappingAsync(
+        CancellationToken cancellationToken = default)
+    {
+        string? json = await uploadRepository.GetRememberedColumnMappingJsonAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<RememberedMonzoColumnMapping>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     public async Task<StatementImportPreview> PreviewAsync(
         Stream csvStream,
         string _,
@@ -113,6 +132,11 @@ public sealed class StatementImportService(
             upload = await uploadRepository.CreatePendingAsync(fileName, cancellationToken);
 
             await using FileStream readStream = File.OpenRead(tempPath);
+            readStream.Seek(0, SeekOrigin.Begin);
+            MonzoColumnMappingPreview layout = await MonzoCsvParser.PreviewColumnMappingAsync(
+                readStream,
+                cancellationToken);
+            readStream.Seek(0, SeekOrigin.Begin);
             MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, columnMap, cancellationToken);
 
             List<string> skippedReasons = parseResult.Errors
@@ -223,8 +247,12 @@ public sealed class StatementImportService(
             await uploadRepository.CompleteAsync(upload.Id, statistics, skippedReasons, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
+            Dictionary<string, string> mapToRemember = columnMap is { Count: > 0 }
+                ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
+                : BuildDefaultColumnMap(layout);
+            RememberedMonzoColumnMapping remembered = new(layout.FileHeaders, mapToRemember);
             await uploadRepository.SaveRememberedColumnMappingJsonAsync(
-                JsonSerializer.Serialize(MonzoCsvParser.StandardHeaders()),
+                JsonSerializer.Serialize(remembered),
                 cancellationToken);
 
             await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
@@ -255,5 +283,31 @@ public sealed class StatementImportService(
                 File.Delete(tempPath);
             }
         }
+    }
+
+    private static Dictionary<string, string> BuildDefaultColumnMap(MonzoColumnMappingPreview layout)
+    {
+        Dictionary<string, string> mapping = new(StringComparer.Ordinal);
+        foreach (string required in layout.RequiredHeaders)
+        {
+            string match = required;
+            foreach (string fileHeader in layout.FileHeaders)
+            {
+                if (fileHeader == required)
+                {
+                    match = fileHeader;
+                    break;
+                }
+            }
+
+            if (match == required && layout.FileHeaders.Count > 0)
+            {
+                match = layout.FileHeaders[0];
+            }
+
+            mapping[required] = match;
+        }
+
+        return mapping;
     }
 }

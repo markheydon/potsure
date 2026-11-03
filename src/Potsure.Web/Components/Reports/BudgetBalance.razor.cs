@@ -18,8 +18,12 @@ public partial class BudgetBalance
     [Inject]
     private CategoryPotBreakdownQuery PotBreakdownQuery { get; set; } = null!;
 
+    [Inject]
+    private RecurringSummaryQuery RecurringSummaryQuery { get; set; } = null!;
+
     private BudgetBalanceReport? _report;
     private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
+    private IReadOnlyList<ConfirmedExpenseSummaryRow> _variableExpenses = [];
     private bool _loading = true;
     private string? _error;
 
@@ -30,6 +34,10 @@ public partial class BudgetBalance
             await ProfileSeeder.EnsureProfileAsync();
             _report = await ReportService.GetBudgetBalanceReportAsync();
             _potBreakdown = await PotBreakdownQuery.ListAsync();
+            RecurringSummaryReadModel summary = await RecurringSummaryQuery.LoadAsync();
+            _variableExpenses = summary.ConfirmedExpenses
+                .Where(e => string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
         catch (Exception ex)
         {

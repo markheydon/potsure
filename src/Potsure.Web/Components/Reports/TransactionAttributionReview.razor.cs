@@ -1,0 +1,136 @@
+using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
+using Potsure.Budgeting;
+using Potsure.Infrastructure.Persistence;
+using Potsure.Infrastructure.Queries;
+using Potsure.Infrastructure.Services;
+
+namespace Potsure.Web.Components.Reports;
+
+public partial class TransactionAttributionReview
+{
+    [Inject]
+    private AttributedTransactionQuery AttributionQuery { get; set; } = null!;
+
+    [Inject]
+    private TransactionAttributionService AttributionService { get; set; } = null!;
+
+    [Inject]
+    private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
+
+    [Inject]
+    private BankPotService PotService { get; set; } = null!;
+
+    [Inject]
+    private PotsureDbContext DbContext { get; set; } = null!;
+
+    private bool _loading = true;
+    private string? _error;
+    private string? _statusMessage;
+    private List<AttributedTransactionRow> _transactions = [];
+    private List<CategoryOption> _categories = [];
+    private List<PotOption> _pots = [];
+    private List<PatternOption> _patterns = [];
+    private Dictionary<Guid, Guid> _categoryByTransaction = [];
+    private Dictionary<Guid, Guid?> _potByTransaction = [];
+    private Dictionary<Guid, Guid?> _patternByTransaction = [];
+    private Dictionary<Guid, string?> _tagByTransaction = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ProfileSeeder.EnsureProfileAsync();
+            await LoadLookupsAsync();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadLookupsAsync()
+    {
+        _categories = await DbContext.BudgetCategories
+            .AsNoTracking()
+            .OrderBy(c => c.Kind)
+            .Select(c => new CategoryOption(c.Id, c.Kind))
+            .ToListAsync();
+
+        IReadOnlyList<BankPotReadModel> pots = await PotService.ListAsync();
+        _pots = pots.Select(p => new PotOption(p.Id, p.Name, p.CategoryKind)).ToList();
+
+        _patterns = await DbContext.RecurringExpenses
+            .AsNoTracking()
+            .Where(e => e.State == PatternConfirmationState.Confirmed)
+            .OrderBy(e => e.VendorLabel)
+            .Select(e => new PatternOption(e.Id, e.VendorLabel))
+            .ToListAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _transactions = (await AttributionQuery.ListForWorkingPeriodAsync()).ToList();
+        foreach (AttributedTransactionRow row in _transactions)
+        {
+            if (!_categoryByTransaction.ContainsKey(row.TransactionId))
+            {
+                _categoryByTransaction[row.TransactionId] = row.CategoryId;
+                _potByTransaction[row.TransactionId] = row.MappedPotId;
+                _patternByTransaction[row.TransactionId] = row.RecurringExpenseId;
+                _tagByTransaction[row.TransactionId] = row.Tag;
+            }
+        }
+    }
+
+    private async Task SaveOverrideAsync(Guid transactionId)
+    {
+        _statusMessage = null;
+        if (!_categoryByTransaction.TryGetValue(transactionId, out Guid categoryId))
+        {
+            return;
+        }
+
+        try
+        {
+            await AttributionService.OverrideAttributionAsync(
+                transactionId,
+                categoryId,
+                _potByTransaction[transactionId],
+                _patternByTransaction[transactionId],
+                NullIfWhiteSpace(_tagByTransaction[transactionId]));
+            _statusMessage = "Override saved.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = ex.Message;
+        }
+    }
+
+    private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
+        _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
+
+    private static string? NullIfWhiteSpace(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
+
+    private sealed record PotOption(Guid Id, string Name, BudgetCategoryKind CategoryKind);
+
+    private sealed record PatternOption(Guid Id, string Label);
+
+    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
+        kind switch
+        {
+            BudgetCategoryKind.Needs => "Needs",
+            BudgetCategoryKind.Wants => "Wants",
+            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
+            _ => kind.ToString(),
+        };
+}
