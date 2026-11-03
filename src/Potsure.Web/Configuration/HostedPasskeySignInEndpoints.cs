@@ -80,21 +80,24 @@ public static class HostedPasskeySignInEndpoints
             }
 
             string email = body.Email.Trim();
-            ApplicationUser? user = await userManager.FindByEmailAsync(email);
-            if (user is null)
+            ApplicationUser? existing = await userManager.FindByEmailAsync(email);
+            if (existing is not null)
             {
-                user = new ApplicationUser
-                {
-                    UserName = email,
-                    Email = email,
-                };
+                return Results.BadRequest(
+                    "An account already exists for this email. Sign in with your passkey instead of registering again.");
+            }
 
-                string unusablePassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(96));
-                IdentityResult create = await userManager.CreateAsync(user, unusablePassword);
-                if (!create.Succeeded)
-                {
-                    return Results.BadRequest(string.Join(' ', create.Errors.Select(e => e.Description)));
-                }
+            var user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+            };
+
+            string unusablePassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(96));
+            IdentityResult create = await userManager.CreateAsync(user, unusablePassword);
+            if (!create.Succeeded)
+            {
+                return Results.BadRequest(string.Join(' ', create.Errors.Select(e => e.Description)));
             }
 
             string userId = await userManager.GetUserIdAsync(user) ?? user.Id;

@@ -6,7 +6,7 @@ public sealed class DeploymentModeOptions
 
     public DeploymentMode Mode { get; init; } = DeploymentMode.Hosted;
 
-    public bool BindPublicEndpoints { get; init; } = true;
+    public bool BindPublicEndpoints { get; init; }
 }
 
 public enum DeploymentMode

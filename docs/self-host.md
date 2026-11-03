@@ -31,6 +31,8 @@ For hosted mode on your own infrastructure:
 4. Enable passkey registration and sign-in; do not enable password fallback in v1.
 5. Complete the encryption verification checklist in `docs/encryption.md`.
 
+Hosted v1 allows **open passkey registration** (any email can create an account). Internet-facing deployments should add operator controls (invitations, rate limits, or CAPTCHA) before production cut-over.
+
 ## Deployment stages (AppHost)
 
 | Stage | Intent | Notes |
