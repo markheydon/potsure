@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Routing;
 using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Identity;
 
@@ -57,15 +56,5 @@ public static class HostedIdentityConfiguration
         services.AddCascadingAuthenticationState();
 
         return services;
-    }
-
-    /// <summary>
-    /// Maps Identity API endpoints including passkey registration and sign-in.
-    /// </summary>
-    public static WebApplication MapHostedPasskeyEndpoints(this WebApplication app)
-    {
-        RouteGroupBuilder group = app.MapGroup("/identity");
-        group.MapIdentityApi<ApplicationUser>();
-        return app;
     }
 }

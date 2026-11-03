@@ -65,7 +65,6 @@ if (deployment.Mode == DeploymentMode.Hosted)
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseMiddleware<HostedFinancialDataAuthorizationMiddleware>();
-    app.MapHostedPasskeyEndpoints();
     app.MapHostedPasskeySignInEndpoints();
     app.MapHostedPasskeyStepUpEndpoints();
 }

@@ -6,7 +6,7 @@ namespace Potsure.Web.Validation;
 public static class UserInputSanitizer
 {
     private const int MaxLabelLength = 200;
-    private const long MaxUploadBytes = 20 * 1024 * 1024;
+    private const long MaxUploadBytes = 10 * 1024 * 1024;
 
     /// <summary>
     /// Trims and bounds free-text labels entered in forms.
