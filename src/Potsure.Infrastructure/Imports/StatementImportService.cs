@@ -5,6 +5,7 @@ using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Entities;
 using Potsure.Infrastructure.Persistence.Repositories;
 using Potsure.Infrastructure.Persistence.Tenancy;
+using Potsure.Infrastructure.Services;
 using Potsure.Statements;
 
 namespace Potsure.Infrastructure.StatementImport;
@@ -19,11 +20,77 @@ public sealed record StatementImportSummary(
     bool RequiresAccountConfirmation,
     string? AccountFingerprint);
 
+public sealed record StatementImportPreview(
+    MonzoColumnMappingPreview ColumnMapping,
+    int ParsedRowCount,
+    int ParseErrorCount,
+    bool RequiresAccountConfirmation,
+    string? AccountFingerprint,
+    IReadOnlyList<string> PreviewErrors);
+
 public sealed class StatementImportService(
     PotsureDbContext dbContext,
     StatementUploadRepository uploadRepository,
-    ICurrentOwnerAccessor ownerAccessor)
+    ICurrentOwnerAccessor ownerAccessor,
+    TransactionAttributionService attributionService)
 {
+    public async Task<StatementImportPreview> PreviewAsync(
+        Stream csvStream,
+        string _,
+        bool confirmAccount,
+        string? confirmedFingerprint,
+        CancellationToken cancellationToken = default)
+    {
+        string? tempPath = null;
+        try
+        {
+            tempPath = Path.GetTempFileName();
+            await using (FileStream tempStream = File.Create(tempPath))
+            {
+                await csvStream.CopyToAsync(tempStream, cancellationToken);
+            }
+
+            await using FileStream readStream = File.OpenRead(tempPath);
+            MonzoColumnMappingPreview mapping = await MonzoCsvParser.PreviewColumnMappingAsync(
+                readStream,
+                cancellationToken);
+
+            readStream.Seek(0, SeekOrigin.Begin);
+            MonzoParseResult parseResult = await MonzoCsvParser.ParseAsync(readStream, cancellationToken);
+
+            List<string> previewErrors = parseResult.Errors
+                .Select(e => $"Row {e.RowNumber}: {e.Reason}")
+                .ToList();
+
+            MonzoAccountAssociationEntity? association = await dbContext.MonzoAccounts
+                .AsNoTracking()
+                .SingleOrDefaultAsync(cancellationToken);
+
+            MonzoAccountValidationResult accountResult = MonzoAccountValidator.ValidateAssociation(
+                fileAccountFingerprint: confirmedFingerprint,
+                associatedAccountFingerprint: association?.AccountFingerprint,
+                explicitConfirmationProvided: confirmAccount);
+
+            bool requiresConfirmation =
+                accountResult.Outcome == MonzoAccountValidationOutcome.ConfirmationRequired;
+
+            return new StatementImportPreview(
+                mapping,
+                parseResult.Rows.Count,
+                parseResult.Errors.Count,
+                requiresConfirmation,
+                confirmedFingerprint,
+                previewErrors);
+        }
+        finally
+        {
+            if (tempPath is not null && File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
+    }
+
     public async Task<StatementImportSummary> ImportAsync(
         Stream csvStream,
         string fileName,
@@ -102,9 +169,6 @@ public sealed class StatementImportService(
                 if (kind is TransactionKind.InternalTransfer or TransactionKind.PotMovement)
                 {
                     transferExcluded++;
-                    skippedReasons.Add(
-                        $"Excluded {kind}: {row.TransactionDate} {row.Name}");
-                    continue;
                 }
 
                 TransactionDedupeKey key = TransactionDeduplicator.CreateKey(row);
@@ -149,7 +213,7 @@ public sealed class StatementImportService(
 
             ImportStatistics statistics = new(
                 entities.Count,
-                parseResult.Errors.Count + transferExcluded,
+                parseResult.Errors.Count,
                 dedupe.DuplicateCount,
                 transferExcluded);
 
@@ -160,6 +224,8 @@ public sealed class StatementImportService(
             await uploadRepository.SaveRememberedColumnMappingJsonAsync(
                 JsonSerializer.Serialize(MonzoCsvParser.StandardHeaders()),
                 cancellationToken);
+
+            await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
 
             return new StatementImportSummary(
                 upload.Id,

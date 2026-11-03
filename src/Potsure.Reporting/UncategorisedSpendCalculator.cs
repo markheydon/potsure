@@ -44,6 +44,6 @@ public static class UncategorisedSpendCalculator
         return total.RoundForReport();
     }
 
-    internal static bool IsExcludedTransferWithoutAttribution(TransactionKind kind) =>
+    public static bool IsExcludedTransferWithoutAttribution(TransactionKind kind) =>
         kind is TransactionKind.InternalTransfer or TransactionKind.PotMovement;
 }

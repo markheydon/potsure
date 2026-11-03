@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<OneOffCategorisationService>();
         services.AddScoped<ForecastHorizonService>();
         services.AddScoped<RecurrenceReviewService>();
+        services.AddScoped<UncategorisedTransactionQuery>();
         services.AddScoped<RecurringSummaryQuery>();
         services.AddScoped<PeriodReportService>();
         services.AddScoped<RunwayReportService>();

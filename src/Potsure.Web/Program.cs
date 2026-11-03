@@ -31,8 +31,8 @@ else
     builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
 }
 
-builder.Services.AddSingleton<ReauthenticationService>();
-builder.Services.AddSingleton<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
+builder.Services.AddScoped<ReauthenticationService>();
+builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
 

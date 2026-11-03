@@ -87,6 +87,26 @@ public sealed class TransactionAttributionService(
     }
 
     /// <summary>
+    /// Auto-attributes debits for every confirmed recurring expense pattern (FR-M010a).
+    /// </summary>
+    public async Task<int> AttributeAllConfirmedExpensesAsync(CancellationToken cancellationToken = default)
+    {
+        List<Guid> expenseIds = await dbContext.RecurringExpenses
+            .AsNoTracking()
+            .Where(e => e.State == PatternConfirmationState.Confirmed)
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+
+        int total = 0;
+        foreach (Guid expenseId in expenseIds)
+        {
+            total += await AttributeMatchingDebitsAsync(expenseId, cancellationToken);
+        }
+
+        return total;
+    }
+
+    /// <summary>
     /// Persists a manual attribution override for a single transaction.
     /// </summary>
     public async Task<AssignmentEntity> OverrideAttributionAsync(

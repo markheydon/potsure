@@ -23,6 +23,13 @@ else
         For reliable automatic detection, we recommend at least three months of statement history; you can still review patterns with less history, but suggestions may be fewer or less certain.
     </p>
 
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <BbAlert Variant="AlertVariant.Default">
+            <BbAlertDescription>@_statusMessage</BbAlertDescription>
+        </BbAlert>
+    }
+
     <section aria-labelledby="recurrence-suggested">
         <h2 id="recurrence-suggested">Suggested</h2>
         @if (_suggested.Count == 0)
@@ -34,11 +41,36 @@ else
             <ul class="potsure-review-list" role="list">
                 @foreach (RecurrenceReviewItem item in _suggested)
                 {
-                    <li>
+                    <li class="potsure-review-item">
                         <strong>@item.Label</strong>
                         — @(item.IsIncome ? "Income" : "Expense")
                         (@FormatCadence(item))
                         typical £@item.TypicalAmount.ToString("F2")
+                        @if (item.IsIncome)
+                        {
+                            IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
+                            <div>
+                                <label>Needs % <InputNumber @bind-Value="splits.Needs" /></label>
+                                <label>Wants % <InputNumber @bind-Value="splits.Wants" /></label>
+                                <label>Savings &amp; debt % <InputNumber @bind-Value="splits.SavingsDebt" /></label>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <label>
+                                    Category
+                                    <InputSelect @bind-Value="_expenseCategoryByLabel[item.Label]">
+                                        @foreach (CategoryOption category in _categories)
+                                        {
+                                            <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                                        }
+                                    </InputSelect>
+                                </label>
+                            </div>
+                        }
+                        <BbButton OnClick="() => ConfirmAsync(item)">Confirm</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" OnClick="() => RejectAsync(item)">Reject</BbButton>
                     </li>
                 }
             </ul>
@@ -54,9 +86,63 @@ else
                     <strong>@item.Label</strong>
                     — @item.State
                     (@FormatCadence(item))
+                    @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_mergeSelection.Contains(item.Label)"
+                                   @onchange="() => ToggleMergeSelection(item.Label)" />
+                            Include in merge
+                        </label>
+                    }
                 </li>
             }
         </ul>
+    </section>
+
+    <section aria-labelledby="recurrence-merge">
+        <h2 id="recurrence-merge">Merge expense patterns</h2>
+        <p class="potsure-muted">Select confirmed expenses above, then merge into one pattern.</p>
+        <BbInput @bind-Value="_mergeLabel" Placeholder="Merged vendor label (optional)" />
+        <label>
+            Category
+            <InputSelect @bind-Value="_mergeCategoryId">
+                @foreach (CategoryOption category in _categories)
+                {
+                    <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                }
+            </InputSelect>
+        </label>
+        <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
+    </section>
+
+    <section aria-labelledby="recurrence-split">
+        <h2 id="recurrence-split">Split expense pattern</h2>
+        <label>
+            Source pattern
+            <InputSelect @bind-Value="_splitSourceLabel">
+                <option value="">Select…</option>
+                @foreach (RecurrenceReviewItem item in _confirmedOrRejected.Where(i => !i.IsIncome && i.State == PatternConfirmationState.Confirmed))
+                {
+                    <option value="@item.Label">@item.Label</option>
+                }
+            </InputSelect>
+        </label>
+        <BbInput @bind-Value="_splitPartOneLabel" Placeholder="First part label" />
+        <InputSelect @bind-Value="_splitPartOneCategoryId">
+            @foreach (CategoryOption category in _categories)
+            {
+                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+            }
+        </InputSelect>
+        <BbInput @bind-Value="_splitPartTwoLabel" Placeholder="Second part label" />
+        <InputSelect @bind-Value="_splitPartTwoCategoryId">
+            @foreach (CategoryOption category in _categories)
+            {
+                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+            }
+        </InputSelect>
+        <BbButton OnClick="SplitPatternAsync">Split pattern</BbButton>
     </section>
 
     <nav aria-label="Related">

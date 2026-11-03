@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Infrastructure.Deletion;
 using Potsure.Infrastructure.Export;
+using Potsure.Web.Services;
 
 namespace Potsure.Web.Components.Privacy;
 
@@ -13,14 +14,77 @@ public partial class PrivacyDataPanel
     [Inject]
     private UserDataDeletionService DeletionService { get; set; } = null!;
 
+    [Inject]
+    private ReauthenticationService ReauthenticationService { get; set; } = null!;
+
     private ExportFormat _exportFormat = ExportFormat.JsonBundle;
     private bool _busy;
     private bool _confirmDelete;
+    private bool _showExportReauth;
+    private bool _showDeleteReauth;
+    private string _exportChallengePhrase = string.Empty;
+    private string _deleteChallengePhrase = string.Empty;
     private string? _exportMessage;
     private string? _deleteMessage;
     private string? _downloadBase64;
     private string? _downloadFileName;
     private string? _downloadContentType;
+
+    private const string ExportPhrase = "EXPORT";
+    private const string DeletePhrase = "DELETE";
+
+    private void BeginExport()
+    {
+        _exportMessage = null;
+        _downloadBase64 = null;
+        if (ReauthenticationService.IsReauthenticationValid)
+        {
+            _ = ExportAsync();
+            return;
+        }
+
+        _exportChallengePhrase = string.Empty;
+        _showExportReauth = true;
+    }
+
+    private void BeginDelete()
+    {
+        _deleteMessage = null;
+        if (ReauthenticationService.IsReauthenticationValid)
+        {
+            _ = DeleteAsync();
+            return;
+        }
+
+        _deleteChallengePhrase = string.Empty;
+        _showDeleteReauth = true;
+    }
+
+    private Task ConfirmExportReauthAsync()
+    {
+        if (!string.Equals(_exportChallengePhrase.Trim(), ExportPhrase, StringComparison.Ordinal))
+        {
+            _exportMessage = $"Type {ExportPhrase} to confirm export.";
+            return Task.CompletedTask;
+        }
+
+        ReauthenticationService.GrantReauthentication();
+        _showExportReauth = false;
+        return ExportAsync();
+    }
+
+    private Task ConfirmDeleteReauthAsync()
+    {
+        if (!string.Equals(_deleteChallengePhrase.Trim(), DeletePhrase, StringComparison.Ordinal))
+        {
+            _deleteMessage = $"Type {DeletePhrase} to confirm deletion.";
+            return Task.CompletedTask;
+        }
+
+        ReauthenticationService.GrantReauthentication();
+        _showDeleteReauth = false;
+        return DeleteAsync();
+    }
 
     private async Task ExportAsync()
     {
@@ -32,6 +96,7 @@ public partial class PrivacyDataPanel
             ExportResult? result = await ExportService.ExportAsync(_exportFormat);
             if (result is null)
             {
+                ReauthenticationService.RevokeReauthentication();
                 _exportMessage = "Export cancelled — reauthentication required.";
                 return;
             }
@@ -58,6 +123,11 @@ public partial class PrivacyDataPanel
         try
         {
             bool deleted = await DeletionService.DeleteAllFinancialDataAsync();
+            if (!deleted)
+            {
+                ReauthenticationService.RevokeReauthentication();
+            }
+
             _deleteMessage = deleted
                 ? "All financial data has been deleted."
                 : "Deletion cancelled — reauthentication required.";

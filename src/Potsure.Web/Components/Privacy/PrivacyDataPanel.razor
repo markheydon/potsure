@@ -18,7 +18,16 @@
             </InputSelect>
         </label>
     </div>
-    <BbButton Disabled="_busy" OnClick="ExportAsync">Export data</BbButton>
+    <BbButton Disabled="_busy" OnClick="BeginExport">Export data</BbButton>
+    @if (_showExportReauth)
+    {
+        <div class="potsure-reauth-panel" aria-labelledby="export-reauth-heading">
+            <h3 id="export-reauth-heading">Confirm export</h3>
+            <p>Type @ExportPhrase to confirm you want to download your financial data.</p>
+            <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
+            <BbButton Disabled="_busy" OnClick="ConfirmExportReauthAsync">Continue export</BbButton>
+        </div>
+    }
     @if (_exportMessage is not null)
     {
         <p aria-live="polite">@_exportMessage</p>
@@ -45,9 +54,20 @@
         <InputCheckbox @bind-Value="_confirmDelete" />
         I understand this will permanently delete my financial data
     </label>
-    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="DeleteAsync">
+    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="BeginDelete">
         Delete all financial data
     </BbButton>
+    @if (_showDeleteReauth)
+    {
+        <div class="potsure-reauth-panel" aria-labelledby="delete-reauth-heading">
+            <h3 id="delete-reauth-heading">Confirm deletion</h3>
+            <p>Type @DeletePhrase to confirm permanent deletion.</p>
+            <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
+            <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy" OnClick="ConfirmDeleteReauthAsync">
+                Continue deletion
+            </BbButton>
+        </div>
+    }
     @if (_deleteMessage is not null)
     {
         <p aria-live="polite">@_deleteMessage</p>

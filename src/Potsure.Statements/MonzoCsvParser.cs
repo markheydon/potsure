@@ -127,4 +127,32 @@ public static class MonzoCsvParser
     }
 
     public static IReadOnlyList<string> StandardHeaders() => RequiredHeaders;
+
+    /// <summary>
+    /// Reads CSV headers and validates required Monzo columns for mapping confirmation (FR-M002).
+    /// </summary>
+    public static async Task<MonzoColumnMappingPreview> PreviewColumnMappingAsync(
+        Stream csvStream,
+        CancellationToken cancellationToken = default)
+    {
+        CsvReaderOptions options = CsvReaderOptions.Default with
+        {
+            HasHeader = true,
+            MissingField = CsvMissingFieldHandling.ReturnEmpty,
+        };
+
+        using CsvReader csv = CsvReader.Create(csvStream, options, leaveOpen: true);
+        await csv.ReadHeaderAsync(cancellationToken);
+        if (csv.Headers.Count == 0)
+        {
+            return new MonzoColumnMappingPreview([], RequiredHeaders, RequiredHeaders, false);
+        }
+
+        IReadOnlyList<string> headers = csv.Headers;
+        List<string> missing = RequiredHeaders
+            .Where(required => !headers.Contains(required, StringComparer.Ordinal))
+            .ToList();
+
+        return new MonzoColumnMappingPreview(headers, RequiredHeaders, missing, missing.Count == 0);
+    }
 }

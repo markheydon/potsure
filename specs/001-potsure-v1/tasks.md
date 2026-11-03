@@ -407,3 +407,17 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - Hosted schema: `PublishAsMigrationScript()` / controlled job (`T116`) — not `RunDatabaseUpdateOnStart` on publish
 - Retire placeholder `src/Potsure/` when T002 completes
 - **FR-S002** (transaction-level actual-spend drill-down) is Should-level; deferred unless explicitly pulled into scope — category health (`T073`) covers aggregate actuals only
+
+---
+
+## Phase 16: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-03) between spec intent and present codebase behaviour.
+
+- [X] T119 [US6] Add transaction-level one-off categorisation UI (and navigation from category health uncategorised warning) wired to `OneOffCategorisationService` for expense debits, refunds, and credits per FR-M037 (missing)
+- [X] T120 [US2] Implement interactive confirm, reject, merge, and split flows on `DetectionReview` calling `IncomePatternService`, `ExpensePatternService`, and `PatternMergeSplitService` per FR-M008 and US2 acceptance scenarios (partial)
+- [X] T121 [US2] Run `TransactionAttributionService` auto-attribution after successful statement import and when expense patterns are confirmed so FR-M010a and SC-003 apply without manual service calls (partial)
+- [X] T122 [US1] Add Monzo column mapping preview with user confirm or adjust step in `ImportWizard` before `StatementImportService` persists rows per FR-M002 and US1/AC1 (partial)
+- [X] T123 [US1] Persist internal transfer and pot movement rows from imports (excluded from uncategorised and category actuals by default) so users can one-off categorise them as spend per FR-M017 and [contracts/monzo-import.md](contracts/monzo-import.md) (partial)
+- [X] T124 [US10] Replace stub `ReauthenticationService` with a real reauthentication challenge before export and permanent deletion per T026 and export/delete UI flows (partial)
+- [X] T125 [US12] Harden `tests/Potsure.E2E/KeyJourneysTests.cs` to assert import → recurring → category health → export when `POTSURE_E2E_BASE_URL` is set (or document CI wiring) per Constitution II and T095 (partial)

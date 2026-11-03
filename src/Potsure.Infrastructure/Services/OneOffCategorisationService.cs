@@ -24,6 +24,8 @@ public sealed class OneOffCategorisationService(
         TransactionKind.ExpenseDebit,
         TransactionKind.RefundCredit,
         TransactionKind.IncomeCredit,
+        TransactionKind.InternalTransfer,
+        TransactionKind.PotMovement,
     ];
 
     /// <summary>

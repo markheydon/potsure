@@ -28,6 +28,48 @@ else
         </BbAlert>
     }
 
+    @if (_awaitingMappingConfirmation && _preview is not null)
+    {
+        <section class="potsure-import-mapping" aria-labelledby="mapping-heading">
+            <h2 id="mapping-heading">Confirm column mapping</h2>
+            <p class="potsure-muted">
+                We detected a Monzo export with @_preview.ParsedRowCount row(s) ready to import
+                (@_preview.ParseErrorCount row(s) skipped due to validation errors).
+            </p>
+            <table>
+                <caption>Required columns</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Column</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (string header in _preview.ColumnMapping.RequiredHeaders)
+                    {
+                        bool present = !_preview.ColumnMapping.MissingRequiredHeaders.Contains(header);
+                        <tr>
+                            <th scope="row">@header</th>
+                            <td>@(present ? "Detected" : "Missing")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (_preview.PreviewErrors.Count > 0)
+            {
+                <details>
+                    <summary>Preview validation messages (@_preview.PreviewErrors.Count)</summary>
+                    <ul>
+                        @foreach (string message in _preview.PreviewErrors.Take(20))
+                        {
+                            <li>@message</li>
+                        }
+                    </ul>
+                </details>
+            }
+        </section>
+    }
+
     <section class="potsure-import-panel" aria-labelledby="import-heading">
         <BbCard>
             <BbCardHeader>
@@ -54,6 +96,14 @@ else
                               Disabled="@(!_accountConfirmed || _pendingFile is null)"
                               OnClick="ConfirmAccountAndImportAsync">
                         Confirm and import
+                    </BbButton>
+                }
+                else if (_awaitingMappingConfirmation)
+                {
+                    <BbButton Variant="ButtonVariant.Default"
+                              Disabled="@(_pendingFile is null)"
+                              OnClick="ConfirmMappingAsync">
+                        Confirm mapping and import
                     </BbButton>
                 }
                 else
