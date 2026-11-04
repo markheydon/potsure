@@ -12,12 +12,21 @@ public static class HostedReturnUrlValidator
             return fallback;
         }
 
-        if (!IsLocalUrl(returnUrl))
+        if (returnUrl.Contains("://", StringComparison.Ordinal)
+            || returnUrl.StartsWith("//", StringComparison.Ordinal)
+            || returnUrl.StartsWith("/\\", StringComparison.Ordinal))
         {
             return fallback;
         }
 
-        return returnUrl;
+        string path = returnUrl.StartsWith('/') ? returnUrl : $"/{returnUrl}";
+
+        if (!IsLocalUrl(path))
+        {
+            return fallback;
+        }
+
+        return path;
     }
 
     private static bool IsLocalUrl(string url)

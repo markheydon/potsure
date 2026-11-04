@@ -8,6 +8,10 @@
         {
             returnUrl = "/";
         }
+        else
+        {
+            returnUrl = HostedReturnUrlValidator.Normalize(returnUrl);
+        }
 
         string signInUrl = Navigation.GetUriWithQueryParameters(
             Navigation.ToAbsoluteUri("/account/sign-in").AbsolutePath,

@@ -10,6 +10,8 @@ public sealed class HostedReturnUrlValidatorTests
     [InlineData("https://evil.example/", "/")]
     [InlineData("//evil.example/", "/")]
     [InlineData("/\\evil", "/")]
+    [InlineData("import", "/import")]
+    [InlineData("Account/Lockout", "/Account/Lockout")]
     public void Normalize_AcceptsLocalPathsOnly(string? input, string expected)
     {
         string actual = HostedReturnUrlValidator.Normalize(input);
