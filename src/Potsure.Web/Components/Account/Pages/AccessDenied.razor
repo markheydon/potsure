@@ -3,13 +3,9 @@
 
 <PageTitle>Access denied</PageTitle>
 
-<BbCard Class="potsure-auth-narrow">
-    <BbCardHeader>
-        <BbCardTitle>Access denied</BbCardTitle>
-    </BbCardHeader>
-    <BbCardContent>
-        <BbAlert Variant="AlertVariant.Danger">
-            <BbAlertDescription>You do not have access to this resource.</BbAlertDescription>
-        </BbAlert>
-    </BbCardContent>
-</BbCard>
+<AuthFormCard Title="Access denied"
+              Description="You do not have permission to view this page.">
+    <BbAlert Variant="AlertVariant.Danger">
+        <BbAlertDescription>You do not have access to this resource.</BbAlertDescription>
+    </BbAlert>
+</AuthFormCard>

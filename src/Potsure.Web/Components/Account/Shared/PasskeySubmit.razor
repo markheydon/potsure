@@ -11,7 +11,11 @@
 </passkey-submit>
 
 @code {
-    private const string PrimaryActionClass = "potsure-auth-primary-action";
+    private const string PrimaryButtonClass =
+        "w-full inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+    private const string OutlineButtonClass =
+        "w-full inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
     private AntiforgeryTokenSet? tokens;
 
@@ -30,6 +34,9 @@
     public string? EmailName { get; set; }
 
     [Parameter]
+    public bool Outline { get; set; }
+
+    [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
     [Parameter(CaptureUnmatchedValues = true)]
@@ -43,13 +50,10 @@
                 ? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
                 : new Dictionary<string, object>(AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
 
-            attrs.TryGetValue("class", out var existingClass);
-            var classText = existingClass?.ToString();
-            attrs["class"] = string.IsNullOrWhiteSpace(classText)
-                ? PrimaryActionClass
-                : classText.Contains(PrimaryActionClass, StringComparison.Ordinal)
-                    ? classText
-                    : $"{classText} {PrimaryActionClass}";
+            if (!attrs.ContainsKey("class"))
+            {
+                attrs["class"] = Outline ? OutlineButtonClass : PrimaryButtonClass;
+            }
 
             return attrs;
         }

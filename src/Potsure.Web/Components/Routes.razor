@@ -10,7 +10,9 @@
                 }
                 else
                 {
-                    <p role="alert">You are not authorised to access this resource.</p>
+                    <BbAlert Variant="AlertVariant.Danger">
+                        <BbAlertDescription>You are not authorised to access this resource.</BbAlertDescription>
+                    </BbAlert>
                 }
             </NotAuthorized>
         </AuthorizeRouteView>

@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,23 +8,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["styles/theme.css"]" />
+    <link rel="icon" href="@Assets["favicon.svg"]" type="image/svg+xml" />
+    <link rel="stylesheet" href="@Assets["styles/themes/default.css"]" />
     <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
+    <link rel="stylesheet" href="_content/BlazorBlueprint.Components/css/themes.css" />
     <link rel="stylesheet" href="@Assets["css/app.css"]" />
-    <link rel="stylesheet" href="@Assets["Potsure.Web.styles.css"]" />
-    <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
     <ImportMap />
     <HeadOutlet />
+    <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
 </head>
 
 <body class="font-sans antialiased">
-    <Routes />
-    <ReconnectModal />
+    <Routes @rendermode="InteractiveServer" />
 
     <div id="blazor-error-ui" class="hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-destructive text-destructive-foreground" data-nosnippet>
-        An unhandled error has occurred.
-        <a href="." class="underline reload">Reload</a>
-        <span class="dismiss cursor-pointer absolute right-3 top-2" role="button" tabindex="0">Dismiss</span>
+        An error has occurred. This application may no longer respond until reloaded.
+        <a href="" class="underline reload">Reload</a>
     </div>
 
     <script src="@Assets["_framework/blazor.web.js"]"></script>

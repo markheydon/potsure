@@ -14,42 +14,40 @@
 <StatusMessage />
 @if (currentLogins?.Count > 0)
 {
-    <h3>Registered Logins</h3>
-    <table>
-        <tbody>
-            @foreach (var login in currentLogins)
-            {
-                <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
-                        @if (showRemoveButton)
-                        {
-                            <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <div>
-                                    <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
-                                    <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <BbButton Type="ButtonType.Submit" title="@($"Remove this {login.ProviderDisplayName} login from your account")">Remove</BbButton>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <BbDataTable TData="UserLoginInfo"
+                 Data="@currentLogins"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Registered external logins">
+        <Columns>
+            <BbDataTableColumn TData="UserLoginInfo" TValue="string"
+                               Header="Provider"
+                               Property="@(login => login.ProviderDisplayName)" />
+            <BbDataTableColumn TData="UserLoginInfo" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="login">
+                    @if (showRemoveButton)
+                    {
+                        <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
+                            <AntiforgeryToken />
+                            <div>
+                                <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
+                                <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
+                                <BbButton Type="ButtonType.Submit" title="@($"Remove this {login.ProviderDisplayName} login from your account")">Remove</BbButton>
+                            </div>
+                        </form>
+                    }
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
 }
 @if (otherLogins?.Count > 0)
 {
-    <h4>Add another service to log in.</h4>
-    <hr />
+    <BbSeparator Class="mb-4" />
     <form action="Account/Manage/LinkExternalLogin" method="post">
         <AntiforgeryToken />
-        <div class="potsure-passkey-actions">
+        <div class="flex flex-wrap gap-2">
             @foreach (var provider in otherLogins)
             {
                 <BbButton Type="ButtonType.Submit"

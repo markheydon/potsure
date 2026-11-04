@@ -10,13 +10,15 @@
 
 @if (_isHosted)
 {
-    <p>Redirecting to sign in…</p>
+    <PotsureLoadingState Message="Redirecting to sign in…" />
 }
 else
 {
-    <h1>Potsure</h1>
-    <p>Budgeting and statement import for your Monzo exports.</p>
-    <p>Use the navigation links to import statements, plan pots, and view reports.</p>
+    <PotsurePageHeader Title="Potsure"
+                       Description="Budgeting and statement import for your Monzo exports."
+                       HeadingLevel="1"
+                       Class="mb-4" />
+    <BbTypographyMuted>Use the navigation links to import statements, plan pots, and view reports.</BbTypographyMuted>
 }
 
 @code {

@@ -3,13 +3,14 @@
 
 <PageTitle>Export and delete data</PageTitle>
 
-<h1>Export and delete data</h1>
+<PotsurePageHeader Title="Export and delete data"
+                   Description="Export your financial data or permanently delete it. You will be asked to reauthenticate before either action completes."
+                   HeadingLevel="1"
+                   Class="mb-4" />
 
-<p>Export your financial data or permanently delete it. You will be asked to reauthenticate before either action completes.</p>
-
-<section aria-labelledby="export-heading">
-    <h2 id="export-heading">Export</h2>
-    <div class="potsure-form-grid">
+<section aria-label="Export">
+    <PotsurePageHeader Title="Export" HeadingLevel="2" Class="mb-4" />
+    <div class="grid gap-4 max-w-2xl">
         <div>
             <BbLabel>Format</BbLabel>
             <BbSelect TValue="ExportFormat" @bind-Value="_exportFormat">
@@ -26,11 +27,11 @@
     <BbButton Disabled="_busy" OnClick="BeginExport">Export data</BbButton>
     @if (_showExportReauth)
     {
-        <div class="potsure-reauth-panel" aria-labelledby="export-reauth-heading">
-            <h3 id="export-reauth-heading">Confirm export</h3>
+        <div class="rounded-lg border p-4 space-y-4" aria-label="Confirm export">
+            <PotsurePageHeader Title="Confirm export" HeadingLevel="3" Class="mb-4" />
             @if (IsHosted)
             {
-                <p>Enter your current account password to confirm export.</p>
+                <BbTypographyP>Enter your current account password to confirm export.</BbTypographyP>
                 <BbInput Type="InputType.Password"
                          @bind-Value="_hostedPassword"
                          Autocomplete="current-password"
@@ -38,7 +39,7 @@
             }
             else
             {
-                <p>Type @ExportPhrase to confirm you want to download your financial data.</p>
+                <BbTypographyP>Type @ExportPhrase to confirm you want to download your financial data.</BbTypographyP>
                 <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
             }
             <BbButton Disabled="_busy" OnClick="ConfirmExportReauthAsync">Continue export</BbButton>
@@ -46,20 +47,21 @@
     }
     @if (_exportMessage is not null)
     {
-        <p aria-live="polite">@_exportMessage</p>
+        <BbTypographyP AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">@_exportMessage</BbTypographyP>
     }
     @if (_downloadBase64 is not null && _downloadFileName is not null)
     {
-        <p>
-            <a download="@_downloadFileName" href="@($"data:{_downloadContentType};base64,{_downloadBase64}")">
+        <BbTypographyP>
+            <BbLink Href="@($"data:{_downloadContentType};base64,{_downloadBase64}")"
+                    AdditionalAttributes="@(new Dictionary<string, object> { ["download"] = _downloadFileName! })">
                 Download @_downloadFileName
-            </a>
-        </p>
+            </BbLink>
+        </BbTypographyP>
     }
 </section>
 
-<section aria-labelledby="delete-heading">
-    <h2 id="delete-heading">Permanent deletion</h2>
+<section aria-label="Permanent deletion">
+    <PotsurePageHeader Title="Permanent deletion" HeadingLevel="2" Class="mb-4" />
     <BbAlert Variant="AlertVariant.Warning">
         <BbAlertTitle>Irreversible</BbAlertTitle>
         <BbAlertDescription>
@@ -74,11 +76,11 @@
     </BbButton>
     @if (_showDeleteReauth)
     {
-        <div class="potsure-reauth-panel" aria-labelledby="delete-reauth-heading">
-            <h3 id="delete-reauth-heading">Confirm deletion</h3>
+        <div class="rounded-lg border p-4 space-y-4" aria-label="Confirm deletion">
+            <PotsurePageHeader Title="Confirm deletion" HeadingLevel="3" Class="mb-4" />
             @if (IsHosted)
             {
-                <p>Enter your current account password to confirm permanent deletion.</p>
+                <BbTypographyP>Enter your current account password to confirm permanent deletion.</BbTypographyP>
                 <BbInput Type="InputType.Password"
                          @bind-Value="_hostedPassword"
                          Autocomplete="current-password"
@@ -86,7 +88,7 @@
             }
             else
             {
-                <p>Type @DeletePhrase to confirm permanent deletion.</p>
+                <BbTypographyP>Type @DeletePhrase to confirm permanent deletion.</BbTypographyP>
                 <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
             }
             <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy" OnClick="ConfirmDeleteReauthAsync">
@@ -96,6 +98,6 @@
     }
     @if (_deleteMessage is not null)
     {
-        <p aria-live="polite">@_deleteMessage</p>
+        <BbTypographyP AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">@_deleteMessage</BbTypographyP>
     }
 </section>

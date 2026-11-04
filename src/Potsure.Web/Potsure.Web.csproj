@@ -16,7 +16,6 @@
     </PackageReference>
     <PackageReference Include="BlazorBlueprint.Components" />
     <PackageReference Include="BlazorBlueprint.Icons.Lucide" />
-    <PackageReference Include="BlazorBlueprint.Primitives" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>

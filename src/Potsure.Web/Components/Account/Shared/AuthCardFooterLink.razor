@@ -1,0 +1,15 @@
+<div class="w-full text-center text-sm text-muted-foreground">
+    @Prompt
+    <BbLink Href="@Href" Class="text-primary underline-offset-4 hover:underline">@LinkText</BbLink>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Prompt { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public string LinkText { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public string Href { get; set; } = "";
+}

@@ -13,7 +13,6 @@
 
 <StatusMessage Message="@message" />
 
-<h3>Delete Personal Data</h3>
 
 <BbAlert Variant="AlertVariant.Warning">
     <BbAlertDescription>
@@ -21,22 +20,28 @@
     </BbAlertDescription>
 </BbAlert>
 
-<BbCard Class="potsure-auth-narrow">
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="text-2xl">Delete personal data</BbCardTitle>
+        <BbCardDescription>Permanently remove your account and all associated data.</BbCardDescription>
+    </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <ValidationSummary Class="text-sm text-destructive" role="alert" />
             @if (requirePassword)
             {
-                <div class="potsure-form-grid">
-                    <label>
-                        Password
-                        <BbInput Type="InputType.Password" @bind-Value="Input.Password" Autocomplete="current-password" Placeholder="Please enter your password." />
-                        <ValidationMessage For="() => Input.Password" class="text-danger" />
-                    </label>
+                <div class="grid gap-4 max-w-2xl">
+                    <BbFormFieldInput TValue="string"
+                                      @bind-Value="Input.Password"
+                                      Label="Password"
+                                      Autocomplete="current-password"
+                                      Placeholder="Please enter your password."
+                                      Type="InputType.Password"
+                                      Required="true" />
                 </div>
             }
-            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive" Class="potsure-auth-primary-action">Delete data and close my account</BbButton>
+            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive" Class="w-full mt-2">Delete data and close my account</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

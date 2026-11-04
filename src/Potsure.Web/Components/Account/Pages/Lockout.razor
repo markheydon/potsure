@@ -3,13 +3,12 @@
 
 <PageTitle>Locked out</PageTitle>
 
-<BbCard Class="potsure-auth-narrow">
-    <BbCardHeader>
-        <BbCardTitle>Locked out</BbCardTitle>
-    </BbCardHeader>
-    <BbCardContent>
-        <BbAlert Variant="AlertVariant.Danger">
-            <BbAlertDescription>This account has been locked out, please try again later.</BbAlertDescription>
-        </BbAlert>
-    </BbCardContent>
-</BbCard>
+<AuthFormCard Title="Locked out"
+              Description="This account has been locked out. Please try again later."
+              FooterPrompt="Return to "
+              FooterLinkText="Log in"
+              FooterHref="Account/Login">
+    <BbAlert Variant="AlertVariant.Danger">
+        <BbAlertDescription>This account has been locked out, please try again later.</BbAlertDescription>
+    </BbAlert>
+</AuthFormCard>

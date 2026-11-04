@@ -1,0 +1,12 @@
+<div class="flex flex-col items-center justify-center gap-3 py-8" role="status">
+    <BbSpinner Size="SpinnerSize.Large" AriaLabel="@Message" />
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <BbTypographyMuted>@Message</BbTypographyMuted>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = "Loading…";
+}

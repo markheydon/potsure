@@ -3,47 +3,17 @@
 
 @inject SignInManager<ApplicationUser> SignInManager
 
-<nav aria-label="Manage account">
-    <ul class="potsure-manage-nav">
-        <li>
-            <NavLink href="Account/Manage" Match="NavLinkMatch.All" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Profile</BbButton>
-            </NavLink>
-        </li>
-        <li>
-            <NavLink href="Account/Manage/Email" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Email</BbButton>
-            </NavLink>
-        </li>
-        <li>
-            <NavLink href="Account/Manage/ChangePassword" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Password</BbButton>
-            </NavLink>
-        </li>
-        @if (hasExternalLogins)
-        {
-            <li>
-                <NavLink href="Account/Manage/ExternalLogins" ActiveClass="active">
-                    <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">External logins</BbButton>
-                </NavLink>
-            </li>
-        }
-        <li>
-            <NavLink href="Account/Manage/TwoFactorAuthentication" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Two-factor authentication</BbButton>
-            </NavLink>
-        </li>
-        <li>
-            <NavLink href="Account/Manage/Passkeys" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Passkeys</BbButton>
-            </NavLink>
-        </li>
-        <li>
-            <NavLink href="Account/Manage/PersonalData" ActiveClass="active">
-                <BbButton Variant="ButtonVariant.Ghost" Type="ButtonType.Button" Class="w-full justify-start">Personal data</BbButton>
-            </NavLink>
-        </li>
-    </ul>
+<nav aria-label="Manage account" class="flex flex-col gap-1">
+    <BbButton Href="Account/Manage" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Profile</BbButton>
+    <BbButton Href="Account/Manage/Email" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Email</BbButton>
+    <BbButton Href="Account/Manage/ChangePassword" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Password</BbButton>
+    @if (hasExternalLogins)
+    {
+        <BbButton Href="Account/Manage/ExternalLogins" Variant="ButtonVariant.Ghost" Class="w-full justify-start">External logins</BbButton>
+    }
+    <BbButton Href="Account/Manage/TwoFactorAuthentication" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Two-factor authentication</BbButton>
+    <BbButton Href="Account/Manage/Passkeys" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Passkeys</BbButton>
+    <BbButton Href="Account/Manage/PersonalData" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Personal data</BbButton>
 </nav>
 
 @code {

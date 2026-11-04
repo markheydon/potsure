@@ -6,28 +6,50 @@
         <BbCardDescription>Upload @Summary.UploadId</BbCardDescription>
     </BbCardHeader>
     <BbCardContent>
-        <dl class="potsure-summary-stats">
-            <div><dt>Imported</dt><dd>@Summary.ImportedCount</dd></div>
-            <div><dt>Skipped</dt><dd>@Summary.SkippedCount</dd></div>
-            <div><dt>Duplicates</dt><dd>@Summary.DedupedCount</dd></div>
-            <div><dt>Transfers excluded</dt><dd>@Summary.TransferExcludedCount</dd></div>
-        </dl>
+        <BbItemGroup Class="grid gap-2 sm:grid-cols-2">
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>Imported</BbItemTitle>
+                    <BbItemDescription>@Summary.ImportedCount</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>Skipped</BbItemTitle>
+                    <BbItemDescription>@Summary.SkippedCount</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>Duplicates</BbItemTitle>
+                    <BbItemDescription>@Summary.DedupedCount</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>Transfers excluded</BbItemTitle>
+                    <BbItemDescription>@Summary.TransferExcludedCount</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+        </BbItemGroup>
 
         @if (Summary.SkippedReasons.Count > 0)
         {
-            <h2>Skipped rows</h2>
-            <ul>
+            <PotsurePageHeader Title="Skipped rows" HeadingLevel="2" Class="mb-4" />
+            <BbItemGroup>
                 @foreach (string reason in Summary.SkippedReasons)
                 {
-                    <li>@reason</li>
+                    <BbItem>
+                        <BbItemTitle>@reason</BbItemTitle>
+                    </BbItem>
                 }
-            </ul>
+            </BbItemGroup>
         }
     </BbCardContent>
     <BbCardFooter>
-        <p class="potsure-muted potsure-import-tip">
+        <BbTypographyMuted>
             Tip: importing about three months of Monzo history helps Potsure suggest recurring income and expenses more reliably. Shorter history is fine for getting started.
-        </p>
+        </BbTypographyMuted>
         <BbButton Variant="ButtonVariant.Outline" OnClick="OnImportAnother">
             Import another file
         </BbButton>

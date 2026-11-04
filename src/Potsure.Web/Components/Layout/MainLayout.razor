@@ -3,15 +3,15 @@
 <div class="relative min-h-screen flex flex-col">
     <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div class="container flex h-14 items-center gap-2 flex-wrap">
-            <a href="/" class="flex items-center space-x-2 shrink-0">
+            <BbLink Href="/" Class="flex items-center space-x-2 shrink-0 no-underline">
                 <LucideIcon Name="piggy-bank" Size="24" Class="text-primary" />
-                <span class="font-bold">Potsure</span>
-            </a>
+                <BbTypographySmall Class="font-bold">Potsure</BbTypographySmall>
+            </BbLink>
 
             <PrimaryNav />
 
             <div class="flex shrink-0 items-center justify-end gap-1">
-                <BbDarkModeToggle Variant="ButtonVariant.Ghost" @rendermode="InteractiveServer" />
+                <BbDarkModeToggle Variant="ButtonVariant.Ghost" />
             </div>
         </div>
     </header>
@@ -21,12 +21,12 @@
     </main>
 
     <footer class="border-t py-4">
-        <div class="container text-sm text-muted-foreground">
-            Potsure — budgeting from your Monzo exports
+        <div class="container">
+            <BbTypographyMuted>Potsure — budgeting from your Monzo exports</BbTypographyMuted>
         </div>
     </footer>
 </div>
 
-<BbToastProvider Position="ToastPosition.BottomRight" @rendermode="InteractiveServer" />
-<BbDialogProvider @rendermode="InteractiveServer" />
-<BbPortalHost @rendermode="InteractiveServer" />
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<BbDialogProvider />
+<BbPortalHost />

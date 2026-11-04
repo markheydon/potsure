@@ -12,32 +12,23 @@
 
 <PageTitle>Recovery code verification</PageTitle>
 
-<h1>Recovery code verification</h1>
-
-<BbCard Class="potsure-auth-narrow">
-    <BbCardHeader>
-        <BbCardTitle>Recovery code</BbCardTitle>
-        <BbCardDescription>
-            You have requested to log in with a recovery code. This login will not be remembered until you provide
-            an authenticator app code at log in or disable 2FA and log in again.
-        </BbCardDescription>
-    </BbCardHeader>
-    <BbCardContent>
-        <StatusMessage Message="@message" />
-        <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="potsure-form-grid">
-                <label>
-                    Recovery code
-                    <BbInput @bind-Value="Input.RecoveryCode" Autocomplete="off" Placeholder="Recovery code" />
-                    <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
-                </label>
-            </div>
-            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Log in</BbButton>
-        </EditForm>
-    </BbCardContent>
-</BbCard>
+<AuthFormCard Title="Recovery code verification"
+              Description="Enter a recovery code to log in. This login will not be remembered until you provide an authenticator app code or disable 2FA.">
+    <StatusMessage Message="@message" />
+    <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <DataAnnotationsValidator />
+        <ValidationSummary Class="text-sm text-destructive" role="alert" />
+        <div class="space-y-4">
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.RecoveryCode"
+                              Label="Recovery code"
+                              Autocomplete="off"
+                              Placeholder="Recovery code"
+                              Required="true" />
+            <BbButton Type="ButtonType.Submit" Class="w-full">Log in</BbButton>
+        </div>
+    </EditForm>
+</AuthFormCard>
 
 @code {
     private string? message;

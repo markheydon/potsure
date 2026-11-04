@@ -14,7 +14,6 @@
 
 <PageTitle>Manage email</PageTitle>
 
-<h3>Manage email</h3>
 
 <StatusMessage Message="@message"/>
 
@@ -22,35 +21,41 @@
     <AntiforgeryToken />
 </form>
 
-<BbCard Class="potsure-auth-narrow">
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="text-2xl">Manage email</BbCardTitle>
+        <BbCardDescription>Update or verify your email address.</BbCardDescription>
+    </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="potsure-form-grid">
+            <ValidationSummary Class="text-sm text-destructive" role="alert" />
+            <div class="grid gap-4 max-w-2xl">
                 @if (isEmailConfirmed)
                 {
-                    <label>
-                        Email
+                    <div class="grid gap-1.5 mb-4">
+                        <BbLabel>Email</BbLabel>
                         <BbInput Value="@email" Disabled="true" Placeholder="Enter your email" />
-                        <span class="potsure-muted">Verified</span>
-                    </label>
+                        <BbTypographyMuted>Verified</BbTypographyMuted>
+                    </div>
                 }
                 else
                 {
-                    <label>
-                        Email
+                    <div class="grid gap-1.5 mb-4">
+                        <BbLabel>Email</BbLabel>
                         <BbInput Value="@email" Disabled="true" Placeholder="Enter your email" />
-                    </label>
+                    </div>
                     <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Link" AdditionalAttributes="@(new Dictionary<string, object> { ["form"] = "send-verification-form" })">Send verification email</BbButton>
                 }
-                <label>
-                    New email
-                    <BbInput @bind-Value="Input.NewEmail" Autocomplete="email" Placeholder="Enter a new email" />
-                    <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
-                </label>
+                <BbFormFieldInput TValue="string"
+                                  @bind-Value="Input.NewEmail"
+                                  Label="New email"
+                                  Autocomplete="email"
+                                  Placeholder="Enter a new email"
+                                  Type="InputType.Email"
+                                  Required="true" />
             </div>
-            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Change email</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Change email</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

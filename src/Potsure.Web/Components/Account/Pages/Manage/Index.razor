@@ -8,31 +8,51 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Edit profile</PageTitle>
 
-<h3>Profile</h3>
 <StatusMessage />
 
-<BbCard Class="potsure-auth-narrow">
+<BbCard Class="w-full max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle>Profile details</BbCardTitle>
+        <BbCardTitle Class="text-2xl">Edit profile</BbCardTitle>
+        <BbCardDescription>Update your personal information.</BbCardDescription>
     </BbCardHeader>
-    <BbCardContent>
+    <BbCardContent Class="space-y-6">
+        <BbSeparator />
+        <div class="flex items-center gap-4">
+            <BbAvatar Size="AvatarSize.Large">
+                <BbAvatarFallback>@ProfileInitials</BbAvatarFallback>
+            </BbAvatar>
+        </div>
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="potsure-form-grid">
-                <label>
-                    Username
-                    <BbInput Value="@username" Disabled="true" Placeholder="Username" />
-                </label>
-                <label>
-                    Phone number
-                    <BbInput @bind-Value="Input.PhoneNumber" Placeholder="Enter your phone number" />
-                    <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-                </label>
+            <ValidationSummary Class="text-sm text-destructive" role="alert" />
+            <div class="space-y-4">
+                <div class="grid gap-2">
+                    <BbLabel For="profile-username">Username</BbLabel>
+                    <BbInput Id="profile-username" Value="@username" Disabled="true" Placeholder="Username" />
+                </div>
+                <div class="space-y-2">
+                    <div class="grid gap-2">
+                        <BbLabel For="profile-email">Email</BbLabel>
+                        <BbInput Id="profile-email" Value="@email" Disabled="true" Placeholder="Email" />
+                    </div>
+                    <BbTypographyMuted Class="text-sm">This is your primary email.</BbTypographyMuted>
+                    <BbTypographyMuted Class="text-sm">
+                        To change it, go to
+                        <BbLink Href="Account/Manage/Email" Class="underline-offset-4 hover:underline">Manage email</BbLink>.
+                    </BbTypographyMuted>
+                </div>
+                <BbFormFieldInput TValue="string"
+                                  @bind-Value="Input.PhoneNumber"
+                                  Label="Phone number"
+                                  Placeholder="Enter your phone number" />
             </div>
-            <BbButton Type="ButtonType.Submit">Save</BbButton>
+            <BbSeparator Class="my-6" />
+            <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <BbButton Variant="ButtonVariant.Outline" Href="/">Cancel</BbButton>
+                <BbButton Type="ButtonType.Submit">Save changes</BbButton>
+            </div>
         </EditForm>
     </BbCardContent>
 </BbCard>
@@ -40,6 +60,7 @@
 @code {
     private ApplicationUser? user;
     private string? username;
+    private string? email;
     private string? phoneNumber;
 
     [CascadingParameter]
@@ -47,6 +68,8 @@
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = default!;
+
+    private string ProfileInitials => GetInitials(username ?? email);
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,6 +83,7 @@
         }
 
         username = await UserManager.GetUserNameAsync(user);
+        email = await UserManager.GetEmailAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;
@@ -85,6 +109,23 @@
 
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+    }
+
+    private static string GetInitials(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "?";
+        }
+
+        var localPart = value.Contains('@', StringComparison.Ordinal)
+            ? value.Split('@')[0]
+            : value;
+
+        var letters = localPart.Where(char.IsLetterOrDigit).Take(2).ToArray();
+        return letters.Length == 0
+            ? "?"
+            : new string(letters).ToUpperInvariant();
     }
 
     private sealed class InputModel

@@ -3,11 +3,11 @@
 
 <PageTitle>Budget balance</PageTitle>
 
-<h1>Budget balance</h1>
+<PotsurePageHeader Title="Budget balance" HeadingLevel="1" Class="mb-4" />
 
 @if (_loading)
 {
-    <p>Loading report…</p>
+    <PotsureLoadingState Message="Loading report…" />
 }
 else if (_error is not null)
 {
@@ -18,10 +18,12 @@ else if (_error is not null)
 }
 else if (_report is not null)
 {
-    <p class="potsure-report-note" role="note">@ReportCopy.ForecastDisclaimer</p>
+    <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["role"] = "note" })">@ReportCopy.ForecastDisclaimer</BbTypographyMuted>
 
     <section aria-labelledby="balance-income-chart">
-        <h2 id="balance-income-chart" class="potsure-sr-only">Planned income versus required total</h2>
+        <PotsurePageHeader Title="Planned income versus required total"
+                           HeadingLevel="2"
+                           Class="sr-only mb-4" />
         <BbBarChart Data="@_budgetCompareRows"
                     Title="Planned income vs required total"
                     Height="300px"
@@ -34,47 +36,61 @@ else if (_report is not null)
     </section>
 
     <section aria-labelledby="balance-income">
-        <h2 id="balance-income">Income (separate measures)</h2>
-        <dl>
-            <div>
-                <dt>@ReportCopy.BudgetedIncomeHeading</dt>
-                <dd>£@_report.Value.BudgetedIncome.Amount.ToString("F2")</dd>
-            </div>
-            <div>
-                <dt>@ReportCopy.ActualReceiptsHeading</dt>
-                <dd>£@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2")</dd>
-            </div>
-        </dl>
+        <PotsurePageHeader Title="Income (separate measures)" HeadingLevel="2" Class="mb-4" />
+        <BbItemGroup Class="grid gap-2 sm:grid-cols-2">
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
+                    <BbItemDescription>£@_report.Value.BudgetedIncome.Amount.ToString("F2")</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
+                    <BbItemDescription>£@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2")</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+        </BbItemGroup>
     </section>
 
     <section aria-labelledby="balance-commitments">
-        <h2 id="balance-commitments">@ReportCopy.CommitmentsHeading</h2>
-        <ul>
+        <PotsurePageHeader Title="@ReportCopy.CommitmentsHeading" HeadingLevel="2" Class="mb-4" />
+        <BbItemGroup>
             @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
             {
-                <li>@FormatKind(commitment.Category): £@commitment.AmountInPeriod.Amount.ToString("F2")</li>
+                <BbItem>
+                    <BbItemTitle>@FormatKind(commitment.Category): £@commitment.AmountInPeriod.Amount.ToString("F2")</BbItemTitle>
+                </BbItem>
             }
-        </ul>
+        </BbItemGroup>
     </section>
 
     <section aria-labelledby="balance-required">
-        <h2 id="balance-required">Required income</h2>
-        <p>
+        <PotsurePageHeader Title="Required income" HeadingLevel="2" Class="mb-4" />
+        <BbTypographyP>
             Overall required:
             £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2")
             (limiting category: @FormatKind(_report.Value.RequiredIncome.LimitingCategory))
-        </p>
+        </BbTypographyP>
         @if (_potBreakdown.Count > 0)
         {
-            <details>
-                <summary>Mapped pots for @FormatKind(_report.Value.RequiredIncome.LimitingCategory)</summary>
-                <ul>
-                    @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
-                    {
-                        <li>@pot.PotName — recorded funding £@pot.RecordedFunding.ToString("F2")</li>
-                    }
-                </ul>
-            </details>
+            <BbCollapsible>
+                <BbCollapsibleTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">
+                        Mapped pots for @FormatKind(_report.Value.RequiredIncome.LimitingCategory)
+                    </BbButton>
+                </BbCollapsibleTrigger>
+                <BbCollapsibleContent Class="pt-2">
+                    <BbItemGroup>
+                        @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
+                        {
+                            <BbItem>
+                                <BbItemTitle>@pot.PotName — recorded funding £@pot.RecordedFunding.ToString("F2")</BbItemTitle>
+                            </BbItem>
+                        }
+                    </BbItemGroup>
+                </BbCollapsibleContent>
+            </BbCollapsible>
         }
         @if (_report.Value.RequiredIncome.Shortfall.Amount > 0m)
         {
@@ -98,32 +114,37 @@ else if (_report is not null)
     @if (_variableExpenses.Count > 0)
     {
         <section aria-labelledby="balance-variable">
-            <h2 id="balance-variable">Variable expense coverage</h2>
-            <ul>
+            <PotsurePageHeader Title="Variable expense coverage" HeadingLevel="2" Class="mb-4" />
+            <BbItemGroup>
                 @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
                 {
-                    <li>@expense.VendorLabel: @(expense.EstimateCoverageLabel ?? "Estimate pending")</li>
+                    <BbItem>
+                        <BbItemTitle>@expense.VendorLabel: @(expense.EstimateCoverageLabel ?? "Estimate pending")</BbItemTitle>
+                    </BbItem>
                 }
-            </ul>
+            </BbItemGroup>
         </section>
     }
 
-    <p class="potsure-sr-table-summary" id="balance-text-summary">
+    <BbTypographyMuted Class="mt-4"
+                       AdditionalAttributes="@(new Dictionary<string, object> { ["id"] = "balance-text-summary" })">
         Textual summary: planned income £@_report.Value.BudgetedIncome.Amount.ToString("F2");
         actual receipts £@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2");
         required total £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2").
-    </p>
+    </BbTypographyMuted>
 
     @if (_report.Value.ExpectedIncomePayments.Count > 0)
     {
         <section aria-labelledby="balance-expected-income">
-            <h2 id="balance-expected-income">@ReportCopy.ExpectedIncomeHeading</h2>
-            <ul>
+            <PotsurePageHeader Title="@ReportCopy.ExpectedIncomeHeading" HeadingLevel="2" Class="mb-4" />
+            <BbItemGroup>
                 @foreach (ExpectedIncomePayment payment in _report.Value.ExpectedIncomePayments)
                 {
-                    <li>@payment.ExpectedDate: £@payment.Amount.Amount.ToString("F2")</li>
+                    <BbItem>
+                        <BbItemTitle>@payment.ExpectedDate: £@payment.Amount.Amount.ToString("F2")</BbItemTitle>
+                    </BbItem>
                 }
-            </ul>
+            </BbItemGroup>
         </section>
     }
 }

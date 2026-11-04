@@ -3,11 +3,11 @@
 
 <PageTitle>Category health</PageTitle>
 
-<h1>Category health</h1>
+<PotsurePageHeader Title="Category health" HeadingLevel="1" Class="mb-4" />
 
 @if (_loading)
 {
-    <p>Loading report…</p>
+    <PotsureLoadingState Message="Loading report…" />
 }
 else if (_error is not null)
 {
@@ -18,25 +18,31 @@ else if (_error is not null)
 }
 else if (_summary is not null)
 {
-    <section class="potsure-income-summary" aria-labelledby="category-health-income">
-        <h2 id="category-health-income">Income</h2>
-        <dl>
-            <div>
-                <dt>@ReportCopy.BudgetedIncomeHeading</dt>
-                <dd>£@_summary.Value.BudgetedIncome.Amount.ToString("F2")</dd>
-            </div>
-            <div>
-                <dt>@ReportCopy.ActualReceiptsHeading</dt>
-                <dd>£@_summary.Value.ActualIncomeInPeriod.Amount.ToString("F2")</dd>
-            </div>
-        </dl>
-        <p class="potsure-report-note">@ReportCopy.CategoryHealthBudgetedNote</p>
+    <section class="space-y-4" aria-label="Income">
+        <PotsurePageHeader Title="Income" HeadingLevel="2" Class="mb-4" />
+        <BbItemGroup Class="grid gap-2 sm:grid-cols-2">
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
+                    <BbItemDescription>£@_summary.Value.BudgetedIncome.Amount.ToString("F2")</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
+                    <BbItemDescription>£@_summary.Value.ActualIncomeInPeriod.Amount.ToString("F2")</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+        </BbItemGroup>
+        <BbTypographyMuted>@ReportCopy.CategoryHealthBudgetedNote</BbTypographyMuted>
     </section>
 
     @if (_categoryChartRows.Count > 0)
     {
-        <section aria-labelledby="category-health-chart-heading">
-            <h2 id="category-health-chart-heading" class="potsure-sr-only">Category measures chart</h2>
+        <section aria-label="Category measures chart">
+            <PotsurePageHeader Title="Category measures chart"
+                               HeadingLevel="2"
+                               Class="sr-only mb-4" />
             <BbBarChart Data="@_categoryChartRows"
                         Config="@_categoryChartConfig"
                         Title="Category measures"
@@ -104,8 +110,8 @@ else if (_summary is not null)
 
     @if (_potBreakdown.Count > 0)
     {
-        <section aria-labelledby="category-health-pots">
-            <h2 id="category-health-pots">Mapped bank pots</h2>
+        <section aria-label="Mapped bank pots">
+            <PotsurePageHeader Title="Mapped bank pots" HeadingLevel="2" Class="mb-4" />
             <BbDataTable TData="CategoryPotBreakdownLine"
                            Data="@_potBreakdown"
                            ShowToolbar="false"
@@ -138,13 +144,17 @@ else if (_summary is not null)
         </section>
     }
 
-    <p class="potsure-sr-table-summary" id="category-health-text-summary">
-        Textual summary:
-        @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
-        {
-            <span>@FormatKind(row.Kind): allocation £@row.Allocation.Amount.ToString("F2"), recorded funding £@row.RecordedFunding.Amount.ToString("F2"), actual £@row.ActualActivity.Amount.ToString("F2"), under/over £@row.UnderOver.Amount.ToString("F2"). </span>
-        }
-    </p>
+    <div class="mt-4" id="category-health-text-summary">
+        <BbTypographyMuted>Textual summary:</BbTypographyMuted>
+        <BbItemGroup>
+            @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
+            {
+                <BbItem>
+                    <BbItemTitle>@FormatKind(row.Kind): allocation £@row.Allocation.Amount.ToString("F2"), recorded funding £@row.RecordedFunding.Amount.ToString("F2"), actual £@row.ActualActivity.Amount.ToString("F2"), under/over £@row.UnderOver.Amount.ToString("F2").</BbItemTitle>
+                </BbItem>
+            }
+        </BbItemGroup>
+    </div>
 
     @if (_summary.Value.UncategorisedSpendWarning)
     {
@@ -152,8 +162,9 @@ else if (_summary is not null)
             <BbAlertTitle>Uncategorised spend</BbAlertTitle>
             <BbAlertDescription>
                 £@_summary.Value.UncategorisedSpend.Amount.ToString("F2") of spend is not attributed to a category.
-                <a href="/reports/categorise">Assign transactions</a>
-                · <a href="/reports/attribution">Reassign attributed debits</a>
+                <BbLink Href="/reports/categorise">Assign transactions</BbLink>
+                ·
+                <BbLink Href="/reports/attribution">Reassign attributed debits</BbLink>
             </BbAlertDescription>
         </BbAlert>
     }

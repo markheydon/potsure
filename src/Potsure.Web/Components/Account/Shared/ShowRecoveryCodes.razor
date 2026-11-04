@@ -6,13 +6,13 @@
     <BbCardContent>
         <BbAlert Variant="AlertVariant.Warning">
             <BbAlertDescription>
-                <p><strong>Put these codes in a safe place.</strong></p>
-                <p>
-                    If you lose your device and don't have the recovery codes you will lose access to your account.
-                </p>
+                <BbTypographyP><strong>Put these codes in a safe place.</strong></BbTypographyP>
+                <BbTypographyP>
+                    If you lose your device and do not have the recovery codes, you will lose access to your account.
+                </BbTypographyP>
             </BbAlertDescription>
         </BbAlert>
-        <div class="potsure-form-grid">
+        <div class="grid gap-4 max-w-2xl">
             @foreach (var recoveryCode in RecoveryCodes)
             {
                 <div>

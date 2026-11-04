@@ -3,15 +3,17 @@
 
 <PageTitle>Reassign transactions</PageTitle>
 
-<h1 id="attribution-heading">Reassign attributed transactions</h1>
+<PotsurePageHeader Title="Reassign attributed transactions"
+                   HeadingLevel="1"
+                   Class="mb-4" />
 
-<p class="potsure-muted">
+<BbTypographyMuted>
     Override auto-attribution or change category, optional pot, pattern link, or tag for individual debits (FR-M010a).
-</p>
+</BbTypographyMuted>
 
 @if (_loading)
 {
-    <p>Loading transactions…</p>
+    <PotsureLoadingState Message="Loading transactions…" />
 }
 else if (_error is not null)
 {
@@ -22,7 +24,7 @@ else if (_error is not null)
 }
 else if (_transactions.Count == 0)
 {
-    <p>No attributed expense debits in the current budget period.</p>
+    <BbTypographyP>No attributed expense debits in the current budget period.</BbTypographyP>
 }
 else
 {
@@ -124,7 +126,7 @@ else
     </BbDataTable>
 }
 
-<nav aria-label="Related">
-    <a href="/reports/category-health">Back to category health</a>
-    · <a href="/reports/categorise">Assign uncategorised transactions</a>
-</nav>
+<PotsureRelatedNav>
+    <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    <BbLink Href="/reports/categorise">Assign uncategorised transactions</BbLink>
+</PotsureRelatedNav>

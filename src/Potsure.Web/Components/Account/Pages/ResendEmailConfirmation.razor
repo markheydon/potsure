@@ -15,29 +15,26 @@
 
 <PageTitle>Resend email confirmation</PageTitle>
 
-<h1>Resend email confirmation</h1>
-
-<BbCard Class="potsure-auth-narrow">
-    <BbCardHeader>
-        <BbCardTitle>Resend confirmation</BbCardTitle>
-        <BbCardDescription>Enter your account email address.</BbCardDescription>
-    </BbCardHeader>
-    <BbCardContent>
-        <StatusMessage Message="@message" />
-        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="potsure-form-grid">
-                <label>
-                    Email
-                    <BbInput @bind-Value="Input.Email" Placeholder="name@example.com" />
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </label>
-            </div>
-            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Resend</BbButton>
-        </EditForm>
-    </BbCardContent>
-</BbCard>
+<AuthFormCard Title="Resend email confirmation"
+              Description="Enter your account email address."
+              FooterPrompt="Back to "
+              FooterLinkText="Log in"
+              FooterHref="Account/Login">
+    <StatusMessage Message="@message" />
+    <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <DataAnnotationsValidator />
+        <ValidationSummary Class="text-sm text-destructive" role="alert" />
+        <div class="space-y-4">
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.Email"
+                              Label="Email"
+                              Placeholder="name@example.com"
+                              Type="InputType.Email"
+                              Required="true" />
+            <BbButton Type="ButtonType.Submit" Class="w-full">Resend confirmation email</BbButton>
+        </div>
+    </EditForm>
+</AuthFormCard>
 
 @code {
     private string? message;

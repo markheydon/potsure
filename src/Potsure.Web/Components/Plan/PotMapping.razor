@@ -3,11 +3,11 @@
 
 <PageTitle>Pot mapping</PageTitle>
 
-<h1 id="pot-mapping-heading">Bank pot mapping</h1>
+<PotsurePageHeader Title="Bank pot mapping" HeadingLevel="1" Class="mb-4" />
 
 @if (_loading)
 {
-    <p>Loading pot settings…</p>
+    <PotsureLoadingState Message="Loading pot settings…" />
 }
 else if (_error is not null)
 {
@@ -19,8 +19,8 @@ else if (_error is not null)
 else
 {
     <section aria-labelledby="pot-mode-heading">
-        <h2 id="pot-mode-heading">Mapping mode</h2>
-        <p class="potsure-muted">Choose no pots for category-only budgeting (FR-M014).</p>
+        <PotsurePageHeader Title="Mapping mode" HeadingLevel="2" Class="mb-4" />
+        <BbTypographyMuted>Choose no pots for category-only budgeting (FR-M014).</BbTypographyMuted>
         <BbLabel For="pot-mode-select">Pot mapping mode</BbLabel>
         <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
             <BbSelectTrigger Id="pot-mode-select">
@@ -38,10 +38,10 @@ else
     @if (_mode != PotMappingMode.None)
     {
         <section aria-labelledby="pot-list-heading">
-            <h2 id="pot-list-heading">Pots</h2>
+            <PotsurePageHeader Title="Pots" HeadingLevel="2" Class="mb-4" />
             @if (_pots.Count == 0)
             {
-                <p>Add a pot mapped to exactly one category.</p>
+                <BbTypographyP>Add a pot mapped to exactly one category.</BbTypographyP>
             }
             else
             {
@@ -67,7 +67,7 @@ else
                 </BbDataTable>
             }
 
-            <div class="potsure-form-grid">
+            <div class="grid gap-4 max-w-2xl">
                 <div>
                     <BbLabel>New pot name</BbLabel>
                     <BbInput @bind-Value="_newPotName" />
@@ -92,8 +92,10 @@ else
     }
     else
     {
-        <p>Category-only budgeting is active. <a href="/plan">Return to plan settings</a>.</p>
+        <BbTypographyMuted>Category-only budgeting is active. <BbLink Href="/plan">Return to plan settings</BbLink>.</BbTypographyMuted>
     }
 
-    <p><a href="/plan/funding">Recorded funding</a></p>
+    <PotsureRelatedNav>
+        <BbLink Href="/plan/funding">Recorded funding</BbLink>
+    </PotsureRelatedNav>
 }

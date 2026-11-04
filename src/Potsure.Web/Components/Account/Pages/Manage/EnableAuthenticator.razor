@@ -21,51 +21,51 @@
 else
 {
     <StatusMessage Message="@message" />
-    <h3>Configure authenticator app</h3>
-    <div>
-        <p>To use an authenticator app go through the following steps:</p>
-        <ol class="list">
-            <li>
-                <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
-                    Google Authenticator for
-                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a> and
-                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>.
-                </p>
-            </li>
-            <li>
-                <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-                <BbAlert Variant="AlertVariant.Default">
-                    <BbAlertDescription>Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</BbAlertDescription>
-                </BbAlert>
-                <div></div>
-                <div data-url="@authenticatorUri"></div>
-            </li>
-            <li>
-                <p>
-                    Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                    with a unique code. Enter the code in the confirmation box below.
-                </p>
-                <BbCard Class="potsure-auth-narrow">
-                    <BbCardContent>
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
-                            <div class="potsure-form-grid">
-                                <label>
-                                    Verification code
-                                    <BbInput @bind-Value="Input.Code" Autocomplete="off" Placeholder="Enter the code" />
-                                    <ValidationMessage For="() => Input.Code" class="text-danger" />
-                                </label>
-                            </div>
-                            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Verify</BbButton>
-                            <ValidationSummary class="text-danger" role="alert" />
-                        </EditForm>
-                    </BbCardContent>
-                </BbCard>
-            </li>
-        </ol>
+    <div class="space-y-6">
+        <BbTypographyP>To use an authenticator app, go through the following steps:</BbTypographyP>
+
+        <BbFormSection Title="1. Get an authenticator app" ShowSeparator="false">
+            <BbTypographyP>
+                Download a two-factor authenticator app like Microsoft Authenticator for
+                <BbLink Href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</BbLink> and
+                <BbLink Href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</BbLink> or
+                Google Authenticator for
+                <BbLink Href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</BbLink> and
+                <BbLink Href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</BbLink>.
+            </BbTypographyP>
+        </BbFormSection>
+
+        <BbFormSection Title="2. Scan the QR code or enter your key" ShowSeparator="false">
+            <BbTypographyP>Scan the QR code or enter this key <BbKbd>@sharedKey</BbKbd> into your two-factor authenticator app. Spaces and casing do not matter.</BbTypographyP>
+            <BbAlert Variant="AlertVariant.Default">
+                <BbAlertDescription>Learn how to <BbLink Href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</BbLink>.</BbAlertDescription>
+            </BbAlert>
+            <BbQrCode Value="@authenticatorUri" />
+        </BbFormSection>
+
+        <BbFormSection Title="3. Verify the code" ShowSeparator="false">
+            <BbTypographyP>
+                Once you have scanned the QR code or entered the key above, your two-factor authentication app will provide you
+                with a unique code. Enter the code in the confirmation box below.
+            </BbTypographyP>
+            <BbCard Class="w-full max-w-2xl">
+                <BbCardContent>
+                    <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                        <DataAnnotationsValidator />
+                        <div class="grid gap-4 max-w-2xl">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="Input.Code"
+                                              Label="Verification code"
+                                              Autocomplete="off"
+                                              Placeholder="Enter the code"
+                                              Required="true" />
+                        </div>
+                        <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Verify</BbButton>
+                        <ValidationSummary Class="text-sm text-destructive" role="alert" />
+                    </EditForm>
+                </BbCardContent>
+            </BbCard>
+        </BbFormSection>
     </div>
 }
 

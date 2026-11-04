@@ -11,45 +11,58 @@
 
 <PageTitle>Manage your passkeys</PageTitle>
 
-<h3>Manage your passkeys</h3>
 
 <StatusMessage />
 
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="text-2xl">Passkeys</BbCardTitle>
+        <BbCardDescription>Register and manage passkeys for passwordless sign-in.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent Class="space-y-4">
+
 @if (currentPasskeys is { Count: > 0 })
 {
-    <table>
-        <tbody>
-            @foreach (var passkey in currentPasskeys)
-            {
-                <tr>
-                    <td>@(passkey.Name ?? "Unnamed passkey")</td>
-                    <td>
-                        @{
-                            var credentialId = Base64Url.EncodeToString(passkey.CredentialId);
-                        }
-                        <form @formname="@($"update-passkey-{credentialId}")" @onsubmit="UpdatePasskey" method="post">
-                            <AntiforgeryToken />
-                            <div class="potsure-passkey-actions">
-                                <input type="hidden" name="CredentialId" value="@credentialId" />
-                                <BbButton Type="ButtonType.Submit"
-                                          AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "rename", ["title"] = "Rename this passkey" })">
-                                    Rename
-                                </BbButton>
-                                <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive"
-                                          AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "delete", ["title"] = "Remove this passkey from your account" })">
-                                    Delete
-                                </BbButton>
-                            </div>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <BbDataTable TData="UserPasskeyInfo"
+                 Data="@currentPasskeys"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Registered passkeys">
+        <Columns>
+            <BbDataTableColumn TData="UserPasskeyInfo" TValue="string"
+                               Header="Passkey">
+                <CellTemplate Context="passkey">
+                    @(passkey.Name ?? "Unnamed passkey")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="UserPasskeyInfo" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="passkey">
+                    @{
+                        var credentialId = Base64Url.EncodeToString(passkey.CredentialId);
+                    }
+                    <form @formname="@($"update-passkey-{credentialId}")" @onsubmit="UpdatePasskey" method="post">
+                        <AntiforgeryToken />
+                        <div class="flex flex-wrap gap-2">
+                            <input type="hidden" name="CredentialId" value="@credentialId" />
+                            <BbButton Type="ButtonType.Submit"
+                                      AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "rename", ["title"] = "Rename this passkey" })">
+                                Rename
+                            </BbButton>
+                            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive"
+                                      AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "delete", ["title"] = "Remove this passkey from your account" })">
+                                Delete
+                            </BbButton>
+                        </div>
+                    </form>
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
 }
 else
 {
-    <p>No passkeys are registered.</p>
+    <BbTypographyP>No passkeys are registered.</BbTypographyP>
 }
 
 <form @formname="add-passkey" @onsubmit="AddPasskey" method="post">
@@ -66,6 +79,9 @@ else
     }
 
 </form>
+
+    </BbCardContent>
+</BbCard>
 
 @code {
     private const int MaxPasskeyCount = 100;

@@ -3,7 +3,10 @@
 
 <PageTitle>Import statement</PageTitle>
 
-<h1 tabindex="-1" id="import-heading">Import Monzo statement</h1>
+<PotsurePageHeader Title="Import Monzo statement"
+                   HeadingLevel="1"
+                   Class="mb-4"
+                   AdditionalAttributes="@(new Dictionary<string, object> { ["tabindex"] = "-1", ["id"] = "import-heading" })" />
 
 @if (_isBusy)
 {
@@ -30,12 +33,12 @@ else
 
     @if (_awaitingMappingConfirmation && _preview is not null)
     {
-        <section class="potsure-import-mapping" aria-labelledby="mapping-heading">
-            <h2 id="mapping-heading">Confirm column mapping</h2>
-            <p class="potsure-muted">
+        <section class="space-y-4" aria-label="Confirm column mapping">
+            <PotsurePageHeader Title="Confirm column mapping" HeadingLevel="2" Class="mb-4" />
+            <BbTypographyMuted>
                 We detected a Monzo export with @_preview.ParsedRowCount row(s) ready to import
                 (@_preview.ParseErrorCount row(s) skipped due to validation errors).
-            </p>
+            </BbTypographyMuted>
             <BbDataTable TData="string"
                            Data="@MappingRequiredHeaders"
                            ShowToolbar="false"
@@ -68,20 +71,28 @@ else
             </BbDataTable>
             @if (_preview.PreviewErrors.Count > 0)
             {
-                <details>
-                    <summary>Preview validation messages (@_preview.PreviewErrors.Count)</summary>
-                    <ul>
-                        @foreach (string message in _preview.PreviewErrors.Take(20))
-                        {
-                            <li>@message</li>
-                        }
-                    </ul>
-                </details>
+                <BbCollapsible>
+                    <BbCollapsibleTrigger>
+                        <BbButton Variant="ButtonVariant.Outline">
+                            Preview validation messages (@_preview.PreviewErrors.Count)
+                        </BbButton>
+                    </BbCollapsibleTrigger>
+                    <BbCollapsibleContent Class="pt-2">
+                        <BbItemGroup>
+                            @foreach (string message in _preview.PreviewErrors.Take(20))
+                            {
+                                <BbItem>
+                                    <BbItemTitle>@message</BbItemTitle>
+                                </BbItem>
+                            }
+                        </BbItemGroup>
+                    </BbCollapsibleContent>
+                </BbCollapsible>
             }
         </section>
     }
 
-    <section class="potsure-import-panel" aria-labelledby="import-heading">
+    <section class="space-y-4" aria-labelledby="import-heading">
         <BbCard>
             <BbCardHeader>
                 <BbCardTitle>Upload CSV</BbCardTitle>
@@ -100,7 +111,7 @@ else
                               FilesChanged="OnUploadFilesChangedAsync" />
                 @if (!string.IsNullOrEmpty(_selectedFileName))
                 {
-                    <p>Selected: @_selectedFileName</p>
+                    <BbTypographyP>Selected: @_selectedFileName</BbTypographyP>
                 }
             </BbCardContent>
             <BbCardFooter>

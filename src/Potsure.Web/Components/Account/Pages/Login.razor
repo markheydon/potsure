@@ -14,51 +14,52 @@
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-
-<div class="potsure-auth-grid">
-    <BbCard>
-        <BbCardHeader>
-            <BbCardTitle>Sign in</BbCardTitle>
-            <BbCardDescription>Use your email and password.</BbCardDescription>
-        </BbCardHeader>
-        <BbCardContent>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="potsure-form-grid">
-                    <label>
-                        Email
-                        <BbInput @bind-Value="Input.Email" Autocomplete="username webauthn" Placeholder="name@example.com" />
-                        <ValidationMessage For="() => Input.Email" class="text-danger" />
-                    </label>
-                    <label>
-                        Password
-                        <BbInput Type="InputType.Password" @bind-Value="Input.Password" Autocomplete="current-password" Placeholder="Password" />
-                        <ValidationMessage For="() => Input.Password" class="text-danger" />
-                    </label>
-                    <div class="potsure-checkbox-row">
-                        <BbCheckbox @bind-Checked="Input.RememberMe" Id="login-remember-me" />
-                        <BbLabel For="login-remember-me">Remember me</BbLabel>
-                    </div>
-                </div>
-                <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Log in</BbButton>
-                <p class="potsure-muted potsure-auth-divider">Or</p>
-                <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email">
-                    Log in with a passkey
-                </PasskeySubmit>
-                <nav class="potsure-auth-links" aria-label="Account help">
-                    <p><a href="Account/ForgotPassword">Forgot your password?</a></p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p><a href="Account/ResendEmailConfirmation">Resend email confirmation</a></p>
-                </nav>
-            </EditForm>
-        </BbCardContent>
-    </BbCard>
-</div>
+<AuthFormCard Title="Log in to your account"
+              Description="Enter your email and password, or use a passkey."
+              FooterPrompt="Don't have an account? "
+              FooterLinkText="Sign up"
+              FooterHref="@RegisterHref">
+    <StatusMessage Message="@errorMessage" />
+    <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+        <DataAnnotationsValidator />
+        <ValidationSummary Class="text-sm text-destructive" role="alert" />
+        <div class="space-y-4">
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.Email"
+                              Label="Email"
+                              Autocomplete="username webauthn"
+                              Placeholder="name@example.com"
+                              Type="InputType.Email"
+                              Required="true" />
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.Password"
+                              Label="Password"
+                              Autocomplete="current-password"
+                              Placeholder="Password"
+                              Type="InputType.Password"
+                              Required="true" />
+            <div class="flex justify-end">
+                <BbLink Href="Account/ForgotPassword"
+                        Class="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                    Forgot your password?
+                </BbLink>
+            </div>
+            <div class="flex items-center gap-2">
+                <BbCheckbox @bind-Checked="Input.RememberMe" Id="login-remember-me" />
+                <BbLabel For="login-remember-me" Class="font-normal">Remember me</BbLabel>
+            </div>
+            <BbButton Type="ButtonType.Submit" Class="w-full">Log in</BbButton>
+            <AuthOrContinueDivider />
+            <PasskeySubmit Operation="PasskeyOperation.Request"
+                           Name="Input.Passkey"
+                           EmailName="Input.Email"
+                           Outline="true">
+                <LucideIcon Name="fingerprint" Size="18" />
+                Log in with a passkey
+            </PasskeySubmit>
+        </div>
+    </EditForm>
+</AuthFormCard>
 
 @code {
     private string? errorMessage;
@@ -72,6 +73,12 @@
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
+
+    private string RegisterHref =>
+        NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?>
+        {
+            ["ReturnUrl"] = ReturnUrl
+        });
 
     protected override async Task OnInitializedAsync()
     {

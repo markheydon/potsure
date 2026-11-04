@@ -12,9 +12,13 @@
 
 <PageTitle>Confirm email change</PageTitle>
 
-<h1>Confirm email change</h1>
-
-<StatusMessage Message="@message" />
+<AuthFormCard Title="Confirm email change"
+              Description="Verify your new email address."
+              FooterPrompt=""
+              FooterLinkText="Account settings"
+              FooterHref="Account/Manage/Email">
+    <StatusMessage Message="@message" />
+</AuthFormCard>
 
 @code {
     private string? message;
@@ -55,8 +59,6 @@
             return;
         }
 
-        // In our UI email and user name are one and the same, so when we update the email
-        // we need to update the user name.
         var setUserNameResult = await UserManager.SetUserNameAsync(user, Email);
         if (!setUserNameResult.Succeeded)
         {

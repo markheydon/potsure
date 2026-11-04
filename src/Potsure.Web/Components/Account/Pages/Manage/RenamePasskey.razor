@@ -8,28 +8,31 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<BbCard Class="potsure-auth-narrow">
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        @if (passkey?.Name is { } name)
+        {
+            <BbCardTitle Class="text-2xl">Rename passkey</BbCardTitle>
+            <BbCardDescription>Enter a new name for your "@name" passkey.</BbCardDescription>
+        }
+        else
+        {
+            <BbCardTitle Class="text-2xl">Name your passkey</BbCardTitle>
+            <BbCardDescription>Enter a name for your passkey.</BbCardDescription>
+        }
+    </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" OnValidSubmit="Rename" FormName="rename-passkey" method="post">
             <DataAnnotationsValidator />
-            @if (passkey?.Name is { } name)
-            {
-                <h4>Enter a new name for your "@name" passkey</h4>
-            }
-            else
-            {
-                <h4>Enter a name for your passkey</h4>
-            }
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="potsure-form-grid">
-                <label>
-                    Passkey name
-                    <BbInput @bind-Value="Input.Name" Placeholder="My passkey" />
-                    <ValidationMessage For="() => Input.Name" class="text-danger" />
-                </label>
+            <ValidationSummary Class="text-sm text-destructive" role="alert" />
+            <div class="grid gap-4 max-w-2xl">
+                <BbFormFieldInput TValue="string"
+                                  @bind-Value="Input.Name"
+                                  Label="Passkey name"
+                                  Placeholder="My passkey"
+                                  Required="true" />
             </div>
-            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Continue</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Continue</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

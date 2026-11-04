@@ -9,21 +9,24 @@
 <PageTitle>Personal Data</PageTitle>
 
 <StatusMessage />
-<h3>Personal Data</h3>
 
-<BbCard Class="potsure-auth-narrow">
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="text-2xl">Personal data</BbCardTitle>
+        <BbCardDescription>Download or delete your account data.</BbCardDescription>
+    </BbCardHeader>
     <BbCardContent>
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
-        <p>
+        <BbTypographyP>Your account contains personal data that you have given us. This page allows you to download or delete that data.</BbTypographyP>
+        <BbTypographyP>
             <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-        </p>
+        </BbTypographyP>
         <form action="Account/Manage/DownloadPersonalData" method="post">
             <AntiforgeryToken />
             <BbButton Type="ButtonType.Submit">Download</BbButton>
         </form>
-        <p class="potsure-passkey-actions">
+        <div class="flex flex-wrap gap-2">
             <BbButton Variant="ButtonVariant.Destructive" Href="Account/Manage/DeletePersonalData">Delete</BbButton>
-        </p>
+        </div>
     </BbCardContent>
 </BbCard>
 

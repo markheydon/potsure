@@ -11,8 +11,13 @@
 
 <PageTitle>Confirm email</PageTitle>
 
-<h1>Confirm email</h1>
-<StatusMessage Message="@statusMessage" />
+<AuthFormCard Title="Confirm email"
+              Description="Email confirmation for your account."
+              FooterPrompt=""
+              FooterLinkText="Log in"
+              FooterHref="Account/Login">
+    <StatusMessage Message="@statusMessage" />
+</AuthFormCard>
 
 @code {
     private string? statusMessage;

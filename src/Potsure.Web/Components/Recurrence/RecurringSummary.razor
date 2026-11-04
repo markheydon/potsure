@@ -3,11 +3,11 @@
 
 <PageTitle>Recurring summary</PageTitle>
 
-<h1 id="recurring-summary-heading">Confirmed recurring summary</h1>
+<PotsurePageHeader Title="Confirmed recurring summary" HeadingLevel="1" Class="mb-4" />
 
 @if (_loading)
 {
-    <p>Loading summary…</p>
+    <PotsureLoadingState Message="Loading summary…" />
 }
 else if (_error is not null)
 {
@@ -19,10 +19,10 @@ else if (_error is not null)
 else if (_model is not null)
 {
     <section aria-labelledby="summary-income">
-        <h2 id="summary-income">Confirmed income</h2>
+        <PotsurePageHeader Title="Confirmed income" HeadingLevel="2" Class="mb-4" />
         @if (_model.ConfirmedIncome.Count == 0)
         {
-            <p>No confirmed income patterns yet.</p>
+            <BbTypographyP>No confirmed income patterns yet.</BbTypographyP>
         }
         else
         {
@@ -59,10 +59,10 @@ else if (_model is not null)
     </section>
 
     <section aria-labelledby="summary-expenses">
-        <h2 id="summary-expenses">Confirmed expenses</h2>
+        <PotsurePageHeader Title="Confirmed expenses" HeadingLevel="2" Class="mb-4" />
         @if (_model.ConfirmedExpenses.Count == 0)
         {
-            <p>No confirmed expense patterns yet.</p>
+            <BbTypographyP>No confirmed expense patterns yet.</BbTypographyP>
         }
         else
         {
@@ -105,20 +105,22 @@ else if (_model is not null)
     </section>
 
     <section aria-labelledby="summary-suggestions">
-        <h2 id="summary-suggestions">Suggestions (not confirmed)</h2>
+        <PotsurePageHeader Title="Suggestions (not confirmed)" HeadingLevel="2" Class="mb-4" />
         @if (_model.Suggestions.Count == 0)
         {
-            <p>No open suggestions.</p>
+            <BbTypographyP>No open suggestions.</BbTypographyP>
         }
         else
         {
-            <ul role="list">
+            <BbItemGroup>
                 @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
                 {
-                    <li>@row.Label — @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</li>
+                    <BbItem>
+                        <BbItemTitle>@row.Label — @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</BbItemTitle>
+                    </BbItem>
                 }
-            </ul>
-            <p><a href="/recurrence/review">Review suggestions</a></p>
+            </BbItemGroup>
+            <BbTypographyP><BbLink Href="/recurrence/review">Review suggestions</BbLink></BbTypographyP>
         }
     </section>
 }

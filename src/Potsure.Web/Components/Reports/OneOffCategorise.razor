@@ -3,15 +3,17 @@
 
 <PageTitle>Assign transactions</PageTitle>
 
-<h1 id="categorise-heading">Assign transactions</h1>
+<PotsurePageHeader Title="Assign transactions"
+                   HeadingLevel="1"
+                   Class="mb-4" />
 
-<p class="potsure-muted">
+<BbTypographyMuted>
     One-off assignments affect category actual activity only and do not create recurring patterns (FR-M037).
-</p>
+</BbTypographyMuted>
 
 @if (_loading)
 {
-    <p>Loading transactions…</p>
+    <PotsureLoadingState Message="Loading transactions…" />
 }
 else if (_error is not null)
 {
@@ -22,10 +24,10 @@ else if (_error is not null)
 }
 else if (_transactions.Count == 0)
 {
-    <p>No unattributed transactions in the current budget period.</p>
-    <nav aria-label="Related">
-        <a href="/reports/category-health">Back to category health</a>
-    </nav>
+    <BbTypographyP>No unattributed transactions in the current budget period.</BbTypographyP>
+    <PotsureRelatedNav>
+        <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    </PotsureRelatedNav>
 }
 else
 {
@@ -88,7 +90,7 @@ else
         </Columns>
     </BbDataTable>
 
-    <nav aria-label="Related">
-        <a href="/reports/category-health">Back to category health</a>
-    </nav>
+    <PotsureRelatedNav>
+        <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    </PotsureRelatedNav>
 }

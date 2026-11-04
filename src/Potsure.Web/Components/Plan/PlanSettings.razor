@@ -3,11 +3,11 @@
 
 <PageTitle>Plan settings</PageTitle>
 
-<h1>Plan settings</h1>
+<PotsurePageHeader Title="Plan settings" HeadingLevel="1" Class="mb-4" />
 
 @if (_loading)
 {
-    <p>Loading plan…</p>
+    <PotsureLoadingState Message="Loading plan…" />
 }
 else if (_error is not null)
 {
@@ -19,14 +19,14 @@ else if (_error is not null)
 else
 {
     <section aria-labelledby="plan-income-heading">
-        <h2 id="plan-income-heading">Income and period</h2>
-        <p class="potsure-report-note">
+        <PotsurePageHeader Title="Income and period" HeadingLevel="2" Class="mb-4" />
+        <BbTypographyMuted>
             <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
             Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
-        </p>
+        </BbTypographyMuted>
 
         <EditForm Model="_form" OnValidSubmit="SaveAsync">
-            <div class="potsure-form-grid">
+            <div class="grid gap-4 max-w-2xl">
                 <div>
                     <BbLabel>Allocation preset</BbLabel>
                     <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
@@ -72,14 +72,17 @@ else
                 </BbAlert>
             }
 
-            <p><a href="/plan/pots">Pot mapping</a> · <a href="/plan/funding">Recorded funding</a></p>
+            <PotsureRelatedNav>
+                <BbLink Href="/plan/pots">Pot mapping</BbLink>
+                <BbLink Href="/plan/funding">Recorded funding</BbLink>
+            </PotsureRelatedNav>
 
             @if (_actualReceiptsInPeriod is not null)
             {
-                <p aria-live="polite">
+                <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
                     @ReportCopy.ActualReceiptsHeading:
                     £@_actualReceiptsInPeriod.Value.ToString("F2")
-                </p>
+                </BbTypographyMuted>
             }
 
             <BbButton Type="ButtonType.Submit" Disabled="_saving">Save plan</BbButton>

@@ -9,16 +9,21 @@
 
 <PageTitle>Disable two-factor authentication (2FA)</PageTitle>
 
+<BbCard Class="w-full max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="text-2xl">Disable two-factor authentication</BbCardTitle>
+        <BbCardDescription>Turn off 2FA for your account.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent Class="space-y-4">
 <StatusMessage />
-<h3>Disable two-factor authentication (2FA)</h3>
 
 <BbAlert Variant="AlertVariant.Warning">
     <BbAlertDescription>
-        <p><strong>This action only disables 2FA.</strong></p>
-        <p>
+        <BbTypographyP><strong>This action only disables 2FA.</strong></BbTypographyP>
+        <BbTypographyP>
             Disabling 2FA does not change the keys used in authenticator apps. If you wish to change the key
-            used in an authenticator app you should <a href="Account/Manage/ResetAuthenticator">reset your authenticator keys.</a>
-        </p>
+            used in an authenticator app, you should <BbLink Href="Account/Manage/ResetAuthenticator">reset your authenticator keys.</BbLink>
+        </BbTypographyP>
     </BbAlertDescription>
 </BbAlert>
 
@@ -28,6 +33,9 @@
         <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive">Disable 2FA</BbButton>
     </form>
 </div>
+
+    </BbCardContent>
+</BbCard>
 
 @code {
     private ApplicationUser? user;

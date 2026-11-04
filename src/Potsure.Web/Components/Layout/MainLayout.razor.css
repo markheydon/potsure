@@ -1,7 +1,0 @@
-#blazor-error-ui {
-    display: none;
-}
-
-#blazor-error-ui:not(.hidden) {
-    display: block;
-}
