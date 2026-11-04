@@ -7,9 +7,17 @@ namespace Potsure.Data.Migrations;
 /// <inheritdoc />
 public partial class AddIdentityUserPasskeys : Migration
 {
+    private static readonly string[] AspNetUserLoginsPrimaryKeyColumns = ["LoginProvider", "ProviderKey"];
+
+    private static readonly string[] AspNetUserTokensPrimaryKeyColumns = ["UserId", "LoginProvider", "Name"];
+
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_AspNetUserTokens",
+            table: "AspNetUserTokens");
+
         migrationBuilder.AlterColumn<string>(
             name: "Name",
             table: "AspNetUserTokens",
@@ -28,6 +36,11 @@ public partial class AddIdentityUserPasskeys : Migration
             oldClrType: typeof(string),
             oldType: "nvarchar(450)");
 
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_AspNetUserTokens",
+            table: "AspNetUserTokens",
+            columns: AspNetUserTokensPrimaryKeyColumns);
+
         migrationBuilder.AlterColumn<string>(
             name: "PhoneNumber",
             table: "AspNetUsers",
@@ -37,6 +50,10 @@ public partial class AddIdentityUserPasskeys : Migration
             oldClrType: typeof(string),
             oldType: "nvarchar(max)",
             oldNullable: true);
+
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_AspNetUserLogins",
+            table: "AspNetUserLogins");
 
         migrationBuilder.AlterColumn<string>(
             name: "ProviderKey",
@@ -55,6 +72,11 @@ public partial class AddIdentityUserPasskeys : Migration
             nullable: false,
             oldClrType: typeof(string),
             oldType: "nvarchar(450)");
+
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_AspNetUserLogins",
+            table: "AspNetUserLogins",
+            columns: AspNetUserLoginsPrimaryKeyColumns);
 
         migrationBuilder.CreateTable(
             name: "AspNetUserPasskeys",
@@ -87,6 +109,10 @@ public partial class AddIdentityUserPasskeys : Migration
         migrationBuilder.DropTable(
             name: "AspNetUserPasskeys");
 
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_AspNetUserTokens",
+            table: "AspNetUserTokens");
+
         migrationBuilder.AlterColumn<string>(
             name: "Name",
             table: "AspNetUserTokens",
@@ -105,6 +131,11 @@ public partial class AddIdentityUserPasskeys : Migration
             oldType: "nvarchar(128)",
             oldMaxLength: 128);
 
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_AspNetUserTokens",
+            table: "AspNetUserTokens",
+            columns: AspNetUserTokensPrimaryKeyColumns);
+
         migrationBuilder.AlterColumn<string>(
             name: "PhoneNumber",
             table: "AspNetUsers",
@@ -114,6 +145,10 @@ public partial class AddIdentityUserPasskeys : Migration
             oldType: "nvarchar(256)",
             oldMaxLength: 256,
             oldNullable: true);
+
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_AspNetUserLogins",
+            table: "AspNetUserLogins");
 
         migrationBuilder.AlterColumn<string>(
             name: "ProviderKey",
@@ -132,5 +167,10 @@ public partial class AddIdentityUserPasskeys : Migration
             oldClrType: typeof(string),
             oldType: "nvarchar(128)",
             oldMaxLength: 128);
+
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_AspNetUserLogins",
+            table: "AspNetUserLogins",
+            columns: AspNetUserLoginsPrimaryKeyColumns);
     }
 }

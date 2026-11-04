@@ -9,6 +9,7 @@ var database = sql.AddDatabase("potsure");
 
 var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithExternalHttpEndpoints()
+    .WithEndpoint("http", endpoint => endpoint.Port = 5191)
     .WithHttpHealthCheck("/health")
     .WithReference(database)
     .WithEnvironment("Deployment__Mode", "Hosted")
