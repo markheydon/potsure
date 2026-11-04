@@ -38,9 +38,10 @@
                         <BbInput Type="InputType.Password" @bind-Value="Input.Password" Autocomplete="current-password" Placeholder="Password" />
                         <ValidationMessage For="() => Input.Password" class="text-danger" />
                     </label>
-                    <BbCheckbox @bind-Checked="Input.RememberMe">
-                        Remember me
-                    </BbCheckbox>
+                    <div class="potsure-checkbox-row">
+                        <BbCheckbox @bind-Checked="Input.RememberMe" Id="login-remember-me" />
+                        <BbLabel For="login-remember-me">Remember me</BbLabel>
+                    </div>
                 </div>
                 <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Log in</BbButton>
                 <p class="potsure-muted potsure-auth-divider">Or</p>
@@ -55,16 +56,6 @@
                     <p><a href="Account/ResendEmailConfirmation">Resend email confirmation</a></p>
                 </nav>
             </EditForm>
-        </BbCardContent>
-    </BbCard>
-
-    <BbCard>
-        <BbCardHeader>
-            <BbCardTitle>External sign-in</BbCardTitle>
-            <BbCardDescription>Use another service to log in.</BbCardDescription>
-        </BbCardHeader>
-        <BbCardContent>
-            <ExternalLoginPicker />
         </BbCardContent>
     </BbCard>
 </div>

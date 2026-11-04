@@ -32,9 +32,10 @@
                     <BbInput @bind-Value="Input.TwoFactorCode" Autocomplete="off" Placeholder="000000" />
                     <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
                 </label>
-                <BbCheckbox @bind-Checked="Input.RememberMachine">
-                    Remember this machine
-                </BbCheckbox>
+                <div class="potsure-checkbox-row">
+                    <BbCheckbox @bind-Checked="Input.RememberMachine" Id="login-2fa-remember-machine" />
+                    <BbLabel For="login-2fa-remember-machine">Remember this machine</BbLabel>
+                </div>
             </div>
             <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Log in</BbButton>
         </EditForm>

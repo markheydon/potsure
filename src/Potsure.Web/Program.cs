@@ -77,7 +77,17 @@ if (deployment.Mode == DeploymentMode.Hosted)
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
-        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor
+            | ForwardedHeaders.XForwardedProto
+            | ForwardedHeaders.XForwardedHost;
+
+        if (builder.Environment.IsDevelopment())
+        {
+            // Dev tunnels, GitHub Codespaces, and Aspire proxies are not in default known-proxy lists.
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        }
     });
 }
 
@@ -89,13 +99,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-if (deployment.Mode == DeploymentMode.Hosted && !app.Environment.IsDevelopment())
+if (deployment.Mode == DeploymentMode.Hosted)
 {
     app.UseForwardedHeaders();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 if (deployment.Mode == DeploymentMode.Hosted)
 {

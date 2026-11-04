@@ -139,6 +139,12 @@
     max-width: 40rem;
 }
 
+.potsure-checkbox-row {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
 .potsure-muted {
     color: var(--muted-foreground);
 }

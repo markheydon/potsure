@@ -18,6 +18,7 @@ aspire run --apphost src/Potsure.AppHost
 
 - **Stable local ports**: AppHost `Properties/launchSettings.json` pins the dashboard (`https://localhost:17134` by default) and web HTTP (`http://localhost:5191` via AppHost endpoint config). Re-run without `--isolated` so ports stay fixed; `--isolated` randomises ports for parallel instances.
 - Open the dashboard at the URL above (login token in the console may change each run; the host/port should not).
+- **GitHub Codespaces / dev tunnels**: open the forwarded **web** URL from the Aspire dashboard (not `https://localhost:7049` from `launchSettings.json`). Hosted mode honours `X-Forwarded-*` headers in Development so post-login redirects stay on your forwarded host.
 - Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in — not passkey enrolment; see `docs/local-only-mode.md`).
 - SQL container and `potsure` database healthy before migrations run.
 - **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
