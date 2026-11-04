@@ -4,6 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.4-preview.1.26523.11" />
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.4-preview.1.26523.11" />

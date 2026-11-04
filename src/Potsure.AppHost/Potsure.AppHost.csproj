@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
     <PackageReference Include="Aspire.Hosting.Azure.AppContainers" />
     <PackageReference Include="Aspire.Hosting.Azure.Sql" />
     <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
@@ -20,7 +21,6 @@
     <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj">
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
-    <ProjectReference Include="..\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 
 </Project>

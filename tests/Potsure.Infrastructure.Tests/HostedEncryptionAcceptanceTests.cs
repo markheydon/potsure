@@ -21,7 +21,7 @@ public sealed class HostedEncryptionAcceptanceTests
         string path = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..", "..",
-            "src", "Potsure.AppHost", "Program.cs"));
+            "src", "Potsure.AppHost", "AppHost.cs"));
         string content = File.ReadAllText(path);
         Assert.Contains("AddAzureSqlServer", content, StringComparison.Ordinal);
         Assert.Contains("WithExternalHttpEndpoints", content, StringComparison.Ordinal);

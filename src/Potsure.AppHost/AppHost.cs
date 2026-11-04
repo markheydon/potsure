@@ -7,7 +7,9 @@ var sql = builder.AddAzureSqlServer("sql")
 
 var database = sql.AddDatabase("potsure");
 
-var web = builder.AddProject<Projects.Potsure_Web>("web")
+#pragma warning disable ASPIREDOTNETPROJECT001
+var web = builder.AddDotnetProject("web", "../Potsure.Web/Potsure.Web.csproj")
+#pragma warning restore ASPIREDOTNETPROJECT001
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(database)
@@ -15,7 +17,9 @@ var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithComputeEnvironment(aca)
     .PublishAsAzureContainerApp((_, _) => { });
 
+#pragma warning disable ASPIREPROJECTS001
 var dataProtectionMigrations = web.AddEFMigrations(
+#pragma warning restore ASPIREPROJECTS001
         "ef-data-protection-migrations",
         "Potsure.Data.PotsureDataProtectionDbContext")
     .WithReference(database)
@@ -24,7 +28,9 @@ var dataProtectionMigrations = web.AddEFMigrations(
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();
 
+#pragma warning disable ASPIREPROJECTS001
 var migrations = web.AddEFMigrations(
+#pragma warning restore ASPIREPROJECTS001
         "ef-migrations",
         "Potsure.Data.PotsureDbContext")
     .WithReference(database)
