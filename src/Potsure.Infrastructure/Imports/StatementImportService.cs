@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
@@ -10,6 +11,8 @@ using Potsure.Statements;
 
 namespace Potsure.Infrastructure.StatementImport;
 
+#pragma warning disable CA1848, CA1873 // Structured import logging uses standard ILogger extensions
+
 public sealed record StatementImportSummary(
     Guid UploadId,
     int ImportedCount,
@@ -18,14 +21,13 @@ public sealed record StatementImportSummary(
     int TransferExcludedCount,
     IReadOnlyList<string> SkippedReasons,
     bool RequiresAccountConfirmation,
-    string? AccountFingerprint);
+    string? PostImportWarning);
 
 public sealed record StatementImportPreview(
     MonzoColumnMappingPreview ColumnMapping,
     int ParsedRowCount,
     int ParseErrorCount,
     bool RequiresAccountConfirmation,
-    string? AccountFingerprint,
     IReadOnlyList<string> PreviewErrors);
 
 public sealed class StatementImportService(
@@ -33,7 +35,8 @@ public sealed class StatementImportService(
     StatementUploadRepository uploadRepository,
     ICurrentOwnerAccessor ownerAccessor,
     TransactionAttributionService attributionService,
-    BudgetProfileSeeder profileSeeder)
+    BudgetProfileSeeder profileSeeder,
+    ILogger<StatementImportService> logger)
 {
     public async Task<RememberedMonzoColumnMapping?> GetRememberedColumnMappingAsync(
         CancellationToken cancellationToken = default)
@@ -57,8 +60,7 @@ public sealed class StatementImportService(
     public async Task<StatementImportPreview> PreviewAsync(
         Stream csvStream,
         string _,
-        bool confirmAccount,
-        string? confirmedFingerprint,
+        bool userConfirmedAccount,
         IReadOnlyDictionary<string, string>? columnMap = null,
         CancellationToken cancellationToken = default)
     {
@@ -87,10 +89,11 @@ public sealed class StatementImportService(
                 .AsNoTracking()
                 .SingleOrDefaultAsync(cancellationToken);
 
+            string? fileDerivedFingerprint = ExtractFileDerivedAccountFingerprint(parseResult);
             MonzoAccountValidationResult accountResult = MonzoAccountValidator.ValidateAssociation(
-                fileAccountFingerprint: confirmedFingerprint,
-                associatedAccountFingerprint: association?.AccountFingerprint,
-                explicitConfirmationProvided: confirmAccount);
+                fileDerivedFingerprint,
+                association?.AccountFingerprint,
+                userConfirmedAccount);
 
             bool requiresConfirmation =
                 accountResult.Outcome == MonzoAccountValidationOutcome.ConfirmationRequired;
@@ -100,7 +103,6 @@ public sealed class StatementImportService(
                 parseResult.Rows.Count,
                 parseResult.Errors.Count,
                 requiresConfirmation,
-                confirmedFingerprint,
                 previewErrors);
         }
         finally
@@ -115,13 +117,13 @@ public sealed class StatementImportService(
     public async Task<StatementImportSummary> ImportAsync(
         Stream csvStream,
         string fileName,
-        bool confirmAccount,
-        string? confirmedFingerprint,
+        bool userConfirmedAccount,
         IReadOnlyDictionary<string, string>? columnMap = null,
         CancellationToken cancellationToken = default)
     {
         string? tempPath = null;
         StatementUploadEntity? upload = null;
+        bool committed = false;
         try
         {
             tempPath = Path.GetTempFileName();
@@ -147,13 +149,18 @@ public sealed class StatementImportService(
             MonzoAccountAssociationEntity? association = await dbContext.MonzoAccounts
                 .SingleOrDefaultAsync(cancellationToken);
 
+            string? fileDerivedFingerprint = ExtractFileDerivedAccountFingerprint(parseResult);
             MonzoAccountValidationResult accountResult = MonzoAccountValidator.ValidateAssociation(
-                fileAccountFingerprint: confirmedFingerprint,
-                associatedAccountFingerprint: association?.AccountFingerprint,
-                explicitConfirmationProvided: confirmAccount);
+                fileDerivedFingerprint,
+                association?.AccountFingerprint,
+                userConfirmedAccount);
 
             if (accountResult.Outcome == MonzoAccountValidationOutcome.ConfirmationRequired)
             {
+                logger.LogInformation(
+                    "Statement import {UploadId} requires account confirmation for owner {OwnerKey}",
+                    upload.Id,
+                    ownerAccessor.OwnerKey);
                 await uploadRepository.FailAsync(upload.Id, cancellationToken);
                 return new StatementImportSummary(
                     upload.Id,
@@ -163,12 +170,16 @@ public sealed class StatementImportService(
                     0,
                     skippedReasons,
                     RequiresAccountConfirmation: true,
-                    confirmedFingerprint);
+                    PostImportWarning: null);
             }
 
             if (accountResult.Outcome == MonzoAccountValidationOutcome.DifferentAccountRejected)
             {
                 skippedReasons.Add(accountResult.Detail ?? "Different Monzo account.");
+                logger.LogWarning(
+                    "Statement import {UploadId} rejected: different Monzo account for owner {OwnerKey}",
+                    upload.Id,
+                    ownerAccessor.OwnerKey);
                 await uploadRepository.FailAsync(upload.Id, cancellationToken);
                 return new StatementImportSummary(
                     upload.Id,
@@ -178,7 +189,7 @@ public sealed class StatementImportService(
                     0,
                     skippedReasons,
                     RequiresAccountConfirmation: false,
-                    confirmedFingerprint);
+                    PostImportWarning: null);
             }
 
             List<TransactionDedupeKey> existingKeys = await dbContext.Transactions
@@ -217,26 +228,11 @@ public sealed class StatementImportService(
                 });
             }
 
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-            dbContext.Transactions.AddRange(entities);
+            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
+                await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-            if (confirmAccount && association is null && !string.IsNullOrWhiteSpace(confirmedFingerprint))
-            {
-                association = new MonzoAccountAssociationEntity
-                {
-                    Id = Guid.NewGuid(),
-                    OwnerKey = ownerAccessor.OwnerKey,
-                    AccountFingerprint = confirmedFingerprint.Trim(),
-                    ConfirmedByUser = true,
-                };
-                dbContext.MonzoAccounts.Add(association);
-            }
-            else if (confirmAccount && association is not null && string.IsNullOrWhiteSpace(association.AccountFingerprint)
-                     && !string.IsNullOrWhiteSpace(confirmedFingerprint))
-            {
-                association.AccountFingerprint = confirmedFingerprint.Trim();
-                association.ConfirmedByUser = true;
-            }
+            dbContext.Transactions.AddRange(entities);
+            EnsureMonzoAssociation(userConfirmedAccount, fileDerivedFingerprint, ref association);
 
             ImportStatistics statistics = new(
                 entities.Count,
@@ -246,7 +242,6 @@ public sealed class StatementImportService(
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await uploadRepository.CompleteAsync(upload.Id, statistics, skippedReasons, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
 
             Dictionary<string, string> mapToRemember = columnMap is { Count: > 0 }
                 ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
@@ -257,7 +252,32 @@ public sealed class StatementImportService(
                 JsonSerializer.Serialize(remembered),
                 cancellationToken);
 
-            await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            committed = true;
+
+            logger.LogInformation(
+                "Statement import {UploadId} completed for owner {OwnerKey}: imported {ImportedCount}, deduped {DedupedCount}, skipped {SkippedCount}",
+                upload.Id,
+                ownerAccessor.OwnerKey,
+                entities.Count,
+                dedupe.DuplicateCount,
+                statistics.SkippedCount);
+
+            string? postImportWarning = null;
+            try
+            {
+                await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Statement import {UploadId} post-import attribution failed for owner {OwnerKey}",
+                    upload.Id,
+                    ownerAccessor.OwnerKey);
+                postImportWarning =
+                    "Import completed but automatic attribution could not run. You can assign transactions manually.";
+            }
 
             return new StatementImportSummary(
                 upload.Id,
@@ -267,11 +287,20 @@ public sealed class StatementImportService(
                 transferExcluded,
                 skippedReasons,
                 RequiresAccountConfirmation: false,
-                confirmedFingerprint);
+                postImportWarning);
         }
-        catch
+        catch (Exception ex)
         {
             if (upload is not null)
+            {
+                logger.LogError(
+                    ex,
+                    "Statement import {UploadId} failed for owner {OwnerKey}",
+                    upload.Id,
+                    ownerAccessor.OwnerKey);
+            }
+
+            if (upload is not null && !committed)
             {
                 await uploadRepository.FailAsync(upload.Id, cancellationToken);
             }
@@ -285,6 +314,45 @@ public sealed class StatementImportService(
                 File.Delete(tempPath);
             }
         }
+    }
+
+    private void EnsureMonzoAssociation(
+        bool userConfirmedAccount,
+        string? fileDerivedFingerprint,
+        ref MonzoAccountAssociationEntity? association)
+    {
+        if (!userConfirmedAccount)
+        {
+            return;
+        }
+
+        if (association is null)
+        {
+            association = new MonzoAccountAssociationEntity
+            {
+                Id = Guid.NewGuid(),
+                OwnerKey = ownerAccessor.OwnerKey,
+                AccountFingerprint = fileDerivedFingerprint,
+                ConfirmedByUser = true,
+            };
+            dbContext.MonzoAccounts.Add(association);
+            return;
+        }
+
+        association.ConfirmedByUser = true;
+        if (fileDerivedFingerprint is not null && string.IsNullOrWhiteSpace(association.AccountFingerprint))
+        {
+            association.AccountFingerprint = fileDerivedFingerprint;
+        }
+    }
+
+    /// <summary>
+    /// v1 Monzo CSV exports do not include a dedicated account identifier column; extend when metadata is available.
+    /// </summary>
+    private static string? ExtractFileDerivedAccountFingerprint(MonzoParseResult parseResult)
+    {
+        _ = parseResult;
+        return null;
     }
 
     private static Dictionary<string, string> BuildDefaultColumnMap(MonzoColumnMappingPreview layout)
@@ -308,3 +376,5 @@ public sealed class StatementImportService(
         return mapping;
     }
 }
+
+#pragma warning restore CA1848, CA1873

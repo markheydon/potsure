@@ -1,13 +1,16 @@
 using BlazorBlueprint.Components;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Potsure.Data;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Tenancy;
-using Potsure.Web;
 using Potsure.Web.Components;
+using Potsure.Web.Components.Account;
 using Potsure.Web.Configuration;
 using Potsure.Web.Services;
 using Potsure.Web.Telemetry;
@@ -27,22 +30,22 @@ DeploymentModeOptions deployment = builder.Configuration
     .GetSection(DeploymentModeOptions.SectionName)
     .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
 
+DeploymentModeStartupValidation.EnsureValid(deployment);
+
 if (deployment.Mode == DeploymentMode.LocalOnly)
 {
     builder.Services.AddSingleton<ICurrentOwnerAccessor, LocalOnlyOwnerAccessor>();
     builder.Services.AddAuthorization();
     builder.Services.AddCascadingAuthenticationState();
 }
-if (deployment.Mode == DeploymentMode.Hosted)
+else if (deployment.Mode == DeploymentMode.Hosted)
 {
     builder.Services.AddSingleton<ICurrentOwnerAccessor, HttpContextOwnerAccessor>();
-    builder.Services.AddHostedPasskeyIdentity(builder.Configuration);
+    builder.Services.AddHostedIdentity(builder.Configuration);
 }
 
-builder.Services.AddScoped<PasskeyStepUpJsInterop>();
-builder.Services.AddScoped<PasskeySignInJsInterop>();
-
 builder.Services.AddScoped<ReauthenticationService>();
+builder.Services.AddScoped<PasswordReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
@@ -51,6 +54,9 @@ builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>(
     configureDbContextOptions: options =>
         options.UseSqlServer(
             sql => sql.MigrationsHistoryTable("__EFDataProtectionMigrationsHistory")));
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<PotsureDbContext>("sql", tags: ["ready"]);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -62,12 +68,25 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "RequestVerificationToken";
 });
 
+if (deployment.Mode == DeploymentMode.Hosted)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    });
+}
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+}
+
+if (deployment.Mode == DeploymentMode.Hosted && !app.Environment.IsDevelopment())
+{
+    app.UseForwardedHeaders();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
@@ -77,9 +96,6 @@ if (deployment.Mode == DeploymentMode.Hosted)
 {
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseMiddleware<HostedFinancialDataAuthorizationMiddleware>();
-    app.MapHostedPasskeySignInEndpoints();
-    app.MapHostedPasskeyStepUpEndpoints();
 }
 
 app.UseAntiforgery();
@@ -88,7 +104,15 @@ app.MapStaticAssets().AllowAnonymous();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapHealthChecks("/health").AllowAnonymous();
+if (deployment.Mode == DeploymentMode.Hosted)
+{
+    app.MapAdditionalIdentityEndpoints();
+}
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("ready"),
+}).AllowAnonymous();
 app.MapHealthChecks("/alive", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains("live"),

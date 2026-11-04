@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Potsure.Data;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Deletion;
@@ -17,6 +18,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPotsureInfrastructureServices(this IServiceCollection services)
     {
+        services.AddLogging();
         services.AddScoped<StatementUploadRepository>();
         services.AddScoped<StatementImportService>();
         services.AddScoped<IncomePatternService>();

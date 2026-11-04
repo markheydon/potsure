@@ -23,9 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Potsure.Budgeting\Potsure.Budgeting.csproj" />
-    <ProjectReference Include="..\Potsure.Recurrence\Potsure.Recurrence.csproj" />
-    <ProjectReference Include="..\Potsure.Statements\Potsure.Statements.csproj" />
-    <ProjectReference Include="..\Potsure.Reporting\Potsure.Reporting.csproj" />
   </ItemGroup>
 
 </Project>

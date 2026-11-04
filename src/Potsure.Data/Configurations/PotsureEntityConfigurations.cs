@@ -104,6 +104,10 @@ internal sealed class TransactionConfiguration : IEntityTypeConfiguration<Transa
         builder.HasOne(e => e.UploadBatch)
             .WithMany(u => u.Transactions)
             .HasForeignKey(e => e.UploadBatchId);
+        builder.HasOne<BudgetCategoryEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 
@@ -146,6 +150,12 @@ internal sealed class RecurringExpenseConfiguration : IEntityTypeConfiguration<R
         builder.Property(e => e.FixedAmount).HasPrecision(18, 2);
         builder.Property(e => e.MonthlyEstimate).HasPrecision(18, 2);
         builder.Property(e => e.Tag).HasMaxLength(128);
+        builder.Property(e => e.PaymentType).HasMaxLength(64).IsRequired();
+        builder.Property(e => e.AmountKind).HasMaxLength(64).IsRequired();
+        builder.HasOne<BudgetCategoryEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -157,5 +167,17 @@ internal sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignm
         builder.HasKey(e => e.Id);
         builder.Property(e => e.OwnerKey).HasMaxLength(450).IsRequired();
         builder.Property(e => e.Tag).HasMaxLength(128);
+        builder.HasOne<TransactionEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.TransactionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<RecurringExpenseEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.RecurringExpenseId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<BudgetCategoryEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

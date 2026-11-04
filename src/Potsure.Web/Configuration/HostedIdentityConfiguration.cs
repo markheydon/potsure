@@ -1,19 +1,21 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Potsure.Data;
 using Potsure.Data.Identity;
+using Potsure.Web.Components.Account;
 
 namespace Potsure.Web.Configuration;
 
 /// <summary>
-/// Registers ASP.NET Core Identity with passkey support and SQL persistence for hosted mode (FR-M025).
+/// Registers ASP.NET Core Identity with optional passkeys and SQL persistence for hosted mode (FR-M025).
 /// </summary>
 public static class HostedIdentityConfiguration
 {
     /// <summary>
-    /// Adds Identity, passkey handler, and cookie authentication for hosted deployment.
+    /// Adds Identity, optional passkey support, and cookie authentication for hosted deployment.
     /// </summary>
-    public static IServiceCollection AddHostedPasskeyIdentity(
+    public static IServiceCollection AddHostedIdentity(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -26,17 +28,17 @@ public static class HostedIdentityConfiguration
 
         services.ConfigureApplicationCookie(options =>
         {
-            options.LoginPath = "/account/sign-in";
+            options.LoginPath = "/Account/Login";
         });
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
                 options.User.RequireUniqueEmail = true;
-                options.Password.RequiredLength = 64;
-                options.Password.RequireDigit = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireUppercase = false;
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
@@ -57,8 +59,17 @@ public static class HostedIdentityConfiguration
             }
         });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
+
         services.AddCascadingAuthenticationState();
+        services.AddScoped<IdentityRedirectManager>();
+        services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+        services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
         return services;
     }

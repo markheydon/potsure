@@ -14,7 +14,7 @@ public sealed class KeyJourneysTests
         string? baseUrl = Environment.GetEnvironmentVariable("POTSURE_E2E_BASE_URL");
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            return;
+            Assert.Skip("Set POTSURE_E2E_BASE_URL to run Playwright journeys (see docs/e2e-testing.md).");
         }
 
         string trimmed = baseUrl.TrimEnd('/');

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Potsure.Statements.Deduplication;
 
 namespace Potsure.Statements;
@@ -11,7 +12,9 @@ public readonly record struct TransactionDedupeKey(string Value, bool IsTransact
         new(monzoTransactionId.Trim(), IsTransactionId: true);
 
     public static TransactionDedupeKey FromDateAmountDescription(DateOnly date, decimal amount, string normalizedDescription) =>
-        new($"{date:yyyy-MM-dd}|{amount}|{normalizedDescription}", IsTransactionId: false);
+        new(
+            $"{date:yyyy-MM-dd}|{amount.ToString("0.00", CultureInfo.InvariantCulture)}|{normalizedDescription}",
+            IsTransactionId: false);
 }
 
 /// <summary>

@@ -57,7 +57,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 | I Code Quality | DI, async + CancellationToken, nullable, records for DTOs, IHttpClientFactory pattern documented in CONVENTIONS |
 | II Testing | Golden Monzo tests, pure core golden maths, Playwright journeys planned |
 | III Maintainability | Parsing / detection / budgeting / reporting separation; core pure |
-| IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (`ICurrentOwnerAccessor`, query filters, `HostedFinancialDataAuthorizationMiddleware`); local-only unchanged; validation, encryption, minimal logging; optional passkeys deferred post–v1 — aligned with constitution 1.2.0 |
+| IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (`ICurrentOwnerAccessor`, EF query filters, fallback authorization policy); local-only unchanged; validation, encryption, structured logging; optional passkeys on template — aligned with constitution 1.2.0 |
 | V Documentation | plan, research, data-model, contracts, quickstart; implement adds XML + self-host docs |
 | VI Transparency | Decisions traceable to spec and research.md |
 | Budget model (constitution) | Three categories, two presets, optional pots, single Monzo CSV — aligned |
@@ -223,7 +223,7 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 
 ### Identity (hosted)
 
-- **Stack**: ASP.NET Core Identity on SQL Server via existing `PotsureDbContext` / `ApplicationUser`; cookie authentication; per-user isolation via `ICurrentOwnerAccessor`, EF global query filters, and `HostedFinancialDataAuthorizationMiddleware` (unchanged isolation model).
+- **Stack**: ASP.NET Core Identity on SQL Server via existing `PotsureDbContext` / `ApplicationUser`; cookie authentication; per-user isolation via `ICurrentOwnerAccessor`, EF global query filters, and hosted **fallback authorization policy** (authenticated user required).
 - **UX / structure**: Adopt the standard .NET 10 Blazor Server Identity account template layout under `Components/Account/Pages` (Login, Register, ForgotPassword, Manage, etc.), `MapAdditionalIdentityEndpoints`, `IdentityRedirectManager`, and `IdentityRevalidatingAuthenticationStateProvider`. Behavioural reference: [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) (adapt routes, copy, and Potsure deployment modes — not a fork).
 - **Presentation**: Convert template markup to BlazorBlueprint v4 (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide via house patterns); UK English copy (`blazor-blueprint` skill).
 - **Primary sign-in (v1)**: Email + password via `PasswordSignInAsync`; first hosted user created through **Register**, not passkey enrolment.

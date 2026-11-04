@@ -48,38 +48,44 @@ public static class MonzoAccountValidator
     }
 
     /// <summary>
-    /// Compares file fingerprint to the associated account; requires explicit confirmation when identity is absent (FR-M006).
+    /// Compares a file-derived account identifier to the stored association; requires explicit user confirmation when identity cannot be verified from the file (FR-M006).
     /// </summary>
+    /// <param name="fileDerivedAccountFingerprint">Parsed from statement metadata when available; null when the export provides no account identifier.</param>
+    /// <param name="storedAccountFingerprint">Previously persisted identifier from a prior confirmed import.</param>
+    /// <param name="userConfirmedAccount">True when the user explicitly confirmed this export belongs to their Monzo account.</param>
     public static MonzoAccountValidationResult ValidateAssociation(
-        string? fileAccountFingerprint,
-        string? associatedAccountFingerprint,
-        bool explicitConfirmationProvided)
+        string? fileDerivedAccountFingerprint,
+        string? storedAccountFingerprint,
+        bool userConfirmedAccount)
     {
-        if (!string.IsNullOrWhiteSpace(fileAccountFingerprint)
-            && !string.IsNullOrWhiteSpace(associatedAccountFingerprint)
-            && !string.Equals(
-                fileAccountFingerprint.Trim(),
-                associatedAccountFingerprint.Trim(),
-                StringComparison.Ordinal))
+        string? fileId = string.IsNullOrWhiteSpace(fileDerivedAccountFingerprint)
+            ? null
+            : fileDerivedAccountFingerprint.Trim();
+        string? storedId = string.IsNullOrWhiteSpace(storedAccountFingerprint)
+            ? null
+            : storedAccountFingerprint.Trim();
+
+        if (fileId is not null
+            && storedId is not null
+            && !string.Equals(fileId, storedId, StringComparison.Ordinal))
         {
             return new MonzoAccountValidationResult(
                 MonzoAccountValidationOutcome.DifferentAccountRejected,
                 "This file appears to be from a different Monzo account.");
         }
 
-        if (string.IsNullOrWhiteSpace(fileAccountFingerprint)
-            || string.IsNullOrWhiteSpace(associatedAccountFingerprint))
+        if (fileId is not null && storedId is not null)
         {
-            if (explicitConfirmationProvided)
-            {
-                return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
-            }
-
-            return new MonzoAccountValidationResult(
-                MonzoAccountValidationOutcome.ConfirmationRequired,
-                "Account identity could not be verified from the file; confirm this export is from your linked account.");
+            return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
         }
 
-        return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
+        if (userConfirmedAccount)
+        {
+            return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
+        }
+
+        return new MonzoAccountValidationResult(
+            MonzoAccountValidationOutcome.ConfirmationRequired,
+            "Account identity could not be verified from the file; confirm this export is from your linked account.");
     }
 }

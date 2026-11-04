@@ -100,7 +100,6 @@ else
                     <BbCheckbox @bind-Checked="_accountConfirmed">
                         I confirm this export is from my Monzo account
                     </BbCheckbox>
-                    <BbInput @bind-Value="_accountFingerprint" Placeholder="Optional account fingerprint" />
                     <BbButton Variant="ButtonVariant.Default"
                               Disabled="@(!_accountConfirmed || _pendingFile is null)"
                               OnClick="ConfirmAccountAndImportAsync">

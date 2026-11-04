@@ -1,6 +1,6 @@
 # Local-only mode
 
-Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core Identity accounts. Financial data is scoped to a fixed owner key (`local-profile`) enforced by EF Core global query filters.
+Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core Identity accounts. Financial data is scoped to a fixed owner key (`local`, see `LocalOnlyOwnerAccessor.LocalOwnerKey`) enforced by EF Core global query filters.
 
 ## Configuration
 
@@ -24,7 +24,7 @@ Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core 
 
 With `BindPublicEndpoints` set to `false`, `Program.cs` clears default URLs and binds Kestrel to `http://127.0.0.1:0` (ephemeral port on loopback). This prevents accidental exposure on LAN interfaces by default.
 
-If you set `BindPublicEndpoints` to `true`, you must configure firewalls and TLS yourself; this is discouraged for personal finance data unless you operate equivalent controls to hosted mode.
+`BindPublicEndpoints` must remain `false` for local-only mode. The application refuses to start if both local-only mode and public binding are configured, because that would expose unauthenticated financial data on the network.
 
 ## When to use hosted mode instead
 

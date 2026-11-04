@@ -25,19 +25,18 @@ public sealed class UserDataDeletionService(
 
         string ownerKey = ownerAccessor.OwnerKey;
 
-        await dbContext.Assignments.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.Transactions.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.StatementUploads.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.RecurringExpenses.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.IncomeSources.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BankPots.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetCategories.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetProfiles.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetPeriods.ExecuteDeleteAsync(cancellationToken);
-        await dbContext.MonzoAccounts.ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Assignments.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Transactions.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.StatementUploads.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.RecurringExpenses.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.IncomeSources.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.BankPots.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.BudgetCategories.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.BudgetProfiles.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.BudgetPeriods.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.MonzoAccounts.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
-        _ = ownerKey;
         return true;
     }
 }

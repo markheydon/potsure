@@ -4,7 +4,7 @@ Potsure ships smoke and journey tests in `tests/Potsure.E2E/` using [Playwright 
 
 ## When tests run
 
-By default, `KeyJourneysTests` **no-op** when `POTSURE_E2E_BASE_URL` is unset so local `dotnet test` stays fast without a running app.
+By default, `KeyJourneysTests` **skip** when `POTSURE_E2E_BASE_URL` is unset (`Assert.Skip`) so local `dotnet test` reports them as skipped rather than silently passing.
 
 Set the environment variable to the base URL of a running instance (no trailing path required), for example:
 

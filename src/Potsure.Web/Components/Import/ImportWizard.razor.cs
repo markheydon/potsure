@@ -19,7 +19,6 @@ public partial class ImportWizard
     private bool _awaitingMappingConfirmation;
     private bool _accountConfirmed;
     private bool _mappingConfirmed;
-    private string? _accountFingerprint;
     private string? _errorMessage;
     private StatementImportSummary? _summary;
     private StatementImportPreview? _preview;
@@ -62,8 +61,7 @@ public partial class ImportWizard
             _preview = await ImportService.PreviewAsync(
                 stream,
                 _pendingFile.Name,
-                confirmAccount: false,
-                confirmedFingerprint: null);
+                userConfirmedAccount: false);
 
             if (!_preview.ColumnMapping.LayoutSupported)
             {
@@ -85,9 +83,9 @@ public partial class ImportWizard
                     StringComparer.Ordinal);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = ex.Message;
+            _errorMessage = "We could not read that file. Check the format and try again.";
         }
         finally
         {
@@ -98,23 +96,23 @@ public partial class ImportWizard
     private Task ConfirmMappingAsync()
     {
         _mappingConfirmed = true;
-        return RunImportAsync(confirmAccount: false, fingerprint: null);
+        return RunImportAsync(userConfirmedAccount: false);
     }
 
     private Task ImportWithoutConfirmationAsync() =>
-        RunImportAsync(confirmAccount: false, fingerprint: null);
+        RunImportAsync(userConfirmedAccount: false);
 
     private Task ConfirmAccountAndImportAsync() =>
-        RunImportAsync(confirmAccount: true, fingerprint: _accountFingerprint);
+        RunImportAsync(userConfirmedAccount: true);
 
-    private async Task RunImportAsync(bool confirmAccount, string? fingerprint)
+    private async Task RunImportAsync(bool userConfirmedAccount)
     {
         if (_pendingBytes is null || _pendingFile is null)
         {
             return;
         }
 
-        if (_awaitingMappingConfirmation && !_mappingConfirmed && !confirmAccount)
+        if (_awaitingMappingConfirmation && !_mappingConfirmed && !userConfirmedAccount)
         {
             return;
         }
@@ -127,8 +125,7 @@ public partial class ImportWizard
             StatementImportSummary result = await ImportService.ImportAsync(
                 stream,
                 _pendingFile.Name,
-                confirmAccount,
-                fingerprint,
+                userConfirmedAccount,
                 _columnMapping);
 
             if (result.RequiresAccountConfirmation)
@@ -143,9 +140,9 @@ public partial class ImportWizard
             _awaitingAccountConfirmation = false;
             _awaitingMappingConfirmation = false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = ex.Message;
+            _errorMessage = "Import failed. Check the summary for skipped rows and try again.";
         }
         finally
         {
@@ -164,7 +161,6 @@ public partial class ImportWizard
         _awaitingMappingConfirmation = false;
         _accountConfirmed = false;
         _mappingConfirmed = false;
-        _accountFingerprint = null;
         _errorMessage = null;
     }
 

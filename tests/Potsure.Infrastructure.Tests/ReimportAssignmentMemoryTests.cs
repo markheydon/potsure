@@ -211,7 +211,6 @@ public sealed class ReimportAssignmentMemoryTests
     public async Task OverlappingImportsThroughStatementImportService_DedupeAndPreserveManualOverride()
     {
         const string owner = "test-owner-import-pipeline";
-        const string accountFingerprint = "monzo-import-test-fingerprint";
         const string overlappingCsv =
             """
             Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In
@@ -251,8 +250,7 @@ public sealed class ReimportAssignmentMemoryTests
         StatementImportSummary firstImport = await importService.ImportAsync(
             new MemoryStream(Encoding.UTF8.GetBytes(overlappingCsv)),
             "overlap-first.csv",
-            confirmAccount: true,
-            confirmedFingerprint: accountFingerprint,
+            userConfirmedAccount: true,
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(firstImport.RequiresAccountConfirmation);
@@ -275,8 +273,7 @@ public sealed class ReimportAssignmentMemoryTests
         StatementImportSummary secondImport = await importService.ImportAsync(
             new MemoryStream(Encoding.UTF8.GetBytes(overlappingCsv)),
             "overlap-second.csv",
-            confirmAccount: true,
-            confirmedFingerprint: accountFingerprint,
+            userConfirmedAccount: true,
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(0, secondImport.ImportedCount);

@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Potsure.Infrastructure.Deletion;
@@ -21,13 +20,7 @@ public partial class PrivacyDataPanel
     private ReauthenticationService ReauthenticationService { get; set; } = null!;
 
     [Inject]
-    private PasskeyStepUpJsInterop PasskeyStepUp { get; set; } = null!;
-
-    [Inject]
-    private IAntiforgery Antiforgery { get; set; } = null!;
-
-    [Inject]
-    private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
+    private PasswordReauthenticationService PasswordReauthenticationService { get; set; } = null!;
 
     [Inject]
     private IOptions<DeploymentModeOptions> DeploymentOptions { get; set; } = null!;
@@ -40,6 +33,7 @@ public partial class PrivacyDataPanel
     private bool _showDeleteReauth;
     private string _exportChallengePhrase = string.Empty;
     private string _deleteChallengePhrase = string.Empty;
+    private string _hostedPassword = string.Empty;
     private string? _exportMessage;
     private string? _deleteMessage;
     private string? _downloadBase64;
@@ -60,6 +54,7 @@ public partial class PrivacyDataPanel
         }
 
         _exportChallengePhrase = string.Empty;
+        _hostedPassword = string.Empty;
         _showExportReauth = true;
     }
 
@@ -73,6 +68,7 @@ public partial class PrivacyDataPanel
         }
 
         _deleteChallengePhrase = string.Empty;
+        _hostedPassword = string.Empty;
         _showDeleteReauth = true;
     }
 
@@ -80,10 +76,9 @@ public partial class PrivacyDataPanel
     {
         if (IsHosted)
         {
-            (bool ok, string? message) = await RunHostedPasskeyStepUpAsync();
-            if (!ok)
+            if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
             {
-                _exportMessage = message ?? "Complete passkey step-up before export.";
+                _exportMessage = "Enter your current account password to confirm export.";
                 return;
             }
         }
@@ -102,10 +97,9 @@ public partial class PrivacyDataPanel
     {
         if (IsHosted)
         {
-            (bool ok, string? message) = await RunHostedPasskeyStepUpAsync();
-            if (!ok)
+            if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
             {
-                _deleteMessage = message ?? "Complete passkey step-up before deletion.";
+                _deleteMessage = "Enter your current account password to confirm deletion.";
                 return;
             }
         }
@@ -118,23 +112,6 @@ public partial class PrivacyDataPanel
         ReauthenticationService.GrantReauthentication();
         _showDeleteReauth = false;
         await DeleteAsync();
-    }
-
-    private async Task<(bool Ok, string? Message)> RunHostedPasskeyStepUpAsync()
-    {
-        HttpContext? httpContext = HttpContextAccessor.HttpContext;
-        if (httpContext is null)
-        {
-            return (false, "Passkey step-up is unavailable.");
-        }
-
-        AntiforgeryTokenSet tokens = Antiforgery.GetAndStoreTokens(httpContext);
-        if (string.IsNullOrEmpty(tokens.RequestToken))
-        {
-            return (false, "Passkey step-up is unavailable.");
-        }
-
-        return await PasskeyStepUp.PerformStepUpAsync(tokens.RequestToken);
     }
 
     private async Task ExportAsync()
@@ -157,9 +134,9 @@ public partial class PrivacyDataPanel
             _downloadBase64 = Convert.ToBase64String(result.Content);
             _exportMessage = string.Format(CultureInfo.InvariantCulture, "Export ready ({0}).", result.FileName);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _exportMessage = ex.Message;
+            _exportMessage = "Export failed. Try again or contact your administrator.";
         }
         finally
         {
@@ -183,9 +160,9 @@ public partial class PrivacyDataPanel
                 ? "All financial data has been deleted."
                 : "Deletion cancelled — reauthentication required.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _deleteMessage = ex.Message;
+            _deleteMessage = "Deletion failed. Try again or contact your administrator.";
         }
         finally
         {
