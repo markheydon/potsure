@@ -80,7 +80,7 @@
 - **Hosted / publish**: `RunDatabaseUpdateOnStart` is local-run only; continue **controlled single-runner** apply via CI or `dotnet ef database update` / published migration script per `docs/deployment-database.md`.
 - **Application seeding** (`BudgetProfileSeeder`, fixed category rows on profile create) remains **runtime** application logic — not executed inside the migration resource.
 
-**Design-time**: Keep `IDesignTimeDbContextFactory` in Infrastructure with `UseSqlServer` from config/localdb fallback for standalone `dotnet ef` when AppHost is not running (constitution 1.1.0 — not a runtime bypass).
+**Design-time**: Keep `IDesignTimeDbContextFactory` in Infrastructure with `UseSqlServer` from config/localdb fallback for standalone `dotnet ef` when AppHost is not running (constitution 1.2.0 — not a runtime bypass).
 
 **Rationale**: EF migrations review prompt; [Aspire EF Core migrations integration](https://aspire.dev/integrations/databases/efcore/migrations/); avoids custom migration worker boilerplate while giving AppHost an explicit migration dependency; matches constitution Aspire consumption (web still uses `AddSqlServerDbContext` at runtime).
 
@@ -122,7 +122,7 @@
 
 **Decision**: Single AppHost modelling web project, ACA environment, Azure SQL (`AddAzureSqlServer`, `RunAsContainer` locally, `AddDatabase`, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp`); explicit SKU/replica/CPU/memory per stage (dev/test min 0 max 1; first public min 1; commercial 2+ replicas after approval). UK South; validate pricing/free offers at deploy time; no ACA Express; no App Insights by default on private dev.
 
-**Runtime consumption (constitution 1.1.0)**: Web project registers SQL through the Aspire SQL Server client integration — `AddSqlServerDbContext<PotsureDbContext>("potsure")` matching the AppHost database reference name. Application startup MUST NOT bypass integration DI with manual connection strings when AppHost models SQL. EF Core design-time factory may read `appsettings`/environment for migration commands only.
+**Runtime consumption (constitution 1.2.0)**: Web project registers SQL through the Aspire SQL Server client integration — `AddSqlServerDbContext<PotsureDbContext>("potsure")` matching the AppHost database reference name. Application startup MUST NOT bypass integration DI with manual connection strings when AppHost models SQL. EF Core design-time factory may read `appsettings`/environment for migration commands only.
 
 **Migration resource (review prompt)**: AppHost models `database → AddEFMigrations → web` with `WaitForCompletion`; inspect with `aspire describe --include-hidden` after implement. Do not upgrade Aspire major versions solely to gain `AddEFMigrations` — already available on pinned 13.6.4 hosting line.
 
@@ -130,7 +130,7 @@
 
 **Alternatives considered**:
 - AKS / Functions / Redis / SignalR / Blob / Key Vault — deferred per release gates until measured need.
-- Manual `UseSqlServer(connectionString)` in `Program.cs` from configuration — rejected at runtime; breaks AppHost parity and violates constitution 1.1.0.
+- Manual `UseSqlServer(connectionString)` in `Program.cs` from configuration — rejected at runtime; breaks AppHost parity and violates constitution 1.2.0.
 
 ## OpenTelemetry
 
@@ -140,8 +140,8 @@
 
 ## CSV library note (package governance)
 
-**Decision**: Add **CsvHelper** (and Aspire/EF/BlazorBlueprint packages) via central `Directory.Packages.props` when implementing — not done in plan phase per AGENTS.md package rule; recorded here as the chosen parser. Each new package version MUST be the latest stable at introduction time (constitution 1.1.0).
+**Decision**: Add **CsvHelper** (and Aspire/EF/BlazorBlueprint packages) via central `Directory.Packages.props` when implementing — not done in plan phase per AGENTS.md package rule; recorded here as the chosen parser. Each new package version MUST be the latest stable at introduction time (constitution 1.2.0).
 
-**Completion gate (constitution 1.1.0 / AGENTS.md)**: Before dependency-related implementation is considered complete, run `dotnet package list --outdated`, upgrade centrally managed packages where compatible, then run the full solution test suite (`dotnet test Potsure.slnx -c Release`) after any version change.
+**Completion gate (constitution 1.2.0 / AGENTS.md)**: Before dependency-related implementation is considered complete, run `dotnet package list --outdated`, upgrade centrally managed packages where compatible, then run the full solution test suite (`dotnet test Potsure.slnx -c Release`) after any version change.
 
 **Rationale**: Agent constraint on unprompted package adds; constitution central package versioning reduces vulnerability drift and restore skew.

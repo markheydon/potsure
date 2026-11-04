@@ -4,9 +4,9 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Implementation in progress — **Phase 23** (hosted Identity pivot, tasks **T143**–**T148**) open before v1.0.0 hosted acceptance
 
-**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.1.0](../../.specify/memory/constitution.md).
+**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.2.0](../../.specify/memory/constitution.md).
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 
@@ -328,7 +328,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-M032**: The system MUST disclose statement-history gaps and uncertain income dates or amounts where they affect forecasts or warnings.
 - **FR-M033**: The system MUST NOT imply that future costs are covered by money not yet received.
 - **FR-M034**: For confirmed recurring variable expenses, forecasts MUST use the last three months’ average monthly total when available, or shorter available history with explicit coverage labelling and user correction.
-- **FR-M035**: Default forecast horizon MUST be three months with user override; users SHOULD be informed that three months of history is recommended for normal automatic recurring detection without blocking one-month onboarding.
+- **FR-M035**: Default forecast horizon MUST be three months with user override.
 - **FR-M036**: For the same stored transactions, confirmed recurring items, period selection, preset, and user-recorded funding, report totals MUST be identical on repeat viewing (no non-deterministic drift for unchanged inputs).
 - **FR-M037**: The system MUST support genuine one-off transaction categorisation at transaction level in v1.0.0. One-off categorisation MUST apply to expense debits, refunds, and merchant credits; it MUST affect category actual activity only (debits increase net spend, refunds/credits decrease it) and MUST NOT create forecast or guessed future recurring purchases.
 
@@ -336,6 +336,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 
 - **FR-S002**: The system SHOULD provide transaction-level actual-spend breakdown with optional mapped pot detail. **Deferred for v1.0.0** unless explicitly pulled into scope — aggregate category actuals on category health (FR-M017) are in scope; see [tasks.md](./tasks.md) Notes.
 - **FR-S003**: One-off categorisation (FR-M037) MUST NOT create forecast or guessed future purchases (Must-level constraint on one-off behaviour).
+- **FR-S004**: Users SHOULD be informed that three months of statement history is recommended for normal automatic recurring detection without blocking one-month onboarding (see **FR-M007**; task **T117**).
 
 ### Functional Requirements — Could
 
@@ -346,9 +347,9 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-X001**: Multi-account and multi-provider statement consolidation MUST NOT be required or implied as supported in v1.
 - **FR-X002**: Live bank feeds or promises of continuous sync MUST NOT be offered in v1.
 - **FR-X003**: Mandatory review cadence or payday-aligned budget periods MUST NOT be imposed.
-- **FR-X006**: A library of multiple saved budget periods (switching among distinct stored period profiles) MUST NOT be offered in v1; only the single working period in **FR-M031** is in scope.
 - **FR-X004**: General accounting, tax filing, investment advice, or unrelated financial products MUST NOT be offered or implied as in scope for v1.
-- **FR-X005**: Advanced account rescue or credential recovery beyond standard Identity flows (e.g. email-based password reset where implemented) MUST NOT be required or implied as shipped in v1 (e.g. one-time recovery keys at signup); future rescue design is explicitly deferred. v1 MUST NOT require passkey-only recovery paths.
+- **FR-X005**: Advanced account rescue or credential recovery beyond standard Identity template pages MUST NOT be required or implied as shipped in v1 (e.g. one-time recovery keys at signup). The **ForgotPassword** account page MAY ship with the Blazor Identity template for v1.0.0; email delivery MAY use a no-op `IEmailSender` on self-host (operator SMTP is post-v1). v1 MUST NOT require passkey-only recovery paths.
+- **FR-X006**: A library of multiple saved budget periods (switching among distinct stored period profiles) MUST NOT be offered in v1; only the single working period in **FR-M031** is in scope.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -381,6 +382,8 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 
 ### Measurable Outcomes
 
+**Validation ownership** (see [tasks.md](./tasks.md) release gate): **SC-001**, **SC-002**, and **SC-009** are moderated usability / release QA outcomes (no dedicated CI tasks). **SC-003** maps to quickstart Scenario 2 (step 4), integration tasks **T106** / **T140**–**T142**, and release evidence **T151**. **SC-004** maps to golden budgeting tests (**T016**, **T078**). **SC-006** maps to **T088**–**T089**, hosted reauth **T147**, and quickstart export/delete scenarios. **SC-008** maps to **T118**, **T129**, **T139**. **SC-005** closes when **T148** and hosted quickstart scenarios pass. **SC-007** requires **T150** (quickstart Scenario 9) plus UI tasks **T091**–**T094**.
+
 - **SC-001**: At least 90% of users in moderated usability tests can upload a valid Monzo CSV and see imported transactions with zero unexplained silent drops (every row accounted for in success or reported error).
 - **SC-002**: Users can complete first-time setup (import, choose preset, confirm at least one recurring item, view category health) in under 30 minutes with only one month of data, without requiring a fixed payday entry.
 - **SC-003**: After confirming recurring items, 95% of repeated imports in test scenarios re-apply remembered assignments without manual re-entry for previously confirmed patterns.
@@ -400,7 +403,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - v1 planning uses one working budget period; multi-period libraries are out of scope (**FR-X006**).
 - Budgeted income may be suggested from confirmed income patterns; user confirmation or edit is required before allocations change (**FR-M031**).
 - Monzo CSV column layouts remain stable enough for explicit mapping; breaking bank format changes are handled as import errors, not silent fixes.
-- Hosted v1 baseline authentication is ASP.NET Core Identity email/password (register, sign-in, sign-out) with per-user data isolation; optional passkeys may follow the .NET Blazor Identity template pattern in a later milestone but are not required for v1.0.0 acceptance. Broader account rescue flows (e.g. one-time keys generated at signup) remain deferred post-v1 beyond standard Identity password reset where implemented.
+- Hosted v1 baseline authentication is ASP.NET Core Identity email/password (register, sign-in, sign-out) with per-user data isolation; optional passkeys may follow the .NET Blazor Identity template pattern in a later milestone but are not required for v1.0.0 acceptance. Identity template **ForgotPassword** may be present; self-host v1 MAY use a no-op email sender (see [plan.md](./plan.md) Identity section). Broader account rescue flows (e.g. one-time keys generated at signup) remain deferred post-v1.
 - One-off transaction categorisation is a v1.0.0 release requirement (FR-M037); forecasts MUST NOT treat one-offs as recurring commitments.
 - Trend reporting (Could) is omitted from v1 release success unless explicitly pulled into scope later.
 - No third-party open banking or aggregation is assumed; statements are user-uploaded files only.

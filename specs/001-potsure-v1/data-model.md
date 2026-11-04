@@ -227,4 +227,4 @@ RecurringExpense 0──* Assignment (pattern defaults)
 
 ## Deletion
 
-Transactional wipe of user financial rows, assignments, patterns, transactions, pots, period, profile; Identity/passkey data per policy; retain non-financial audit marker only (user prompt reliability/deletion).
+Transactional wipe of user financial rows, assignments, patterns, transactions, pots, period, profile; hosted **Identity** account data per operator policy (email/password v1; optional passkeys post–v1.0.0); retain non-financial audit marker only (user prompt reliability/deletion).

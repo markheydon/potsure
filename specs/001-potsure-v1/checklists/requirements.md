@@ -32,5 +32,5 @@
 ## Notes
 
 - Validation pass (iteration 1): All checklist items satisfied. Spec aligns with constitution budget model, Monzo-only v1 scope, deployment modes, and MoSCoW priorities from user input.
-- Validation pass (iteration 2, 2026-11-02): Re-reviewed against updated GOALS.md, SCOPE.md, and constitution v1.0.0. Added **FR-M036** (deterministic report totals), **FR-X004** (accounting/tax/investment exclusions), **SC-009** (G1 return-visit upkeep), product-alignment header, and determinism edge case. No contradictions found; MoSCoW requirement grouping retained (richer than base spec template).
+- Validation pass (iteration 2, 2026-11-02): Re-reviewed against updated GOALS.md, SCOPE.md, and constitution v1.0.0. Added **FR-M036** (deterministic report totals), **FR-X004** (accounting/tax/investment exclusions), **SC-009** (G1 return-visit upkeep), product-alignment header, and determinism edge case. No contradictions found; MoSCoW requirement grouping retained (richer than base spec template). **2026-11-04**: hosted Identity pivot aligned to constitution **v1.2.0** in spec/plan/tasks; checklist not re-run item-by-item.
 - Ready for `/speckit-plan` (optional `/speckit-clarify` if stakeholders want structured review of assumptions).

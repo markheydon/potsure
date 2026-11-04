@@ -35,7 +35,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 
 **Project Type**: Multi-project web application + pure libraries + AppHost.
 
-**Performance Goals**: Interactive Blazor acceptable for single-user/small hosted instances; streaming import within documented row/size limits; bounded DB retries compatible with SQL auto-pause on dev/test tiers.
+**Performance / import bounds**: Interactive Blazor acceptable for single-user/small hosted instances; Monzo CSV import uses streaming parse within operator-documented row/size limits (see [research.md](./research.md)); bounded DB retries compatible with SQL auto-pause on dev/test tiers.
 
 **Constraints**:
 - Budgeting core: no I/O (constitution III).
@@ -242,4 +242,4 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 
 ## Next steps
 
-`tasks.md` is generated; run `/speckit-implement` or the repository implement workflow. Optional: `/speckit-analyze` before implement.
+`tasks.md` is generated; run `/speckit-implement` starting with **Phase 23** (**T143**–**T148**) and release-evidence tasks **T149**–**T151**. Pre-implement `/speckit-analyze` gate: artifacts aligned 2026-11-04; open checkboxes are implement backlog, not spec gaps.

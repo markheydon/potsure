@@ -20,10 +20,12 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 - Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in — not passkey enrolment; see `docs/local-only-mode.md`).
 - SQL container and `potsure` database healthy before migrations run.
 - **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
-- **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.1.0).
+- **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.2.0). Re-run after **Phase 23** Identity wiring (**T144**–**T146**) changes `Program.cs`.
 - **Migration ordering smoke** (post T111–T114): In the Aspire dashboard, the EF migrations resource reaches **Finished/Active** before the web resource starts; web must not crash on missing tables on cold SQL container. Hidden migration resource visible via `aspire describe --include-hidden` if needed.
 
 ## Hosted Identity bootstrap (Aspire / hosted mode)
+
+> **Release gate**: Routine acceptance for this section is **blocked until Phase 23** (**T143**–**T148**) completes. Steps below describe the target validation path (**T148**); exploratory runs may fail until template Identity pages replace superseded passkey-only UI.
 
 1. Start AppHost so web runs with `Deployment__Mode=Hosted`.
 2. Navigate to **Register** (Identity account template route under `Components/Account/Pages`).
@@ -43,7 +45,7 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 1. With ≥1 month of fixture data, open detection review.
 2. Confirm one expense → assign Needs + optional pot; confirm income with splits totalling 100%.
 3. Re-upload same period fixture.
-4. **Expect**: Assignments remembered; matched debits auto-attributed; income splits visible but do not change category allocations.
+4. **Expect**: Assignments remembered; matched debits auto-attributed; income splits visible but do not change category allocations. (**SC-003** evidence: integration tests **T106** / **T140**–**T142**; release sign-off **T151**.)
 
 ## Scenario 3 — Preset and period (US3)
 
@@ -85,7 +87,7 @@ dotnet test tests/Potsure.Statements.Tests -c Release
 
 **Expect**: Golden parsing files pass; budgeting golden scenarios match independently verified expected results.
 
-## Scenario 8b — Dependency hygiene (constitution 1.1.0)
+## Scenario 8b — Dependency hygiene (constitution 1.2.0)
 
 After any change to `Directory.Packages.props`:
 
