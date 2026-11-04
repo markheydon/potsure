@@ -78,6 +78,7 @@ Project skills live in `.agents/skills/`.
 | `documentation-writer` | Diátaxis-aligned documentation |
 | `project-documentation` | Project-aware docs placement |
 | `code-review` | PR or branch review before merge (see `.cursor/commands/loop-code-review.md`) |
+| `principal-engineering` | Non-trivial implementation, refactors, analyzer/build fixes, EF migrations, new abstractions—keep changes architecturally sound and root-cause based |
 | `blazor-blueprint` | BlazorBlueprint UI in `Potsure.Web` (`Bb*` components, theme, overlays, icons) |
 | `aspire` (and related `aspire-*` skills) | AppHost exists or you are wiring/deploying Aspire resources |
 
