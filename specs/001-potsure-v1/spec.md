@@ -10,9 +10,17 @@
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 
-**Last reviewed**: 2026-11-02 — reconciled against current GOALS, SCOPE, constitution, and repository templates (no scope change).
+**Last reviewed**: 2026-11-04 — hosted authentication aligned to ASP.NET Core Identity (email/password); passkeys optional and deferred for v1.0.0 acceptance.
 
 ## Clarifications
+
+### Session 2026-11-04
+
+- Q: What hosted authentication must v1 provide? → A: ASP.NET Core Identity with email/password register, sign-in, sign-out, and account isolation per user. Passwords are hashed by Identity; no plaintext storage. Hosted v1 MUST NOT require passkeys to sign in.
+- Q: Where do passkeys fit? → A: Optional enhancement (same pattern as the .NET Blazor Identity template: password primary, passkey optional on login/register/manage when implemented). Passkeys are out of scope for v1.0.0 acceptance unless explicitly added in a later milestone; no “passkey-only hosted login” and no “no non-passkey login” rules.
+- Q: Hosted reauthentication before export and permanent deletion? → A: User must reauthenticate using a hosted-appropriate challenge: prefer confirming the current account password (or the existing local-only typed phrase pattern adapted for hosted if password re-entry is unavailable in a flow). Passkey step-up MUST NOT be required for v1 acceptance.
+- Q: Local-only mode? → A: Unchanged: account-free local-only mode, not network-exposed (**FR-M024**).
+- **Planning note (UI, not a new FR here)**: Hosted account pages (register, sign-in, sign-out, manage) should behave like the .NET Blazor Identity template but be presented with BlazorBlueprint (**Bb***) components in Potsure.Web, not raw HTML/Tailwind from the stock template.
 
 ### Session 2026-11-02
 
@@ -20,7 +28,7 @@
 - Q: If an uploaded statement contains transactions in a currency other than GBP, what should v1 do by default? → A: Reject the upload (or non-GBP rows) with a clear error; no user override to import non-GBP amounts in v1.
 - Q: When mapped pot amounts plus unassigned amounts within a category would exceed that category’s budget allocation, how should the system respond? → A: Allow saving but show a persistent visible over-allocation warning on category health until corrected.
 - Q: For Monzo CSV import, how much field mapping should v1 require from the user? → A: Auto-detect Monzo columns when possible; user confirms or adjusts mapping before import; remembered when layout unchanged.
-- Q: When a user cannot use a passkey on their current device on a hosted instance, what should v1 offer? → A: Clear guidance to use a device with a registered passkey or register a passkey on a supported device; no non-passkey login on hosted v1. Account rescue mechanisms (e.g. one-time keys at signup) are out of v1 scope for future design.
+- Q: When a user cannot use a passkey on their current device on a hosted instance, what should v1 offer? → A: *(Superseded by Session 2026-11-04 — hosted v1 uses Identity email/password; passkeys optional and not required for acceptance.)* Former answer: passkey-only guidance with no non-passkey login.
 - Q: For imported spending that does not match any confirmed recurring expense pattern—and is not manually categorised as a one-off—how should it affect category “actual activity” on category health? → A: Only debits matched to confirmed recurring or one-off categorisation count in category actuals; unmatched debits are excluded from categories but shown as uncategorised spend with a persistent visible warning until assigned.
 - Q: When the same Monzo transaction appears twice within one file or across overlapping uploads, which rule should v1 use to treat two rows as the same transaction for de-duplication? → A: Prefer Monzo Transaction ID when available in the mapped CSV; otherwise duplicate = same date + amount + normalised description.
 - Q: When an imported expense debit clearly matches a user’s confirmed recurring expense pattern, should v1 automatically count it toward that pattern’s category (and optional pot) in category actual activity without asking again on each import? → A: Auto-attribute matching debits to the confirmed pattern’s category and optional pot; user may reassign individual transactions; corrections persist on re-upload.
@@ -210,22 +218,23 @@ As a privacy-conscious user or self-hoster, I export my current plan and stored 
 **Acceptance Scenarios**:
 
 1. **Given** an active plan with imports, **When** the user requests export and selects a format, **Then** they receive their plan and stored transaction data as either a versioned JSON bundle (single file or ZIP of JSON parts) or a ZIP of CSV files (transactions plus separate plan/metadata CSV), with the chosen format documented for portability.
-2. **Given** the user confirms permanent deletion, **When** deletion completes, **Then** all their financial data is removed and they receive confirmation; hosted instances enforce user isolation so deletion affects only their data.
+2. **Given** a hosted signed-in user, **When** they request export or confirm permanent deletion, **Then** the system requires reauthentication (prefer current account password confirmation, or the local-only typed-phrase pattern adapted for hosted when password re-entry is unavailable in that flow) before completing the action, **And** passkey step-up is not required for v1 acceptance.
+3. **Given** the user confirms permanent deletion, **When** deletion completes, **Then** all their financial data is removed and they receive confirmation; hosted instances enforce user isolation so deletion affects only their data.
 
 ---
 
 ### User Story 11 - Local-only and hosted access modes (Priority: P1)
 
-As a self-hoster or local user, I run Potsure in account-free local-only mode on my device, or I use a hosted instance where every user—including a sole user—must authenticate with passkey support and isolated data.
+As a self-hoster or local user, I run Potsure in account-free local-only mode on my device, or I use a hosted instance where every user—including a sole user—signs in with a hosted account (Identity email/password) and has isolated data.
 
 **Why this priority**: Constitution-mandated deployment paths; wrong exposure of local mode or weak hosted auth would violate product trust.
 
-**Independent Test**: Run local-only mode without network account; deploy hosted instance; verify passkey authentication required and users cannot access each other’s data.
+**Independent Test**: Run local-only mode without network account; deploy hosted instance; verify Identity sign-in is required before financial data and users cannot access each other’s data; confirm passkeys are not required for v1 acceptance.
 
 **Acceptance Scenarios**:
 
 1. **Given** local-only mode, **When** the user works with their budget, **Then** no hosted account is required and the mode is not exposed as a network service.
-2. **Given** a hosted instance, **When** any user accesses the app, **Then** authentication with passkey support is required before viewing or changing financial data.
+2. **Given** a hosted instance, **When** any user accesses financial data, **Then** they MUST be signed in with an authenticated hosted account (register, sign-in, sign-out via Identity email/password); passkeys MUST NOT be required for v1.0.0 acceptance.
 3. **Given** multiple users on a hosted instance, **When** each user operates normally, **Then** financial data is isolated per user with no cross-user visibility.
 
 ---
@@ -266,7 +275,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - Forecast horizon shorter than recurring cadence (e.g. weekly bill, one-week horizon); warnings remain mathematically consistent and labelled.
 - Category runway warning triggers when projected remaining spend in the window exceeds allocation minus actual activity plus recorded funding (pot funding rolled up at category level); optional pot detail in messaging.
 - Permanent deletion is irreversible; export is offered as the recovery path before deletion.
-- Hosted passkey unavailable on a device; user MUST receive clear guidance to authenticate on a device with a registered passkey or to register a passkey on a supported device, with no non-passkey login bypass on hosted v1.
+- Hosted sign-in or registration problems (unknown account, wrong password, unconfirmed email where enforced, lockout): user MUST receive clear Identity-appropriate messaging and paths to register, sign in, or reset password where implemented; passkey step-up MUST NOT be required for v1 acceptance.
 - Currency other than GBP in a file; import MUST reject the upload or affected rows with a clear error and MUST NOT offer an override to persist non-GBP amounts in v1 (no silent conversion).
 - Confirmed recurring income pattern splits totalling 100% are display-only; category allocations and budget balance use budgeted income and preset only, not per-pattern splits.
 - Confirmed recurring rejected then similar transactions appear; user can re-suggest without auto-confirming.
@@ -306,10 +315,10 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-M019**: Actual receipts and activity MUST remain separate from planned income and forecasts in all balance and health views.
 - **FR-M020**: The system MUST warn when a category is projected to run short within the selected period or forecast horizon, with optional pot detail. **Projected remaining category spend** for the warning window MUST include in-period actual activity to date plus cadence-projected remaining confirmed recurring expense commitments and variable expense estimates for that category (per **FR-M034**) over the overlapping window. A runway warning MUST be shown when projected remaining spend exceeds `(category allocation − category actual activity + category recorded funding)`, where recorded funding includes mapped-pot funding rolled into the category once only; when it does not exceed that amount, the system MUST NOT show a runway warning for that category for that window.
 - **FR-M021**: The system MUST present a complete confirmed recurring income and expense summary with cadence, fixed or variable amounts, assignments, and income splits.
-- **FR-M022**: The system MUST export the user’s current plan and stored transaction data on demand; the user MUST choose at export time between (1) a versioned JSON bundle (single JSON file or ZIP of JSON parts) and (2) a ZIP of CSV files including stored transactions and separate plan/metadata CSV.
-- **FR-M023**: The system MUST permanently delete all of a user’s financial data on confirmed request.
+- **FR-M022**: The system MUST export the user’s current plan and stored transaction data on demand; the user MUST choose at export time between (1) a versioned JSON bundle (single JSON file or ZIP of JSON parts) and (2) a ZIP of CSV files including stored transactions and separate plan/metadata CSV. On hosted instances, export MUST require reauthentication per Session 2026-11-04 (password confirmation preferred; passkey step-up not required for v1).
+- **FR-M023**: The system MUST permanently delete all of a user’s financial data on confirmed request. On hosted instances, permanent deletion MUST require reauthentication per Session 2026-11-04 before erasure completes.
 - **FR-M024**: The system MUST provide a local-only, account-free single-user mode that MUST NOT be exposed over a network.
-- **FR-M025**: Every hosted instance MUST require authentication with passkey support and MUST isolate user data per account. When passkeys are unavailable on the current device, the system MUST show guidance to use or register a passkey on a supported device and MUST NOT offer non-passkey login on hosted v1.
+- **FR-M025**: Every hosted instance MUST require user authentication and MUST isolate financial data per account (single-owner access: signed-in users see and change only their own plan and transactions). v1 hosted authentication MUST use ASP.NET Core Identity with email/password registration, sign-in, and sign-out; passwords MUST be stored hashed by Identity with no plaintext retention. Hosted v1 MUST NOT require passkeys for sign-in or data access. Optional passkeys (password primary, passkey optional on login/register/manage when implemented, aligned with the .NET Blazor Identity template pattern) are deferred beyond v1.0.0 acceptance unless explicitly added in a later milestone; hosted v1 MUST NOT offer passkey-only login or prohibit non-passkey login. When sign-in fails or account access is blocked, the system MUST guide users through standard Identity flows (register, sign-in, forgot password where implemented, lockout messaging).
 - **FR-M026**: The system MUST operate in GBP for v1 monetary amounts; uploads containing non-GBP transactions MUST be rejected (whole file or affected rows) with a clear error and MUST NOT allow user override to import non-GBP amounts. The system MUST collect only minimal personal data necessary for function.
 - **FR-M027**: Hosted deployments MUST encrypt financial data at rest and in transit; the system MUST NOT share financial data with third-party financial-data aggregators.
 - **FR-M028**: The system MUST validate and sanitise all user inputs, including uploads and form fields.
@@ -339,11 +348,11 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-X003**: Mandatory review cadence or payday-aligned budget periods MUST NOT be imposed.
 - **FR-X006**: A library of multiple saved budget periods (switching among distinct stored period profiles) MUST NOT be offered in v1; only the single working period in **FR-M031** is in scope.
 - **FR-X004**: General accounting, tax filing, investment advice, or unrelated financial products MUST NOT be offered or implied as in scope for v1.
-- **FR-X005**: Account rescue or credential recovery beyond passkey-on-supported-device guidance (e.g. one-time recovery keys at signup) MUST NOT be required or implied as shipped in v1; future rescue design is explicitly deferred.
+- **FR-X005**: Advanced account rescue or credential recovery beyond standard Identity flows (e.g. email-based password reset where implemented) MUST NOT be required or implied as shipped in v1 (e.g. one-time recovery keys at signup); future rescue design is explicitly deferred. v1 MUST NOT require passkey-only recovery paths.
 
 ### Key Entities *(include if feature involves data)*
 
-- **User**: Person using Potsure; in hosted mode has authenticated identity; in local-only mode operates without remote account.
+- **User**: Person using Potsure; in hosted mode has an authenticated Identity account (email/password) with isolated data; in local-only mode operates without remote account.
 - **Budget period**: The single working user-editable date range for planning and reports, independent of pay schedule; both start and end dates are inclusive for period-scoped calculations. v1 does not maintain a library of alternate saved periods—changing dates updates this same period.
 - **Budget category**: One of Needs, Wants, Savings & Debt; fixed for v1; receives allocation from preset percentages of budgeted income.
 - **Allocation preset**: Either 50/30/20 (default) or 75/15/10 (alternative); applies only at category level.
@@ -376,7 +385,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **SC-002**: Users can complete first-time setup (import, choose preset, confirm at least one recurring item, view category health) in under 30 minutes with only one month of data, without requiring a fixed payday entry.
 - **SC-003**: After confirming recurring items, 95% of repeated imports in test scenarios re-apply remembered assignments without manual re-entry for previously confirmed patterns.
 - **SC-004**: For scripted plan scenarios, required income, limiting category, and budget balance yes/no with monetary gap match independently verified expected results in 100% of golden scenarios.
-- **SC-005**: 100% of hosted deployment acceptance checks enforce authentication with passkey before data access; local-only mode acceptance checks confirm no network exposure path for account-free use.
+- **SC-005**: 100% of hosted deployment acceptance checks enforce authenticated access (Identity sign-in) before viewing or changing financial data; passkeys MUST NOT be required for acceptance. Local-only mode acceptance checks confirm no network exposure path for account-free use.
 - **SC-006**: Export followed by full deletion removes all user financial data in acceptance testing with no residual retrievable transactions or plan fields for that user.
 - **SC-007**: Primary reports (category health, budget balance, confirmed recurring summary) remain readable and operable via keyboard-only navigation in accessibility test passes for core flows.
 - **SC-008**: Users viewing forecasts with less than three months of history see explicit coverage labelling in 100% of test cases where shorter history drives variable recurring estimates.
@@ -391,7 +400,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - v1 planning uses one working budget period; multi-period libraries are out of scope (**FR-X006**).
 - Budgeted income may be suggested from confirmed income patterns; user confirmation or edit is required before allocations change (**FR-M031**).
 - Monzo CSV column layouts remain stable enough for explicit mapping; breaking bank format changes are handled as import errors, not silent fixes.
-- Passkeys are available for hosted users on at least one device; v1 provides passkey-on-supported-device guidance when the current device cannot authenticate, with no non-passkey hosted login. Broader account rescue flows (e.g. one-time keys generated at signup) are deferred post-v1.
+- Hosted v1 baseline authentication is ASP.NET Core Identity email/password (register, sign-in, sign-out) with per-user data isolation; optional passkeys may follow the .NET Blazor Identity template pattern in a later milestone but are not required for v1.0.0 acceptance. Broader account rescue flows (e.g. one-time keys generated at signup) remain deferred post-v1 beyond standard Identity password reset where implemented.
 - One-off transaction categorisation is a v1.0.0 release requirement (FR-M037); forecasts MUST NOT treat one-offs as recurring commitments.
 - Trend reporting (Could) is omitted from v1 release success unless explicitly pulled into scope later.
 - No third-party open banking or aggregation is assumed; statements are user-uploaded files only.

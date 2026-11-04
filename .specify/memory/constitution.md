@@ -1,11 +1,12 @@
 <!--
 Sync Impact Report
-- Version: 1.0.0 → 1.1.0
-- Modified principles: none (titles unchanged)
-- Added sections: Aspire resource consumption; Central package versioning (under Development Workflow & Quality Gates)
+- Version: 1.1.0 → 1.2.0
+- Modified principles: IV. Security & Privacy by Default (hosted auth mandate; password hashing; optional passkeys)
+- Modified sections: Deployment governance (Principle IV compliance wording)
+- Added sections: Revision history (under Governance)
 - Removed sections: none
 - Deferred: none
-- Note: Operational agent steps for these mandates belong in AGENTS.md (see user request); not updated by this command.
+- Follow-up (out of scope for this command): update specs/001-potsure-v1 auth sections; speckit-plan / speckit-tasks for plan/research/tasks
 -->
 
 # Potsure Constitution
@@ -48,10 +49,15 @@ scope. Security MUST outrank convenience in every design and implementation choi
 user input—including each uploaded statement and every form field—MUST be validated and
 treated as untrusted; inputs MUST be validated and sanitised before use. Financial data
 MUST be encrypted in transit and at rest on hosted deployments. All network-exposed hosted
-instances (single-user or multi-tenant) MUST require authentication with passkey support.
-V1 MUST preserve a local-only, account-free mode that MUST NOT be exposed over a network.
-Raw statements, full account numbers, and secrets MUST NOT appear in logs. Persist the
-minimum data required for function; deletion MUST remove user financial data completely.
+instances (single-user or multi-tenant) MUST require strong authentication before access to
+financial data, implemented with ASP.NET Core Identity and per-user isolation. Password
+credentials MUST be stored using Identity’s one-way hashing only; plaintext passwords MUST
+NOT be persisted. Passkeys and WebAuthn MAY be offered as an optional second factor or
+optional sign-in method once implemented and tested; they MUST NOT be the only sign-in
+method for hosted v1 until explicitly promoted in a later constitution amendment. V1 MUST
+preserve a local-only, account-free mode that MUST NOT be exposed over a network. Raw
+statements, full account numbers, and secrets MUST NOT appear in logs. Persist the minimum
+data required for function; deletion MUST remove user financial data completely.
 **Rationale:** trust is the product; weak input handling or logging destroys it irreversibly.
 
 ### V. Documentation as a Deliverable
@@ -89,8 +95,7 @@ documented decisions let users and contributors audit behaviour and intent.
 - Secure **self-hosting** MUST remain a supported path.
 - **Account-free local-only** v1 use MUST be preserved and MUST NOT be replaced by
   mandatory cloud accounts for local workflows.
-- Hosted deployments MUST comply with Principle IV (authentication, passkeys, encryption,
-  no local-only mode on the network).
+- Hosted deployments MUST comply with Principle IV (authentication, encryption, isolation).
 
 ## Development Workflow & Quality Gates
 
@@ -144,4 +149,10 @@ known-vulnerability drift and avoid silent skew between local and CI restores.
   Aspire integration consumption, and central package versioning when relevant files change.
 - **Version line** at file footer is authoritative for constitution semver.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-03
+### Revision history
+
+- **1.2.0 (2026-11-04):** Defer mandatory passkey-only hosted login; adopt ASP.NET Core
+  Identity email/password as the primary hosted sign-in path for v1, with optional passkeys
+  permitted later via amendment.
+
+**Version**: 1.2.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-04

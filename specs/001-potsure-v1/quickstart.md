@@ -17,15 +17,22 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 ```
 
 - Open Aspire dashboard URL from console.
-- Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise hosted passkey behaviour (see `docs/local-only-mode.md`).
+- Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in — not passkey enrolment; see `docs/local-only-mode.md`).
 - SQL container and `potsure` database healthy before migrations run.
 - **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
 - **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.1.0).
 - **Migration ordering smoke** (post T111–T114): In the Aspire dashboard, the EF migrations resource reaches **Finished/Active** before the web resource starts; web must not crash on missing tables on cold SQL container. Hidden migration resource visible via `aspire describe --include-hidden` if needed.
 
+## Hosted Identity bootstrap (Aspire / hosted mode)
+
+1. Start AppHost so web runs with `Deployment__Mode=Hosted`.
+2. Navigate to **Register** (Identity account template route under `Components/Account/Pages`).
+3. Create the first user with **email and password**; sign in.
+4. **Expect**: Financial data routes reject anonymous access; each user sees only their own data after isolation checks.
+
 ## Scenario 1 — Safe Monzo import (US1)
 
-1. Start app (local-only or hosted with passkey enrolment).
+1. Start app (local-only **or** hosted: register first user via **Register** with email/password, then sign in).
 2. Confirm or set Monzo account association.
 3. Upload anonymised valid Monzo CSV ([monzo-import.md](contracts/monzo-import.md)).
 4. Confirm auto-detected column mapping; import.
@@ -59,7 +66,7 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 
 ## Scenario 6 — Export and delete (US10)
 
-1. Reauthenticate; export JSON bundle and CSV ZIP separately.
+1. Reauthenticate (hosted: confirm account password, or typed phrase where that flow applies); export JSON bundle and CSV ZIP separately.
 2. Verify files match [export-formats.md](contracts/export-formats.md).
 3. Permanent delete account data.
 4. **Expect**: No retrievable transactions/plan; confirmation shown.
@@ -114,7 +121,7 @@ dotnet test Potsure.slnx -c Release
 After deploy to dev/test ACA + Azure SQL free tier:
 
 - Cold start acceptable; health probe does not hammer DB (auto-pause).
-- Passkey required before data; OTel excludes payee/upload bodies.
+- Identity sign-in (email/password) required before financial data; passkeys not required for acceptance; OTel excludes payee/upload bodies.
 
 ## Validation log
 
@@ -134,7 +141,7 @@ Last run: 2026-11-03 (automated build/test; Aspire migration ordering verified).
 | 8c — EF migration ordering | Pass | **T115** 2026-11-03: `aspire run` — `sql`/`potsure` Healthy, `ef-migrations` Finished before web start; `aspire describe --include-hidden` lists hidden migration resource |
 | 9 — Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
-| Hosted stage smoke | Not run | Requires deployed ACA and passkey device |
+| Hosted stage smoke | Not run | Requires deployed ACA; hosted Register/sign-in validation |
 
 Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test` — see Phase 15 task T101.
 

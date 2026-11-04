@@ -5,7 +5,7 @@ description: "Task list for Potsure v1 implementation"
 
 # Tasks: Potsure v1
 
-**Plan sync**: 2026-11-03 (Aspire SQL client consumption, central package gates, EF `AddEFMigrations` orchestration per [plan.md](./plan.md))
+**Plan sync**: 2026-11-04 (hosted Identity pivot: email/password primary, passkey-only path superseded per [plan.md](./plan.md), [spec.md](./spec.md) Session 2026-11-04, constitution 1.2.0). Prior sync 2026-11-03: Aspire SQL client, EF `AddEFMigrations`.
 
 **Input**: Design documents from `/specs/001-potsure-v1/`
 
@@ -66,7 +66,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T019 Create initial EF migration in `src/Potsure.Infrastructure/Persistence/Migrations/` and document idempotent deploy approach in `docs/deployment-database.md`
 - [X] T020 Configure ASP.NET Core Data Protection key ring persistence to SQL in `src/Potsure.Infrastructure/` reconciled with Aspire SQL resource
 - [X] T021 Implement deployment mode options (local-only vs hosted) in `src/Potsure.Web/Configuration/DeploymentModeOptions.cs` with FR-M024 network non-exposure for local-only
-- [X] T022 Configure ASP.NET Core Identity with passkey support and SQL persistence in `src/Potsure.Web/` for hosted mode (FR-M025; no password fallback v1)
+- [X] T022 Configure ASP.NET Core Identity with passkey support and SQL persistence in `src/Potsure.Web/` for hosted mode (FR-M025; no password fallback v1) — **Superseded 2026-11-04** (passkey-primary / no-password policy incompatible with constitution 1.2.0); replace via **T143**–**T146**
 - [X] T023 Implement local-only single-user profile key path without remote account in `src/Potsure.Infrastructure/` when deployment mode is local-only
 - [X] T024 Register `AddBlazorBlueprintComponents()`, `App.razor` theme assets, `_Imports.razor`, and `BbPortalHost` in interactive root layout under `src/Potsure.Web/`
 - [X] T025 Create base interactive layout and navigation shell in `src/Potsure.Web/Components/Layout/` (UK English labels)
@@ -84,7 +84,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T114 [P] Update `docs/deployment-database.md` and `docs/self-host.md` to distinguish local Aspire auto-apply vs hosted controlled migration job; document unchanged `dotnet ef migrations add` / `database update` commands (`--project` Infrastructure, `--startup-project` Web); note migration resource hidden in Aspire dashboard by default (`aspire describe --include-hidden`)
 - [X] T116 [P] Wire hosted publish migration artefact path (`PublishAsMigrationScript()` and/or documented migration bundle) on AppHost publish model in `src/Potsure.AppHost/Program.cs` and single-runner apply steps in `docs/deployment-database.md` (no concurrent migrate on all replicas; `RunDatabaseUpdateOnStart` local-only) per plan.md hosted publish bullet
 
-**Checkpoint**: AppHost starts; migrations complete before web; web resolves SQL via Aspire client DI; hosted passkey or local-only path loads shell; budgeting golden tests pass in CI.
+**Checkpoint**: AppHost starts; migrations complete before web; web resolves SQL via Aspire client DI; hosted Identity email/password or local-only path loads shell; budgeting golden tests pass in CI. **Post-pivot**: complete **T143**–**T148** before hosted acceptance re-run.
 
 ---
 
@@ -118,12 +118,12 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ## Phase 4: User Story 11 — Local-only and hosted access modes (Priority: P1)
 
-**Goal**: Constitution-mandated deployment paths with passkey hosted auth and non-network local-only mode.
+**Goal**: Constitution-mandated deployment paths with hosted Identity (email/password) and non-network local-only mode.
 
-**Independent Test**: Local-only without network account; hosted requires passkey; users isolated (spec US11).
+**Independent Test**: Local-only without network account; hosted requires Identity sign-in (passkeys not required); users isolated (spec US11). **Pivot**: passkey-only implementation from **T042** superseded — execute **Phase 23** (**T143**–**T148**).
 
 - [X] T041 [P] [US11] Document local-only vs hosted behaviour in `docs/self-host.md` and `docs/local-only-mode.md`
-- [X] T042 [US11] Enforce hosted passkey-only sign-in UI and guidance when passkey unavailable in `src/Potsure.Web/Components/Account/` (FR-M025)
+- [X] T042 [US11] Enforce hosted passkey-only sign-in UI and guidance when passkey unavailable in `src/Potsure.Web/Components/Account/` (FR-M025) — **Superseded 2026-11-04**; replace passkey-only UI with template account pages (**T143**) and remove custom passkey endpoints (**T145**)
 - [X] T043 [US11] Block financial data endpoints and pages without authentication on hosted in `src/Potsure.Web/` middleware/filters
 - [X] T044 [US11] Verify local-only mode does not bind Kestrel to public interfaces by default in `src/Potsure.Web/Program.cs` and document operator checklist in `docs/self-host.md`
 - [X] T045 [US11] Add integration tests for tenancy isolation in `tests/Potsure.Infrastructure.Tests/TenancyIsolationTests.cs`
@@ -324,7 +324,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 ### Phase Dependencies
 
 - **Phase 1 Setup** → **Phase 2 Foundational** → user story phases **3–14** → **Phase 15 Polish**
-- **Phase 4 (US11)** can start after T021–T023 but should complete before hosted demo of later stories
+- **Phase 4 (US11)** can start after T021–T023 but should complete before hosted demo of later stories; **Phase 23 (T143–T148)** must complete for constitution 1.2.0 hosted acceptance after the Identity pivot
 - **Phase 5 (US3)** can proceed in parallel with late US1 work once T017 profile entities exist (after T017)
 
 ### User Story Dependencies
@@ -332,7 +332,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 | Story | Depends on | Notes |
 |-------|------------|-------|
 | US1 | Phase 2 | No other stories |
-| US11 | Phase 2 T021–T023 | Foundational auth |
+| US11 | Phase 2 T021–T023; **Phase 23** for pivot | Foundational auth; **T143–T148** supersede passkey-only **T022** / **T042** |
 | US3 | Phase 2, profile entities | Independent of imports for empty plan |
 | US2 | US1 transactions | Detection needs history |
 | US4 | US3 categories | Pots map to categories |
@@ -344,7 +344,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 | US10 | Persistence populated | Export/delete |
 | US12 | Core UI pages exist | Polish pass |
 
-Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → US3 → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.1.0 + spec P1): also US10, US11, FR-M037 (`T071`), hosted encryption verification (`T102`), Aspire SQL client consumption (`T107`–`T108`), EF migration orchestration (`T111`–`T114`, `T116`), dependency hygiene (`T110` after any package add including `T111`), migration orchestration validation (`T115`), and quickstart validation (`T100`).
+Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → US3 → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): also US10, US11 (**Phase 23** hosted Identity pivot), FR-M037 (`T071`), hosted encryption verification (`T102`), Aspire SQL client consumption (`T107`–`T108`), EF migration orchestration (`T111`–`T114`, `T116`), dependency hygiene (`T110` after any package add including `T111`), migration orchestration validation (`T115`), and quickstart validation (`T100`).
 
 ### Parallel Opportunities
 
@@ -354,6 +354,7 @@ Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 
 - US10: T085, T086 parallel
 - US12: T091, T092 parallel
 - After Phase 2, teams may parallelise **US4+US5** while another works **US7** once US2+US3 land
+- **Phase 23**: **T143** and **T146** touch Identity registration and pages — sequence before **T144**/**T145**; **T148** can run in parallel once **T143**–**T147** land
 
 ---
 
@@ -381,7 +382,7 @@ T032 src/Potsure.Statements/MonzoCsvParser.cs
 
 ### v1.0.0 release (full Must scope)
 
-Before tagging v1.0.0, also complete Phase 4 (US11, including `T102`), Phase 13 (US10), one-offs (`T071`), Phase 2 Aspire consumption (`T107`–`T108`) and migration orchestration (`T111`–`T114`, `T116`), US2 **FR-M035** copy (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`), and remaining P1/P2 stories as scheduled in spec.
+Before tagging v1.0.0, also complete Phase 4 (US11, including `T102`), **Phase 23** (`T143`–`T148`), Phase 13 (US10; hosted reauth via **T147** supersedes passkey **T132** / **T136**), one-offs (`T071`), Phase 2 Aspire consumption (`T107`–`T108`) and migration orchestration (`T111`–`T114`, `T116`), US2 **FR-M035** copy (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`), and remaining P1/P2 stories as scheduled in spec.
 
 ### Incremental Delivery
 
@@ -405,6 +406,8 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - AppHost is the source of truth for SQL configuration; use `aspire` / `aspireify` skills when changing AppHost wiring (AGENTS.md)
 - EF schema apply: AppHost `AddEFMigrations` + `WaitForCompletion` on web — not `MigrateAsync` at web startup; app seeding (`BudgetProfileSeeder`) stays in web/runtime, not the migration job (plan.md EF migrations architecture; [data-model.md](./data-model.md) schema evolution)
 - Hosted schema: `PublishAsMigrationScript()` / controlled job (`T116`) — not `RunDatabaseUpdateOnStart` on publish
+- **Hosted Identity pivot (2026-11-04)**: passkey-only tasks **T022**, **T042**, **T132**, **T136** remain marked done for history but are **superseded**; implement **T143**–**T148** before re-asserting SC-005 / hosted quickstart acceptance
+- Optional WebAuthn passkeys: deferred post–v1.0.0 (template-style optional submit), not mandatory sign-in
 - Retire placeholder `src/Potsure/` when T002 completes
 - **FR-S002** (transaction-level actual-spend drill-down) is Should-level; deferred unless explicitly pulled into scope — category health (`T073`) covers aggregate actuals only
 
@@ -441,7 +444,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T129 [US2] [US8] Wire `VariableExpenseEstimator` when confirming variable recurring expenses (persist `MonthlyEstimate` and `EstimateCoverageLabel` via `ExpensePatternService` / detection review) and surface coverage labelling on runway, budget balance, and recurring summary UIs per FR-M034 and SC-008 (partial)
 - [X] T130 [US2] Allow confirming income patterns with `IncomeCadence.AdHoc` or `IncomeCadence.Variable` (amount without forced weekly/fortnightly/monthly recurrence) in `DetectionReview` and persistence per US2/AC2 (partial)
 - [X] T131 [US1] Add user-adjustable Monzo column mapping controls in `ImportWizard` before import proceeds (not read-only confirm only) per FR-M002 and US1/AC1 (partial)
-- [X] T132 [US10] Replace typed phrase reauthentication with hosted passkey step-up (Identity) before export and permanent deletion when deployment mode is hosted; keep an appropriate local-only challenge per `research.md`, T026, and `plan.md` reauthentication notes (partial)
+- [X] T132 [US10] Replace typed phrase reauthentication with hosted passkey step-up (Identity) before export and permanent deletion when deployment mode is hosted; keep an appropriate local-only challenge per `research.md`, T026, and `plan.md` reauthentication notes (partial) — **Superseded 2026-11-04** (passkey step-up not required for v1); redo hosted reauth in **T147**
 - [X] T133 [P] [US12] Extend `tests/Potsure.E2E/KeyJourneysTests.cs` to confirm at least one suggested recurring pattern in the UI (not only navigate to review) before category health and export when `POTSURE_E2E_BASE_URL` is set per Constitution II and T128 (partial)
 
 ---
@@ -452,7 +455,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T134 [US1] Persist the user-confirmed column map from `ImportWizard` / `StatementImportService.ImportAsync` to `BudgetProfile.RememberedColumnMappingJson` and pre-fill mapping on subsequent uploads when the file header layout is unchanged per FR-M002, US1/AC1, and T038 (partial)
 - [X] T135 [US2] Add optional mapped bank pot and free-text tag inputs on `DetectionReview` for expense confirm, merge, and split; when merging confirmed patterns with differing category, pot, or tag, require explicit resolution (and validate in `PatternMergeSplitService`) before save per FR-M008, FR-M009, and US2 acceptance scenarios 3, 5, and 6 (partial)
-- [X] T136 [US10] Wire hosted export and permanent deletion reauthentication to an Identity passkey step-up challenge (not self-attestation checkbox only) before granting `ReauthenticationService` per T132, `research.md`, and `plan.md` reauthentication notes (partial)
+- [X] T136 [US10] Wire hosted export and permanent deletion reauthentication to an Identity passkey step-up challenge (not self-attestation checkbox only) before granting `ReauthenticationService` per T132, `research.md`, and `plan.md` reauthentication notes (partial) — **Superseded 2026-11-04**; replace with password confirmation in **T147** (no passkey step-up for v1 acceptance)
 
 ---
 
@@ -480,3 +483,20 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, pass 4, post T141) between spec intent and present codebase behaviour.
 
 - [X] T142 [P] [US1] [US2] Add `StatementImportService` integration coverage in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (or a dedicated import integration fixture) that imports overlapping Monzo CSV twice through the full import pipeline, asserts de-duplication on the second pass (US1/AC2, FR-M004), auto-attribution to confirmed expense patterns on both passes, and persistence of manual `OverrideAttributionAsync` without re-auto-attribution after re-import per US2/AC7, SC-003, FR-M010a, T140, and T141 (partial)
+
+---
+
+## Phase 23: Hosted Identity pivot (2026-11-04)
+
+**Purpose**: Align implemented hosted auth with constitution 1.2.0 and amended spec — standard Identity email/password, Blazor account template + BlazorBlueprint, no passkey-only login or passkey step-up for v1 acceptance. Does **not** reopen completed import, budgeting, or report tasks.
+
+**Goal**: Hosted users register and sign in with email/password; export/delete reauthenticate without passkeys; Aspire Hosted mode smoke-validates register/login.
+
+**Independent Test**: AppHost with `Deployment__Mode=Hosted`; register a user, sign in, reach a gated page; export/delete prompts password reauth (not passkey); quickstart hosted Identity notes satisfied (**T148**).
+
+- [ ] T143 [US11] Scaffold .NET 10 Blazor Server Identity account pages under `src/Potsure.Web/Components/Account/Pages/` (Login, Register, ForgotPassword, Manage, and related shared components) with `IdentityRedirectManager` and `IdentityRevalidatingAuthenticationStateProvider`; convert template markup to BlazorBlueprint v4 (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide per house patterns) per [plan.md](./plan.md), [research.md](./research.md), and `blazor-blueprint` skill
+- [ ] T144 [US11] Call `MapAdditionalIdentityEndpoints()` from `src/Potsure.Web/Program.cs` and align account routes with template paths; register no-op or logging `IEmailSender<ApplicationUser>` for v1 self-host per [research.md](./research.md)
+- [ ] T145 [US11] Remove or replace `src/Potsure.Web/Configuration/HostedPasskeySignInEndpoints.cs`, `src/Potsure.Web/Configuration/HostedPasskeyStepUpEndpoints.cs`, and passkey-only `src/Potsure.Web/Components/Account/PasskeySignIn.razor`; update `src/Potsure.Web/Components/Account/RedirectToLogin.razor` and `Program.cs` to use template sign-in/register flows instead of `MapHostedPasskeySignInEndpoints` / `MapHostedPasskeyStepUpEndpoints`
+- [ ] T146 [US11] Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` for standard email/password Identity (normal `IdentityOptions.Password` policy per constitution 1.2.0 — not passkey-style 64-character minimum); rename `AddHostedPasskeyIdentity` to hosted Identity registration used from `Program.cs`; defer mandatory passkey handler wiring to post–v1.0.0 optional milestone
+- [ ] T147 [US10] Replace hosted passkey step-up in `src/Potsure.Web/Components/Privacy/PrivacyDataPanel.razor.cs` with current-password confirmation (preferred) or typed-phrase fallback per amended FR-M022/FR-M023 and [plan.md](./plan.md) reauthentication notes; ensure `ReauthenticationService` grants export/delete without passkey step-up
+- [ ] T148 [P] [US11] Add smoke coverage for hosted register and sign-in under Aspire Hosted mode (`Deployment__Mode=Hosted` from AppHost) in `tests/Potsure.Web.Tests/` or `tests/Potsure.E2E/` and record the exercised path in `specs/001-potsure-v1/quickstart.md` (email/password — passkeys not required for acceptance)

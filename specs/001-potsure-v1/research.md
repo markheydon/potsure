@@ -1,8 +1,8 @@
 # Research: Potsure v1
 
 **Feature**: `001-potsure-v1`  
-**Date**: 2026-11-03  
-**Status**: Complete — all Technical Context items resolved from spec, constitution v1.1.0, AGENTS.md, and planning prompt (Azure/Aspire baseline included in prompt; no separate attachment). Amended 2026-11-03 for Aspire integration consumption, central package versioning gates, and **EF migration orchestration** (EF migrations review prompt).
+**Date**: 2026-11-03 (identity auth amended 2026-11-04)  
+**Status**: Complete — all Technical Context items resolved from spec, constitution v1.2.0, AGENTS.md, and planning prompt (Azure/Aspire baseline included in prompt; no separate attachment). Amended 2026-11-03 for Aspire integration consumption, central package versioning gates, and **EF migration orchestration** (EF migrations review prompt). Amended 2026-11-04 for **password-primary hosted Identity** (constitution 1.2.0).
 
 ## Monzo CSV parsing
 
@@ -97,9 +97,16 @@
 
 ## Identity
 
-**Decision**: ASP.NET Core Identity **passkeys** with SQL persistence; hosted = passkey required (guidance only if unavailable); local-only mode without network auth per FR-M024. Reauthentication before export, deletion, recovery, credential removal.
+**Decision**: **ASP.NET Core Identity** on SQL Server using the existing `PotsureDbContext` / `ApplicationUser`, **cookie authentication**, and standard Identity password hashing (no plaintext passwords). Hosted financial data access remains gated by **`ICurrentOwnerAccessor`**, EF **global query filters**, and **`HostedFinancialDataAuthorizationMiddleware`**. **Primary v1 sign-in**: email + password (`PasswordSignInAsync`). **UX**: adopt the .NET 10 Blazor Server Identity **account template** structure (`Components/Account/Pages` for Login, Register, ForgotPassword, Manage, etc.; `MapAdditionalIdentityEndpoints`; `IdentityRedirectManager`; `IdentityRevalidatingAuthenticationStateProvider`), with behaviour aligned to [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) and adapted for Potsure deployment modes. **Presentation**: explicit implement task to convert template markup to **BlazorBlueprint v4** (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide icons per house patterns). **Passkeys**: deferred beyond v1.0.0 acceptance; when added later, optional on login/register/manage (template-style passkey submit), **not** mandatory and **not** passkey-only hosted login. Remove v1 path dependence on custom passkey-only endpoints and passkey-only enrolment UI. **Reauthentication** before export, permanent deletion, and sensitive manage actions: confirm current **password** (preferred) or typed-phrase pattern per amended spec — **no passkey step-up** for v1 acceptance. **Local-only** mode unchanged (no Identity pages; not network-exposed) per FR-M024.
 
-**Rationale**: Constitution IV; spec clarifications.
+**Email (`IEmailSender<ApplicationUser>`)**: Register a development/self-host **no-op or logging sender** for v1 (acceptable for local Aspire and Penny-style self-host without SMTP). Production hosted deployments document operator configuration of a real mail provider later; email confirmation and password reset flows may be limited until then — **does not block** v1 plan when `RequireConfirmedAccount` remains disabled for self-host parity.
+
+**Rationale**: Constitution IV (v1.2.0) mandates Identity with password credentials and forbids passkeys as the only sign-in method for hosted v1; spec Session 2026-11-04 and FR-M025/M022/M023.
+
+**Alternatives considered**:
+- Hosted passkey-only login (prior plan) — **rejected**; incompatible with constitution 1.2.0 and amended spec.
+- Mandatory passkeys at v1 — **rejected**; optional enhancement post–v1.0.0 acceptance only.
+- Stock template HTML/Tailwind without BlazorBlueprint — **rejected**; product UI standards require Bb* conversion.
 
 ## UI stack
 
