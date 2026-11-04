@@ -36,34 +36,36 @@ else
                 We detected a Monzo export with @_preview.ParsedRowCount row(s) ready to import
                 (@_preview.ParseErrorCount row(s) skipped due to validation errors).
             </p>
-            <table>
-                <caption>Required columns</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Column</th>
-                        <th scope="col">File header</th>
-                        <th scope="col">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (string header in _preview.ColumnMapping.RequiredHeaders)
-                    {
-                        bool present = !_preview.ColumnMapping.MissingRequiredHeaders.Contains(header);
-                        <tr>
-                            <th scope="row">@header</th>
-                            <td>
-                                <InputSelect @bind-Value="_columnMapping[header]">
+            <BbDataTable TData="string"
+                           Data="@MappingRequiredHeaders"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Required columns">
+                <Columns>
+                    <BbDataTableColumn TData="string" TValue="string"
+                                       Header="Column"
+                                       Property="@(header => header)" />
+                    <BbDataTableColumn TData="string" TValue="string"
+                                       Header="File header">
+                        <CellTemplate Context="header">
+                            <BbSelect TValue="string" @bind-Value="_columnMapping[header]">
+                                <BbSelectTrigger>
+                                    <BbSelectValue Placeholder="Select header" />
+                                </BbSelectTrigger>
+                                <BbSelectContent>
                                     @foreach (string fileHeader in _preview.ColumnMapping.FileHeaders)
                                     {
-                                        <option value="@fileHeader">@fileHeader</option>
+                                        <BbSelectItem TValue="string" Value="@fileHeader" Text="@fileHeader" />
                                     }
-                                </InputSelect>
-                            </td>
-                            <td>@(present ? "Detected" : "Missing")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                </BbSelectContent>
+                            </BbSelect>
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="string" TValue="string"
+                                       Header="Status"
+                                       Property="@(header => _preview.ColumnMapping.MissingRequiredHeaders.Contains(header) ? "Missing" : "Detected")" />
+                </Columns>
+            </BbDataTable>
             @if (_preview.PreviewErrors.Count > 0)
             {
                 <details>
@@ -88,7 +90,14 @@ else
                 </BbCardDescription>
             </BbCardHeader>
             <BbCardContent>
-                <InputFile OnChange="OnFileSelectedAsync" accept=".csv,text/csv" disabled="@_isBusy" />
+                <BbFileUpload Accept=".csv,text/csv"
+                              MaxFileSize="10485760"
+                              Multiple="false"
+                              ShowPreview="false"
+                              AutoUpload="false"
+                              Disabled="@_isBusy"
+                              Files="@_uploadFiles"
+                              FilesChanged="OnUploadFilesChangedAsync" />
                 @if (!string.IsNullOrEmpty(_selectedFileName))
                 {
                     <p>Selected: @_selectedFileName</p>

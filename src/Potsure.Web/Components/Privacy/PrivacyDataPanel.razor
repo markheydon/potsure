@@ -10,13 +10,18 @@
 <section aria-labelledby="export-heading">
     <h2 id="export-heading">Export</h2>
     <div class="potsure-form-grid">
-        <label>
-            Format
-            <InputSelect @bind-Value="_exportFormat">
-                <option value="@ExportFormat.JsonBundle">JSON bundle</option>
-                <option value="@ExportFormat.CsvZip">CSV ZIP</option>
-            </InputSelect>
-        </label>
+        <div>
+            <BbLabel>Format</BbLabel>
+            <BbSelect TValue="ExportFormat" @bind-Value="_exportFormat">
+                <BbSelectTrigger>
+                    <BbSelectValue Placeholder="Select format" />
+                </BbSelectTrigger>
+                <BbSelectContent>
+                    <BbSelectItem TValue="ExportFormat" Value="@ExportFormat.JsonBundle" Text="JSON bundle" />
+                    <BbSelectItem TValue="ExportFormat" Value="@ExportFormat.CsvZip" Text="CSV ZIP" />
+                </BbSelectContent>
+            </BbSelect>
+        </div>
     </div>
     <BbButton Disabled="_busy" OnClick="BeginExport">Export data</BbButton>
     @if (_showExportReauth)
@@ -26,7 +31,10 @@
             @if (IsHosted)
             {
                 <p>Enter your current account password to confirm export.</p>
-                <InputText type="password" @bind-Value="_hostedPassword" autocomplete="current-password" class="potsure-input" />
+                <BbInput Type="InputType.Password"
+                         @bind-Value="_hostedPassword"
+                         Autocomplete="current-password"
+                         Placeholder="Current password" />
             }
             else
             {
@@ -58,10 +66,9 @@
             This removes all imported transactions, patterns, plan data, and pots for your account. It cannot be undone.
         </BbAlertDescription>
     </BbAlert>
-    <label>
-        <InputCheckbox @bind-Value="_confirmDelete" />
+    <BbCheckbox @bind-Checked="_confirmDelete">
         I understand this will permanently delete my financial data
-    </label>
+    </BbCheckbox>
     <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="BeginDelete">
         Delete all financial data
     </BbButton>
@@ -72,7 +79,10 @@
             @if (IsHosted)
             {
                 <p>Enter your current account password to confirm permanent deletion.</p>
-                <InputText type="password" @bind-Value="_hostedPassword" autocomplete="current-password" class="potsure-input" />
+                <BbInput Type="InputType.Password"
+                         @bind-Value="_hostedPassword"
+                         Autocomplete="current-password"
+                         Placeholder="Current password" />
             }
             else
             {

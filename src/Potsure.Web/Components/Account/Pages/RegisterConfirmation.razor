@@ -25,7 +25,13 @@
 }
 else
 {
-    <p role="alert">Please check your email to confirm your account.</p>
+    <BbCard Class="potsure-auth-narrow">
+        <BbCardContent>
+            <BbAlert Variant="AlertVariant.Default">
+                <BbAlertDescription>Please check your email to confirm your account.</BbAlertDescription>
+            </BbAlert>
+        </BbCardContent>
+    </BbCard>
 }
 
 @code {

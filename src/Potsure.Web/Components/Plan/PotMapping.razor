@@ -21,13 +21,18 @@ else
     <section aria-labelledby="pot-mode-heading">
         <h2 id="pot-mode-heading">Mapping mode</h2>
         <p class="potsure-muted">Choose no pots for category-only budgeting (FR-M014).</p>
-        <label for="pot-mode-select">Pot mapping mode</label>
-        <InputSelect id="pot-mode-select" @bind-Value="Mode">
-            @foreach (PotMappingMode mode in Enum.GetValues<PotMappingMode>())
-            {
-                <option value="@mode">@FormatMode(mode)</option>
-            }
-        </InputSelect>
+        <BbLabel For="pot-mode-select">Pot mapping mode</BbLabel>
+        <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
+            <BbSelectTrigger Id="pot-mode-select">
+                <BbSelectValue Placeholder="Select mode" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                @foreach (PotMappingMode mode in Enum.GetValues<PotMappingMode>())
+                {
+                    <BbSelectItem TValue="PotMappingMode" Value="@mode" Text="@FormatMode(mode)" />
+                }
+            </BbSelectContent>
+        </BbSelect>
     </section>
 
     @if (_mode != PotMappingMode.None)
@@ -40,42 +45,47 @@ else
             }
             else
             {
-                <table>
-                    <caption>Mapped bank pots</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Category</th>
-                            <th scope="col">Recorded funding</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (BankPotReadModel pot in _pots)
-                        {
-                            <tr>
-                                <th scope="row">@pot.Name</th>
-                                <td>@pot.CategoryKind</td>
-                                <td>£@pot.RecordedFundingAmount.ToString("F2")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <BbDataTable TData="BankPotReadModel"
+                               Data="@_pots"
+                               ShowToolbar="false"
+                               ShowPagination="false"
+                               AriaLabel="Mapped bank pots">
+                    <Columns>
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="string"
+                                           Header="Name"
+                                           Property="@(pot => pot.Name)" />
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="BudgetCategoryKind"
+                                           Header="Category"
+                                           Property="@(pot => pot.CategoryKind)" />
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="decimal"
+                                           Header="Recorded funding">
+                            <CellTemplate Context="pot">
+                                £@pot.RecordedFundingAmount.ToString("F2")
+                            </CellTemplate>
+                        </BbDataTableColumn>
+                    </Columns>
+                </BbDataTable>
             }
 
             <div class="potsure-form-grid">
-                <label>
-                    New pot name
+                <div>
+                    <BbLabel>New pot name</BbLabel>
                     <BbInput @bind-Value="_newPotName" />
-                </label>
-                <label>
-                    Category
-                    <InputSelect @bind-Value="_newPotCategoryId">
-                        @foreach (CategoryOption option in _categories)
-                        {
-                            <option value="@option.Id">@option.Kind</option>
-                        }
-                    </InputSelect>
-                </label>
+                </div>
+                <div>
+                    <BbLabel>Category</BbLabel>
+                    <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select category" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (CategoryOption option in _categories)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@option.Id" Text="@FormatCategoryKind(option.Kind)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
                 <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
             </div>
         </section>

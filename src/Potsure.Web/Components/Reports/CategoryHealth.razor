@@ -33,70 +33,108 @@ else if (_summary is not null)
         <p class="potsure-report-note">@ReportCopy.CategoryHealthBudgetedNote</p>
     </section>
 
-    <table>
-        <caption>Category measures for @_summary.Value.Period.Start to @_summary.Value.Period.End</caption>
-        <thead>
-            <tr>
-                <th scope="col">Category</th>
-                <th scope="col">Allocation</th>
-                <th scope="col">Recorded funding</th>
-                <th scope="col">Actual activity</th>
-                <th scope="col">Under / over</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
-            {
-                <tr>
-                    <th scope="row">@FormatKind(row.Kind)</th>
-                    <td>£@row.Allocation.Amount.ToString("F2")</td>
-                    <td>£@row.RecordedFunding.Amount.ToString("F2")</td>
-                    <td>£@row.ActualActivity.Amount.ToString("F2")</td>
-                    <td>£@row.UnderOver.Amount.ToString("F2")</td>
-                </tr>
-                @if (row.OverAllocationWarning)
-                {
-                    <tr>
-                        <td colspan="5">
-                            <BbAlert Variant="AlertVariant.Warning">
-                                <BbAlertTitle>Over-allocation</BbAlertTitle>
-                                <BbAlertDescription>
-                                    Recorded funding and pot assignments exceed allocation for @FormatKind(row.Kind).
-                                </BbAlertDescription>
-                            </BbAlert>
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </table>
+    @if (_categoryChartRows.Count > 0)
+    {
+        <section aria-labelledby="category-health-chart-heading">
+            <h2 id="category-health-chart-heading" class="potsure-sr-only">Category measures chart</h2>
+            <BbBarChart Data="@_categoryChartRows"
+                        Config="@_categoryChartConfig"
+                        Title="Category measures"
+                        Height="350px"
+                        AriaLabel="Grouped bar chart of allocation, recorded funding and actual activity by category">
+                <BbXAxis DataKey="Category" />
+                <BbYAxis />
+                <BbChartTooltip />
+                <BbChartLegend />
+                <BbBar DataKey="Allocation" />
+                <BbBar DataKey="RecordedFunding" />
+                <BbBar DataKey="Actual" />
+            </BbBarChart>
+        </section>
+    }
+
+    <BbDataTable TData="CategoryPeriodTableRow"
+                 Data="@_categoryTableRows"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="@CategoryTableAriaLabel">
+        <Columns>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="BudgetCategoryKind"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    @FormatKind(row.Summary.Kind)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Allocation">
+                <CellTemplate Context="row">
+                    £@row.Summary.Allocation.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Recorded funding">
+                <CellTemplate Context="row">
+                    £@row.Summary.RecordedFunding.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Actual activity">
+                <CellTemplate Context="row">
+                    £@row.Summary.ActualActivity.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Under / over">
+                <CellTemplate Context="row">
+                    £@row.Summary.UnderOver.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
+
+    @foreach (CategoryPeriodSummary row in _summary.Value.Categories.Where(c => c.OverAllocationWarning))
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Over-allocation</BbAlertTitle>
+            <BbAlertDescription>
+                Recorded funding and pot assignments exceed allocation for @FormatKind(row.Kind).
+            </BbAlertDescription>
+        </BbAlert>
+    }
 
     @if (_potBreakdown.Count > 0)
     {
         <section aria-labelledby="category-health-pots">
             <h2 id="category-health-pots">Mapped bank pots</h2>
-            <table>
-                <caption>Pot funding by category</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Category</th>
-                        <th scope="col">Pot</th>
-                        <th scope="col">Allocation to pot</th>
-                        <th scope="col">Recorded funding</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
-                    {
-                        <tr>
-                            <th scope="row">@FormatKind(pot.Category)</th>
-                            <td>@pot.PotName</td>
-                            <td>@(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "—")</td>
-                            <td>£@pot.RecordedFunding.ToString("F2")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <BbDataTable TData="CategoryPotBreakdownLine"
+                           Data="@_potBreakdown"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Pot funding by category">
+                <Columns>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="BudgetCategoryKind"
+                                       Header="Category">
+                        <CellTemplate Context="pot">
+                            @FormatKind(pot.Category)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
+                                       Header="Pot"
+                                       Property="@(pot => pot.PotName)" />
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
+                                       Header="Allocation to pot">
+                        <CellTemplate Context="pot">
+                            @(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "—")
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="decimal"
+                                       Header="Recorded funding">
+                        <CellTemplate Context="pot">
+                            £@pot.RecordedFunding.ToString("F2")
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                </Columns>
+            </BbDataTable>
         </section>
     }
 

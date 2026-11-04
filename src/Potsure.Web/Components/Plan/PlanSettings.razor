@@ -27,30 +27,39 @@ else
 
         <EditForm Model="_form" OnValidSubmit="SaveAsync">
             <div class="potsure-form-grid">
-                <label>
-                    Allocation preset
-                    <InputSelect @bind-Value="_form.Preset">
-                        @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
-                        {
-                            <option value="@preset">@FormatPreset(preset)</option>
-                        }
-                    </InputSelect>
-                </label>
+                <div>
+                    <BbLabel>Allocation preset</BbLabel>
+                    <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select preset" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
+                            {
+                                <BbSelectItem TValue="AllocationPreset" Value="@preset" Text="@FormatPreset(preset)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
 
-                <label>
-                    Period start (inclusive)
-                    <InputDate @bind-Value="_form.StartDate" />
-                </label>
+                <div>
+                    <BbLabel>Period start (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.StartDate)"
+                                  ValueChanged="@(d => _form.StartDate = d ?? _form.StartDate)" />
+                </div>
 
-                <label>
-                    Period end (inclusive)
-                    <InputDate @bind-Value="_form.EndDate" />
-                </label>
+                <div>
+                    <BbLabel>Period end (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.EndDate)"
+                                  ValueChanged="@(d => _form.EndDate = d ?? _form.EndDate)" />
+                </div>
 
-                <label>
-                    Planned income (budgeted)
-                    <InputNumber @bind-Value="_form.BudgetedIncome" />
-                </label>
+                <div>
+                    <BbLabel>Planned income (budgeted)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(_form.BudgetedIncome)"
+                             ValueChanged="@(v => _form.BudgetedIncome = ParseDecimal(v, _form.BudgetedIncome))" />
+                </div>
             </div>
 
             @if (_incomeSuggestion is not null)

@@ -20,6 +20,19 @@ else if (_report is not null)
 {
     <p class="potsure-report-note" role="note">@ReportCopy.ForecastDisclaimer</p>
 
+    <section aria-labelledby="balance-income-chart">
+        <h2 id="balance-income-chart" class="potsure-sr-only">Planned income versus required total</h2>
+        <BbBarChart Data="@_budgetCompareRows"
+                    Title="Planned income vs required total"
+                    Height="300px"
+                    AriaLabel="Bar chart comparing planned income and required total">
+            <BbXAxis DataKey="Label" />
+            <BbYAxis />
+            <BbChartTooltip />
+            <BbBar DataKey="Amount" FillKey="Fill" BorderRadius="6" />
+        </BbBarChart>
+    </section>
+
     <section aria-labelledby="balance-income">
         <h2 id="balance-income">Income (separate measures)</h2>
         <dl>

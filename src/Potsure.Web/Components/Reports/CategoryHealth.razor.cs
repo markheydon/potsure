@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Data;
@@ -20,16 +21,38 @@ public partial class CategoryHealth
 
     private PeriodSummary? _summary;
     private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
+    private List<CategoryPeriodTableRow> _categoryTableRows = [];
+    private IReadOnlyList<CategoryHealthChartRow> _categoryChartRows = [];
+    private ChartConfig _categoryChartConfig = ChartConfig.Create(
+        ("Allocation", new ChartSeriesConfig { Label = "Allocation", Color = "var(--chart-1)" }),
+        ("RecordedFunding", new ChartSeriesConfig { Label = "Recorded funding", Color = "var(--chart-2)" }),
+        ("Actual", new ChartSeriesConfig { Label = "Actual activity", Color = "var(--chart-3)" }));
     private bool _loading = true;
     private string? _error;
+
+    private string CategoryTableAriaLabel =>
+        _summary is null
+            ? "Category measures"
+            : $"Category measures for {_summary.Value.Period.Start} to {_summary.Value.Period.End}";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
-            _summary = await ReportService.GetPeriodSummaryAsync();
+            PeriodSummary summary = await ReportService.GetPeriodSummaryAsync();
+            _summary = summary;
             _potBreakdown = await PotBreakdownQuery.ListAsync();
+            _categoryTableRows = summary.Categories
+                .Select(row => new CategoryPeriodTableRow(row))
+                .ToList();
+            _categoryChartRows = summary.Categories
+                .Select(row => new CategoryHealthChartRow(
+                    FormatKind(row.Kind),
+                    (double)row.Allocation.Amount,
+                    (double)row.RecordedFunding.Amount,
+                    (double)row.ActualActivity.Amount))
+                .ToList();
         }
         catch (Exception ex)
         {
@@ -49,4 +72,15 @@ public partial class CategoryHealth
             BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
             _ => kind.ToString(),
         };
+
+    private sealed record CategoryHealthChartRow(
+        string Category,
+        double Allocation,
+        double RecordedFunding,
+        double Actual);
+
+    private sealed class CategoryPeriodTableRow(CategoryPeriodSummary summary)
+    {
+        public CategoryPeriodSummary Summary { get; } = summary;
+    }
 }

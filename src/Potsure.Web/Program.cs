@@ -61,7 +61,12 @@ builder.Services.AddHealthChecks()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddBlazorBlueprintComponents(configureTheme: options =>
+{
+    options.DefaultRadius = 0.65;
+    options.PersistToLocalStorage = true;
+    options.DetectSystemPreference = true;
+});
 
 builder.Services.AddAntiforgery(options =>
 {

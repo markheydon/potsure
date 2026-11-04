@@ -26,28 +26,35 @@ else if (_model is not null)
         }
         else
         {
-            <table>
-                <caption>Income patterns used for display splits only</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Source</th>
-                        <th scope="col">Cadence</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Splits (Needs / Wants / Savings)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (ConfirmedIncomeSummaryRow row in _model.ConfirmedIncome)
-                    {
-                        <tr>
-                            <th scope="row">@row.SourceLabel</th>
-                            <td>@row.Cadence</td>
-                            <td>£@((row.FixedAmount ?? row.EstimateAmount ?? 0m).ToString("F2"))</td>
-                            <td>@row.SplitNeedsPercent% / @row.SplitWantsPercent% / @row.SplitSavingsDebtPercent%</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <BbDataTable TData="ConfirmedIncomeSummaryRow"
+                           Data="@_model.ConfirmedIncome"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Income patterns used for display splits only">
+                <Columns>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Source"
+                                       Property="@(row => row.SourceLabel)" />
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Cadence">
+                        <CellTemplate Context="row">
+                            @row.Cadence
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="decimal"
+                                       Header="Amount">
+                        <CellTemplate Context="row">
+                            £@((row.FixedAmount ?? row.EstimateAmount ?? 0m).ToString("F2"))
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Splits (Needs / Wants / Savings)">
+                        <CellTemplate Context="row">
+                            @row.SplitNeedsPercent% / @row.SplitWantsPercent% / @row.SplitSavingsDebtPercent%
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                </Columns>
+            </BbDataTable>
         }
     </section>
 
@@ -59,32 +66,41 @@ else if (_model is not null)
         }
         else
         {
-            <table>
-                <caption>Expense commitments for budget balance</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Vendor</th>
-                        <th scope="col">Category</th>
-                        <th scope="col">Cadence</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Coverage</th>
-                        <th scope="col">Tag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (ConfirmedExpenseSummaryRow row in _model.ConfirmedExpenses)
-                    {
-                        <tr>
-                            <th scope="row">@row.VendorLabel</th>
-                            <td>@row.CategoryKind</td>
-                            <td>@row.Cadence</td>
-                            <td>£@((row.FixedAmount ?? row.MonthlyEstimate ?? 0m).ToString("F2"))</td>
-                            <td>@(row.EstimateCoverageLabel ?? "—")</td>
-                            <td>@(row.Tag ?? "—")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <BbDataTable TData="ConfirmedExpenseSummaryRow"
+                           Data="@_model.ConfirmedExpenses"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Expense commitments for budget balance">
+                <Columns>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Vendor"
+                                       Property="@(row => row.VendorLabel)" />
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Category">
+                        <CellTemplate Context="row">
+                            @row.CategoryKind
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Cadence">
+                        <CellTemplate Context="row">
+                            @row.Cadence
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="decimal"
+                                       Header="Amount">
+                        <CellTemplate Context="row">
+                            £@((row.FixedAmount ?? row.MonthlyEstimate ?? 0m).ToString("F2"))
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Coverage"
+                                       Property="@(row => row.EstimateCoverageLabel ?? "—")" />
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Tag"
+                                       Property="@(row => row.Tag ?? "—")" />
+                </Columns>
+            </BbDataTable>
         }
     </section>
 

@@ -112,5 +112,14 @@ public partial class PotMapping
             _ => mode.ToString(),
         };
 
+    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
+        kind switch
+        {
+            BudgetCategoryKind.Needs => "Needs",
+            BudgetCategoryKind.Wants => "Wants",
+            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
+            _ => kind.ToString(),
+        };
+
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
 }

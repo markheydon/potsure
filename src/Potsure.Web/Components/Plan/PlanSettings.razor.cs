@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Data;
@@ -93,6 +94,14 @@ public partial class PlanSettings
             AllocationPreset.SeventyFiveFifteenTen => "75 / 15 / 10",
             _ => preset.ToString(),
         };
+
+    private static string FormatDecimal(decimal value) =>
+        value.ToString("G29", CultureInfo.InvariantCulture);
+
+    private static decimal ParseDecimal(string? value, decimal fallback) =>
+        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed)
+            ? parsed
+            : fallback;
 
     private sealed class PlanSettingsForm
     {

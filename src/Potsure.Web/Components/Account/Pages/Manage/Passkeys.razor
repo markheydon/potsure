@@ -17,7 +17,7 @@
 
 @if (currentPasskeys is { Count: > 0 })
 {
-    <table class="table">
+    <table>
         <tbody>
             @foreach (var passkey in currentPasskeys)
             {
@@ -29,10 +29,16 @@
                         }
                         <form @formname="@($"update-passkey-{credentialId}")" @onsubmit="UpdatePasskey" method="post">
                             <AntiforgeryToken />
-                            <div>
+                            <div class="potsure-passkey-actions">
                                 <input type="hidden" name="CredentialId" value="@credentialId" />
-                                <button type="submit" name="Action" value="rename" class="btn btn-primary" title="Rename this passkey">Rename</button>
-                                <button type="submit" name="Action" value="delete" class="btn btn-danger" title="Remove this passkey from your account">Delete</button>
+                                <BbButton Type="ButtonType.Submit"
+                                          AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "rename", ["title"] = "Rename this passkey" })">
+                                    Rename
+                                </BbButton>
+                                <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive"
+                                          AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "delete", ["title"] = "Remove this passkey from your account" })">
+                                    Delete
+                                </BbButton>
                             </div>
                         </form>
                     </td>
@@ -50,11 +56,13 @@ else
     <AntiforgeryToken />
     @if (currentPasskeys is { Count: >= MaxPasskeyCount })
     {
-        <p class="text-danger">You have reached the maximum number of allowed passkeys. Please delete one before adding a new one.</p>
+        <BbAlert Variant="AlertVariant.Danger">
+            <BbAlertDescription>You have reached the maximum number of allowed passkeys. Please delete one before adding a new one.</BbAlertDescription>
+        </BbAlert>
     }
     else
     {
-        <PasskeySubmit Operation="PasskeyOperation.Create" Name="Input" class="btn btn-primary">Add a new passkey</PasskeySubmit>
+        <PasskeySubmit Operation="PasskeyOperation.Create" Name="Input">Add a new passkey</PasskeySubmit>
     }
 
 </form>

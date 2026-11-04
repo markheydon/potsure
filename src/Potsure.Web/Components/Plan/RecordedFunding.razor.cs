@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Infrastructure.Services;
@@ -99,4 +100,12 @@ public partial class RecordedFunding
 
         public decimal Recorded { get; set; } = recorded;
     }
+
+    private static string FormatDecimal(decimal value) =>
+        value.ToString("G29", CultureInfo.InvariantCulture);
+
+    private static decimal ParseDecimal(string? value, decimal fallback) =>
+        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed)
+            ? parsed
+            : fallback;
 }

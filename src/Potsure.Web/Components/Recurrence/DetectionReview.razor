@@ -50,46 +50,64 @@ else
                         {
                             IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
                             <div>
-                                <label>
-                                    Cadence
-                                    <InputSelect @bind-Value="_incomeCadenceByLabel[item.Label]">
+                                <BbLabel>Cadence</BbLabel>
+                                <BbSelect TValue="IncomeCadence" @bind-Value="_incomeCadenceByLabel[item.Label]">
+                                    <BbSelectTrigger>
+                                        <BbSelectValue Placeholder="Cadence" />
+                                    </BbSelectTrigger>
+                                    <BbSelectContent>
                                         @foreach (IncomeCadence cadence in Enum.GetValues<IncomeCadence>())
                                         {
-                                            <option value="@cadence">@cadence</option>
+                                            <BbSelectItem TValue="IncomeCadence" Value="@cadence" Text="@cadence.ToString()" />
                                         }
-                                    </InputSelect>
-                                </label>
-                                <label>Needs % <InputNumber @bind-Value="splits.Needs" /></label>
-                                <label>Wants % <InputNumber @bind-Value="splits.Wants" /></label>
-                                <label>Savings &amp; debt % <InputNumber @bind-Value="splits.SavingsDebt" /></label>
+                                    </BbSelectContent>
+                                </BbSelect>
+                                <BbLabel>Needs %</BbLabel>
+                                <BbInput Type="InputType.Number"
+                                         Value="@FormatDecimal(splits.Needs)"
+                                         ValueChanged="@(v => splits.Needs = ParseDecimal(v, splits.Needs))" />
+                                <BbLabel>Wants %</BbLabel>
+                                <BbInput Type="InputType.Number"
+                                         Value="@FormatDecimal(splits.Wants)"
+                                         ValueChanged="@(v => splits.Wants = ParseDecimal(v, splits.Wants))" />
+                                <BbLabel>Savings &amp; debt %</BbLabel>
+                                <BbInput Type="InputType.Number"
+                                         Value="@FormatDecimal(splits.SavingsDebt)"
+                                         ValueChanged="@(v => splits.SavingsDebt = ParseDecimal(v, splits.SavingsDebt))" />
                             </div>
                         }
                         else
                         {
                             <div>
-                                <label>
-                                    Category
-                                    <InputSelect @bind-Value="_expenseCategoryByLabel[item.Label]">
+                                <BbLabel>Category</BbLabel>
+                                <BbSelect TValue="Guid" @bind-Value="_expenseCategoryByLabel[item.Label]">
+                                    <BbSelectTrigger>
+                                        <BbSelectValue Placeholder="Category" />
+                                    </BbSelectTrigger>
+                                    <BbSelectContent>
                                         @foreach (CategoryOption category in _categories)
                                         {
-                                            <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                                            <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
                                         }
-                                    </InputSelect>
-                                </label>
-                                <label>
-                                    Mapped pot (optional)
-                                    <InputSelect @bind-Value="_expensePotByLabel[item.Label]">
-                                        <option value="">None</option>
+                                    </BbSelectContent>
+                                </BbSelect>
+                                <BbLabel>Mapped pot (optional)</BbLabel>
+                                <BbSelect TValue="Guid"
+                                          Value="@GetExpensePotSelection(item.Label)"
+                                          ValueChanged="@(id => SetExpensePotSelection(item.Label, id))">
+                                    <BbSelectTrigger>
+                                        <BbSelectValue Placeholder="None" />
+                                    </BbSelectTrigger>
+                                    <BbSelectContent>
+                                        <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
                                         @foreach (PotOption pot in PotsForCategory(_expenseCategoryByLabel[item.Label]))
                                         {
-                                            <option value="@pot.Id">@pot.Name</option>
+                                            <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
                                         }
-                                    </InputSelect>
-                                </label>
-                                <label>
-                                    Tag (optional)
-                                    <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
-                                </label>
+                                    </BbSelectContent>
+                                </BbSelect>
+                                <BbLabel>Tag (optional)</BbLabel>
+                                <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
                             </div>
                         }
                         <BbButton OnClick="() => ConfirmAsync(item)">Confirm</BbButton>
@@ -111,12 +129,10 @@ else
                     (@FormatCadence(item))
                     @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
                     {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_mergeSelection.Contains(item.Label)"
-                                   @onchange="() => ToggleMergeSelection(item.Label)" />
+                        <BbCheckbox Checked="@_mergeSelection.Contains(item.Label)"
+                                    CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))">
                             Include in merge
-                        </label>
+                        </BbCheckbox>
                     }
                 </li>
             }
@@ -135,73 +151,99 @@ else
             </BbAlert>
         }
         <BbInput @bind-Value="_mergeLabel" Placeholder="Merged vendor label (optional)" />
-        <label>
-            Category
-            <InputSelect @bind-Value="_mergeCategoryId">
+        <BbLabel>Category</BbLabel>
+        <BbSelect TValue="Guid" @bind-Value="_mergeCategoryId">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Category" />
+            </BbSelectTrigger>
+            <BbSelectContent>
                 @foreach (CategoryOption category in _categories)
                 {
-                    <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
                 }
-            </InputSelect>
-        </label>
-        <label>
-            Mapped pot (optional)
-            <InputSelect @bind-Value="_mergePotId">
-                <option value="">None</option>
+            </BbSelectContent>
+        </BbSelect>
+        <BbLabel>Mapped pot (optional)</BbLabel>
+        <BbSelect TValue="Guid" @bind-Value="MergePotSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="None" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
                 @foreach (PotOption pot in PotsForCategory(_mergeCategoryId))
                 {
-                    <option value="@pot.Id">@pot.Name</option>
+                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
                 }
-            </InputSelect>
-        </label>
-        <label>
-            Tag (optional)
-            <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
-        </label>
+            </BbSelectContent>
+        </BbSelect>
+        <BbLabel>Tag (optional)</BbLabel>
+        <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
     </section>
 
     <section aria-labelledby="recurrence-split">
         <h2 id="recurrence-split">Split expense pattern</h2>
-        <label>
-            Source pattern
-            <InputSelect @bind-Value="_splitSourceLabel">
-                <option value="">Select…</option>
+        <BbLabel>Source pattern</BbLabel>
+        <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Select…" />
+            </BbSelectTrigger>
+            <BbSelectContent>
                 @foreach (RecurrenceReviewItem item in _confirmedOrRejected.Where(i => !i.IsIncome && i.State == PatternConfirmationState.Confirmed))
                 {
-                    <option value="@item.Label">@item.Label</option>
+                    <BbSelectItem TValue="string" Value="@item.Label" Text="@item.Label" />
                 }
-            </InputSelect>
-        </label>
+            </BbSelectContent>
+        </BbSelect>
         <BbInput @bind-Value="_splitPartOneLabel" Placeholder="First part label" />
-        <InputSelect @bind-Value="_splitPartOneCategoryId">
-            @foreach (CategoryOption category in _categories)
-            {
-                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
-            }
-        </InputSelect>
-        <InputSelect @bind-Value="_splitPartOnePotId">
-            <option value="">None</option>
-            @foreach (PotOption pot in PotsForCategory(_splitPartOneCategoryId))
-            {
-                <option value="@pot.Id">@pot.Name</option>
-            }
-        </InputSelect>
+        <BbSelect TValue="Guid" @bind-Value="_splitPartOneCategoryId">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="First part category" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                @foreach (CategoryOption category in _categories)
+                {
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                }
+            </BbSelectContent>
+        </BbSelect>
+        <BbSelect TValue="Guid" @bind-Value="SplitPartOnePotSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="First part pot" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                @foreach (PotOption pot in PotsForCategory(_splitPartOneCategoryId))
+                {
+                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                }
+            </BbSelectContent>
+        </BbSelect>
         <BbInput @bind-Value="_splitPartOneTag" Placeholder="First part tag (optional)" />
         <BbInput @bind-Value="_splitPartTwoLabel" Placeholder="Second part label" />
-        <InputSelect @bind-Value="_splitPartTwoCategoryId">
-            @foreach (CategoryOption category in _categories)
-            {
-                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
-            }
-        </InputSelect>
-        <InputSelect @bind-Value="_splitPartTwoPotId">
-            <option value="">None</option>
-            @foreach (PotOption pot in PotsForCategory(_splitPartTwoCategoryId))
-            {
-                <option value="@pot.Id">@pot.Name</option>
-            }
-        </InputSelect>
+        <BbSelect TValue="Guid" @bind-Value="_splitPartTwoCategoryId">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Second part category" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                @foreach (CategoryOption category in _categories)
+                {
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                }
+            </BbSelectContent>
+        </BbSelect>
+        <BbSelect TValue="Guid" @bind-Value="SplitPartTwoPotSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Second part pot" />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                @foreach (PotOption pot in PotsForCategory(_splitPartTwoCategoryId))
+                {
+                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                }
+            </BbSelectContent>
+        </BbSelect>
         <BbInput @bind-Value="_splitPartTwoTag" Placeholder="Second part tag (optional)" />
         <BbButton OnClick="SplitPatternAsync">Split pattern</BbButton>
     </section>

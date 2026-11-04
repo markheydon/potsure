@@ -20,10 +20,11 @@ else
 {
     <section aria-labelledby="runway-horizon">
         <h2 id="runway-horizon">Forecast horizon</h2>
-        <label>
-            Months ahead
-            <InputNumber @bind-Value="_horizonMonths" min="1" max="12" />
-        </label>
+        <BbLabel>Months ahead</BbLabel>
+        <BbInput Type="InputType.Number"
+                 Value="@_horizonMonths.ToString()"
+                 ValueChanged="@(v => _horizonMonths = ParseHorizonMonths(v, _horizonMonths))"
+                 AdditionalAttributes="@(HorizonInputAttributes)" />
         <BbButton Variant="ButtonVariant.Default" OnClick="SaveHorizonAsync">Update horizon</BbButton>
     </section>
 
@@ -49,28 +50,38 @@ else
         </p>
     </section>
 
-    <table>
-        <caption>Runway by category</caption>
-        <thead>
-            <tr>
-                <th scope="col">Category</th>
-                <th scope="col">Projected spend</th>
-                <th scope="col">Threshold</th>
-                <th scope="col">Shortfall</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (RunwayProjectionLine line in _lines)
-            {
-                <tr>
-                    <th scope="row">@line.Category</th>
-                    <td>£@line.ProjectedRemainingSpend.Amount.ToString("F2")</td>
-                    <td>£@line.Threshold.Amount.ToString("F2")</td>
-                    <td>@(line.IsShortfall ? "Yes" : "No")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <BbDataTable TData="RunwayTableRow"
+                 Data="@_runwayTableRows"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Runway by category">
+        <Columns>
+            <BbDataTableColumn TData="RunwayTableRow" TValue="string"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    @FormatKind(row.Line.Category)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="RunwayTableRow" TValue="decimal"
+                               Header="Projected spend">
+                <CellTemplate Context="row">
+                    £@row.Line.ProjectedRemainingSpend.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="RunwayTableRow" TValue="decimal"
+                               Header="Threshold">
+                <CellTemplate Context="row">
+                    £@row.Line.Threshold.Amount.ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="RunwayTableRow" TValue="bool"
+                               Header="Shortfall">
+                <CellTemplate Context="row">
+                    @(row.Line.IsShortfall ? "Yes" : "No")
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
 
     @if (_variableExpenses.Count > 0)
     {

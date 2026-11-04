@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
@@ -401,6 +402,56 @@ public partial class DetectionReview
 
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
         _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
+
+    private void SetMergeIncluded(string label, bool included)
+    {
+        if (included)
+        {
+            _mergeSelection.Add(label);
+        }
+        else
+        {
+            _mergeSelection.Remove(label);
+        }
+    }
+
+    private Guid GetExpensePotSelection(string label) =>
+        _expensePotByLabel.TryGetValue(label, out Guid? pot) && pot is Guid id ? id : Guid.Empty;
+
+    private void SetExpensePotSelection(string label, Guid value) =>
+        _expensePotByLabel[label] = value == Guid.Empty ? null : value;
+
+    private Guid MergePotSelection
+    {
+        get => _mergePotId ?? Guid.Empty;
+        set => _mergePotId = value == Guid.Empty ? null : value;
+    }
+
+    private string SplitSourceSelection
+    {
+        get => _splitSourceLabel ?? string.Empty;
+        set => _splitSourceLabel = string.IsNullOrEmpty(value) ? null : value;
+    }
+
+    private Guid SplitPartOnePotSelection
+    {
+        get => _splitPartOnePotId ?? Guid.Empty;
+        set => _splitPartOnePotId = value == Guid.Empty ? null : value;
+    }
+
+    private Guid SplitPartTwoPotSelection
+    {
+        get => _splitPartTwoPotId ?? Guid.Empty;
+        set => _splitPartTwoPotId = value == Guid.Empty ? null : value;
+    }
+
+    private static string FormatDecimal(decimal value) =>
+        value.ToString("G29", CultureInfo.InvariantCulture);
+
+    private static decimal ParseDecimal(string? value, decimal fallback) =>
+        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed)
+            ? parsed
+            : fallback;
 
     private sealed class IncomeSplitInput
     {

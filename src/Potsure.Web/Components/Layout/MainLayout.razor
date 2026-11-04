@@ -1,28 +1,42 @@
 ﻿@inherits LayoutComponentBase
 
-<header class="potsure-nav">
-    <nav aria-label="Primary">
-        <a href="/">Home</a>
-        <a href="/import">Import</a>
-        <a href="/plan">Plan</a>
-        <a href="/plan/pots">Pots</a>
-        <a href="/plan/funding">Funding</a>
-        <a href="/recurrence/review">Recurring</a>
-        <a href="/reports/category-health">Category health</a>
-        <a href="/reports/budget-balance">Budget balance</a>
-        <a href="/reports/runway">Runway</a>
-        <a href="/privacy">Export and delete</a>
-    </nav>
-</header>
+<div class="relative min-h-screen flex flex-col">
+    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container flex h-14 items-center gap-2 flex-wrap">
+            <a href="/" class="flex items-center space-x-2 shrink-0">
+                <LucideIcon Name="piggy-bank" Size="24" Class="text-primary" />
+                <span class="font-bold">Potsure</span>
+            </a>
 
-<main>
-    @Body
-</main>
+            <nav class="hidden lg:flex items-center flex-wrap gap-x-4 gap-y-1 text-sm font-medium" aria-label="Primary">
+                <NavLink href="/import" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Import</NavLink>
+                <NavLink href="/plan" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Plan</NavLink>
+                <NavLink href="/plan/pots" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Pots</NavLink>
+                <NavLink href="/plan/funding" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Funding</NavLink>
+                <NavLink href="/recurrence/review" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Recurring</NavLink>
+                <NavLink href="/reports/category-health" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Category health</NavLink>
+                <NavLink href="/reports/budget-balance" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Budget balance</NavLink>
+                <NavLink href="/reports/runway" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Runway</NavLink>
+                <NavLink href="/privacy" class="transition-colors hover:text-foreground/80 text-foreground/60" ActiveClass="text-foreground">Export and delete</NavLink>
+            </nav>
 
-<BbPortalHost />
+            <div class="flex flex-1 items-center justify-end gap-1 min-w-0">
+                <BbDarkModeToggle Variant="ButtonVariant.Ghost" @rendermode="InteractiveServer" />
+            </div>
+        </div>
+    </header>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <main class="flex-1 container py-6">
+        @Body
+    </main>
+
+    <footer class="border-t py-4">
+        <div class="container text-sm text-muted-foreground">
+            Potsure — budgeting from your Monzo exports
+        </div>
+    </footer>
 </div>
+
+<BbToastProvider Position="ToastPosition.BottomRight" @rendermode="InteractiveServer" />
+<BbDialogProvider @rendermode="InteractiveServer" />
+<BbPortalHost @rendermode="InteractiveServer" />

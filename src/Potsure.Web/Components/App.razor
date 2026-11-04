@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-base-color="zinc">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
@@ -7,18 +7,24 @@
     <base href="/" />
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["styles/theme.css"]" />
-    <link rel="stylesheet" href="_content/BlazorBlueprint.Components/css/themes.css" />
     <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["css/app.css"]" />
     <link rel="stylesheet" href="@Assets["Potsure.Web.styles.css"]" />
     <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
     <ImportMap />
     <HeadOutlet />
 </head>
 
-<body>
+<body class="font-sans antialiased">
     <Routes />
     <ReconnectModal />
+
+    <div id="blazor-error-ui" class="hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-destructive text-destructive-foreground" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="underline reload">Reload</a>
+        <span class="dismiss cursor-pointer absolute right-3 top-2" role="button" tabindex="0">Dismiss</span>
+    </div>
+
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

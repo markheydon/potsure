@@ -116,6 +116,18 @@ public partial class TransactionAttributionReview
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
         _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
 
+    private Guid GetPotSelection(Guid transactionId) =>
+        _potByTransaction.TryGetValue(transactionId, out Guid? pot) && pot is Guid id ? id : Guid.Empty;
+
+    private void SetPotSelection(Guid transactionId, Guid value) =>
+        _potByTransaction[transactionId] = value == Guid.Empty ? null : value;
+
+    private Guid GetPatternSelection(Guid transactionId) =>
+        _patternByTransaction.TryGetValue(transactionId, out Guid? pattern) && pattern is Guid id ? id : Guid.Empty;
+
+    private void SetPatternSelection(Guid transactionId, Guid value) =>
+        _patternByTransaction[transactionId] = value == Guid.Empty ? null : value;
+
     private static string? NullIfWhiteSpace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

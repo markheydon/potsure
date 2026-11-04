@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Potsure.Infrastructure.StatementImport;
@@ -23,9 +24,14 @@ public partial class ImportWizard
     private StatementImportSummary? _summary;
     private StatementImportPreview? _preview;
     private Dictionary<string, string> _columnMapping = new(StringComparer.Ordinal);
+    private IReadOnlyList<FileUploadItem> _uploadFiles = Array.Empty<FileUploadItem>();
 
-    private async Task OnFileSelectedAsync(InputFileChangeEventArgs args)
+    private IReadOnlyList<string> MappingRequiredHeaders =>
+        _preview?.ColumnMapping.RequiredHeaders ?? Array.Empty<string>();
+
+    private async Task OnUploadFilesChangedAsync(IReadOnlyList<FileUploadItem> files)
     {
+        _uploadFiles = files;
         _errorMessage = null;
         _summary = null;
         _preview = null;
@@ -34,7 +40,16 @@ public partial class ImportWizard
         _accountConfirmed = false;
         _mappingConfirmed = false;
 
-        IBrowserFile file = args.File;
+        if (files.Count == 0)
+        {
+            _pendingFile = null;
+            _pendingBytes = null;
+            _selectedFileName = null;
+            return;
+        }
+
+        FileUploadItem item = files[^1];
+        IBrowserFile file = item.File;
         _selectedFileName = file.Name;
         await using Stream stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
         using MemoryStream buffer = new();
@@ -157,6 +172,7 @@ public partial class ImportWizard
         _pendingFile = null;
         _pendingBytes = null;
         _selectedFileName = null;
+        _uploadFiles = Array.Empty<FileUploadItem>();
         _awaitingAccountConfirmation = false;
         _awaitingMappingConfirmation = false;
         _accountConfirmed = false;

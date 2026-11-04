@@ -6,8 +6,8 @@ Ground truth in the repo; prefer reading these files over memory.
 
 `Directory.Packages.props`:
 
-- `BlazorBlueprint.Components` (styled + primitives dependency)
-- `BlazorBlueprint.Primitives`
+- `BlazorBlueprint.Components` (styled; pulls in Primitives transitively)
+- `BlazorBlueprint.Primitives` (optional explicit pin on the same v4 line as Components)
 - `BlazorBlueprint.Icons.Lucide`
 
 Do not add icon packs or chart libraries unless the user explicitly requests package changes.
@@ -16,20 +16,24 @@ Do not add icon packs or chart libraries unless the user explicitly requests pac
 
 `src/Potsure.Web/Program.cs`:
 
-- `builder.Services.AddBlazorBlueprintComponents();` once (not both Components and Primitives registration).
+- `builder.Services.AddBlazorBlueprintComponents(configureTheme: ...)` once (Sunset radius **0.65**, dark mode persistence).
 - Blazor Web App uses Interactive Server (`AddInteractiveServerComponents` / `AddInteractiveServerRenderMode`).
 
 ## Static assets (`App.razor`)
 
 Order matters for theming:
 
-1. `wwwroot/styles/theme.css` (Potsure shell tokens)
-2. `_content/BlazorBlueprint.Components/css/themes.css`
-3. `_content/BlazorBlueprint.Components/blazorblueprint.css`
-4. App bundle CSS
-5. `_content/BlazorBlueprint.Components/js/theme-init.js` in `<head>`
+1. `wwwroot/styles/theme.css` (**Sunset** shadcn-compatible tokens; no `themes.css` — avoids overriding custom palette)
+2. `_content/BlazorBlueprint.Components/blazorblueprint.css`
+3. `wwwroot/css/app.css` (Tailwind v4 **app shell** utilities; rebuild from `app-input.css`)
+4. Scoped bundle CSS
+5. `_content/BlazorBlueprint.Components/js/theme-init.js` in `<head>` (blocking)
 
-`<html>` uses `data-base-color="zinc"` (palette from Blueprint themes).
+Regenerate app CSS after changing layout markup or `app-input.css`:
+
+```bash
+cd src/Potsure.Web && npm install && npx @tailwindcss/cli -i wwwroot/css/app-input.css -o wwwroot/css/app.css
+```
 
 ## Imports
 
@@ -40,27 +44,24 @@ Order matters for theming:
 - `BlazorBlueprint.Primitives.Services`
 - `BlazorBlueprint.Icons.Lucide.Components`
 
-## Portal host
+## Portal host and providers
 
-Interactive overlays require `BbPortalHost`:
+Interactive overlays require `BbPortalHost` (with `@rendermode InteractiveServer` on mixed static/interactive apps):
 
-- `src/Potsure.Web/Components/Layout/MainLayout.razor`
-- `src/Potsure.Web/Components/Layout/AuthLayout.razor`
+- `src/Potsure.Web/Components/Layout/MainLayout.razor` — also `BbToastProvider`, `BbDialogProvider`, `BbDarkModeToggle`
 
 ## Interactive pages
 
-Blueprint-heavy `.razor` files use `@rendermode InteractiveServer` at page or component level (auth, import wizard, plan, reports, recurrence, privacy panels).
+Feature `.razor` files use `@rendermode InteractiveServer`. Identity account pages use `[ExcludeFromInteractiveRouting]` and `@layout AuthLayout`.
+
+## Platform UI (not BlazorBlueprint)
+
+- **`ReconnectModal`** — ASP.NET Core Interactive Server circuit reconnect UI; keep `id="components-reconnect-modal"`.
 
 ## UI patterns in repo
 
-Inspect neighbours before inventing markup:
-
-- Forms and alerts: `Components/Account/PasskeySignIn.razor`
-- Auth shell layout: `Components/Layout/AuthLayout.razor`
-- Feature UI: `Components/Import/`, `Components/Plan/`, `Components/Reports/`, etc.
-
-Prefer composing existing `BbCard`, `BbButton`, `BbInput`, `BbAlert`, tables, and charts consistent with nearby files.
+Prefer `BbCard`, `BbButton`, `BbInput`, `BbSelect`, `BbDataTable`, `BbAlert`, `BbFileUpload`, `BbDatePicker`, chart components, and Lucide icons.
 
 ## Spec alignment
 
-`specs/001-potsure-v1/plan.md` and `research.md` record v4 choices: InteractiveServer, Lucide only, BlazorBlueprint charts, no duplicate chart package.
+`specs/001-potsure-v1/plan.md` and `research.md`: InteractiveServer, Lucide only, BlazorBlueprint charts, no duplicate chart package.

@@ -16,16 +16,17 @@
 }
 else
 {
-    <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
-        <div>
+    <form action="Account/PerformExternalLogin" method="post">
+        <div class="potsure-passkey-actions">
             <AntiforgeryToken />
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <p>
-                @foreach (var provider in externalLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                }
-            </p>
+            @foreach (var provider in externalLogins)
+            {
+                <BbButton Type="ButtonType.Submit"
+                          AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "provider", ["value"] = provider.Name, ["title"] = $"Log in using your {provider.DisplayName} account" })">
+                    @provider.DisplayName
+                </BbButton>
+            }
         </div>
     </form>
 }

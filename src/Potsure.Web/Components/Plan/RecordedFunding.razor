@@ -28,14 +28,18 @@ else
         <section class="potsure-funding-row" aria-labelledby="@($"funding-{row.CategoryId}")">
             <h2 id="@($"funding-{row.CategoryId}")">@row.Kind</h2>
             <div class="potsure-form-grid">
-                <label>
-                    Recorded funding (category)
-                    <InputNumber @bind-Value="row.RecordedDirect" />
-                </label>
-                <label>
-                    Planned future funding (category)
-                    <InputNumber @bind-Value="row.PlannedDirect" />
-                </label>
+                <div>
+                    <BbLabel>Recorded funding (category)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(row.RecordedDirect)"
+                             ValueChanged="@(v => row.RecordedDirect = ParseDecimal(v, row.RecordedDirect))" />
+                </div>
+                <div>
+                    <BbLabel>Planned future funding (category)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(row.PlannedDirect)"
+                             ValueChanged="@(v => row.PlannedDirect = ParseDecimal(v, row.PlannedDirect))" />
+                </div>
             </div>
             @if (row.Pots.Count > 0)
             {
@@ -44,10 +48,10 @@ else
                     @foreach (PotFundingForm pot in row.Pots)
                     {
                         <li>
-                            <label>
-                                @pot.Name
-                                <InputNumber @bind-Value="pot.Recorded" />
-                            </label>
+                            <BbLabel>@pot.Name</BbLabel>
+                            <BbInput Type="InputType.Number"
+                                     Value="@FormatDecimal(pot.Recorded)"
+                                     ValueChanged="@(v => pot.Recorded = ParseDecimal(v, pot.Recorded))" />
                         </li>
                     }
                 </ul>

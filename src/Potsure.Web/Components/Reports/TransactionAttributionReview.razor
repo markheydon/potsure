@@ -33,63 +33,95 @@ else
         </BbAlert>
     }
 
-    <table>
-        <caption>Attributed expense debits</caption>
-        <thead>
-            <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Name</th>
-                <th scope="col">Amount</th>
-                <th scope="col">Category</th>
-                <th scope="col">Pot</th>
-                <th scope="col">Pattern</th>
-                <th scope="col">Tag</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (AttributedTransactionRow row in _transactions)
-            {
-                <tr>
-                    <td>@row.TransactionDate.ToString("dd/MM/yyyy")</td>
-                    <td>@row.Name</td>
-                    <td>£@Math.Abs(row.Amount).ToString("F2")</td>
-                    <td>
-                        <InputSelect @bind-Value="_categoryByTransaction[row.TransactionId]">
+    <BbDataTable TData="AttributedTransactionRow"
+                 Data="@_transactions"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Attributed expense debits">
+        <Columns>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="DateOnly"
+                               Header="Date">
+                <CellTemplate Context="row">
+                    @row.TransactionDate.ToString("dd/MM/yyyy")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Name"
+                               Property="@(row => row.Name)" />
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="decimal"
+                               Header="Amount">
+                <CellTemplate Context="row">
+                    £@Math.Abs(row.Amount).ToString("F2")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid" @bind-Value="_categoryByTransaction[row.TransactionId]">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Category" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
                             @foreach (CategoryOption category in _categories)
                             {
-                                <option value="@category.Id">@FormatCategoryKind(category.Kind)</option>
+                                <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
                             }
-                        </InputSelect>
-                    </td>
-                    <td>
-                        <InputSelect @bind-Value="_potByTransaction[row.TransactionId]">
-                            <option value="">None</option>
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid?"
+                               Header="Pot">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@GetPotSelection(row.TransactionId)"
+                              ValueChanged="@(id => SetPotSelection(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="None" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
                             @foreach (PotOption pot in PotsForCategory(_categoryByTransaction[row.TransactionId]))
                             {
-                                <option value="@pot.Id">@pot.Name</option>
+                                <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
                             }
-                        </InputSelect>
-                    </td>
-                    <td>
-                        <InputSelect @bind-Value="_patternByTransaction[row.TransactionId]">
-                            <option value="">None</option>
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid?"
+                               Header="Pattern">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@GetPatternSelection(row.TransactionId)"
+                              ValueChanged="@(id => SetPatternSelection(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="None" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
                             @foreach (PatternOption pattern in _patterns)
                             {
-                                <option value="@pattern.Id">@pattern.Label</option>
+                                <BbSelectItem TValue="Guid" Value="@pattern.Id" Text="@pattern.Label" />
                             }
-                        </InputSelect>
-                    </td>
-                    <td>
-                        <BbInput @bind-Value="_tagByTransaction[row.TransactionId]" Placeholder="Optional" />
-                    </td>
-                    <td>
-                        <BbButton OnClick="() => SaveOverrideAsync(row.TransactionId)">Save override</BbButton>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Tag">
+                <CellTemplate Context="row">
+                    <BbInput @bind-Value="_tagByTransaction[row.TransactionId]" Placeholder="Optional" />
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="row">
+                    <BbButton OnClick="() => SaveOverrideAsync(row.TransactionId)">Save override</BbButton>
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
 }
 
 <nav aria-label="Related">

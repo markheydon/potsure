@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Potsure.Budgeting;
 using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Reporting;
 using Potsure.Infrastructure.Services;
@@ -24,6 +25,7 @@ public partial class RunwayWarnings
     private string? _error;
     private int _horizonMonths = ForecastHorizonService.DefaultHorizonMonths;
     private IReadOnlyList<RunwayProjectionLine> _lines = [];
+    private List<RunwayTableRow> _runwayTableRows = [];
     private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
     private IReadOnlyList<ConfirmedExpenseSummaryRow> _variableExpenses = [];
     private UncertaintyFlags _flags;
@@ -68,6 +70,37 @@ public partial class RunwayWarnings
     {
         (IReadOnlyList<RunwayProjectionLine> lines, UncertaintyFlags flags) = await RunwayReportService.GetRunwayAsync();
         _lines = lines;
+        _runwayTableRows = lines.Select(line => new RunwayTableRow(line)).ToList();
         _flags = flags;
+    }
+
+    private static string FormatKind(BudgetCategoryKind kind) =>
+        kind switch
+        {
+            BudgetCategoryKind.Needs => "Needs",
+            BudgetCategoryKind.Wants => "Wants",
+            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
+            _ => kind.ToString(),
+        };
+
+    private sealed class RunwayTableRow(RunwayProjectionLine line)
+    {
+        public RunwayProjectionLine Line { get; } = line;
+    }
+
+    private static readonly Dictionary<string, object> HorizonInputAttributes = new()
+    {
+        ["min"] = 1,
+        ["max"] = 12,
+    };
+
+    private static int ParseHorizonMonths(string? value, int fallback)
+    {
+        if (!int.TryParse(value, out int parsed))
+        {
+            return fallback;
+        }
+
+        return Math.Clamp(parsed, 1, 12);
     }
 }
