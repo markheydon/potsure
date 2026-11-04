@@ -18,16 +18,8 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
 
     public void RedirectTo(string? uri)
     {
-        uri ??= "";
-
-        // Prevent open redirects.
-        if (!Uri.IsWellFormedUriString(uri, UriKind.Relative)
-            || uri.StartsWith("//", StringComparison.Ordinal))
-        {
-            uri = navigationManager.ToBaseRelativePath(uri);
-        }
-
-        navigationManager.NavigateTo(uri);
+        string normalized = HostedReturnUrlValidator.Normalize(uri);
+        navigationManager.NavigateTo(normalized);
     }
 
     public void RedirectTo(string uri, Dictionary<string, object?> queryParameters)

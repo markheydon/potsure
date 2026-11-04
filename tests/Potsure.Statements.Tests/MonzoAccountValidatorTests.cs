@@ -47,4 +47,16 @@ public sealed class MonzoAccountValidatorTests
 
         Assert.Equal(expected, result.Outcome);
     }
+
+    [Fact]
+    public void ValidateAssociation_AcceptsRepeatImportWhenAssociationPreviouslyConfirmed()
+    {
+        MonzoAccountValidationResult result = MonzoAccountValidator.ValidateAssociation(
+            null,
+            null,
+            userConfirmedAccount: false,
+            associationPreviouslyConfirmedByUser: true);
+
+        Assert.Equal(MonzoAccountValidationOutcome.Accepted, result.Outcome);
+    }
 }

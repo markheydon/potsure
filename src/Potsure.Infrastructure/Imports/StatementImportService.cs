@@ -93,7 +93,8 @@ public sealed class StatementImportService(
             MonzoAccountValidationResult accountResult = MonzoAccountValidator.ValidateAssociation(
                 fileDerivedFingerprint,
                 association?.AccountFingerprint,
-                userConfirmedAccount);
+                userConfirmedAccount,
+                association?.ConfirmedByUser == true);
 
             bool requiresConfirmation =
                 accountResult.Outcome == MonzoAccountValidationOutcome.ConfirmationRequired;
@@ -153,7 +154,8 @@ public sealed class StatementImportService(
             MonzoAccountValidationResult accountResult = MonzoAccountValidator.ValidateAssociation(
                 fileDerivedFingerprint,
                 association?.AccountFingerprint,
-                userConfirmedAccount);
+                userConfirmedAccount,
+                association?.ConfirmedByUser == true);
 
             if (accountResult.Outcome == MonzoAccountValidationOutcome.ConfirmationRequired)
             {

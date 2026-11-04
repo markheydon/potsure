@@ -121,6 +121,20 @@ public sealed class TransactionAttributionService(
             .SingleAsync(t => t.Id == transactionId, cancellationToken);
         EntityOwnershipValidator.EnsureOwnedBy(transaction.OwnerKey, ownerAccessor.OwnerKey);
 
+        BudgetCategoryEntity category = await dbContext.BudgetCategories
+            .SingleAsync(c => c.Id == categoryId, cancellationToken);
+        EntityOwnershipValidator.EnsureOwnedBy(category.OwnerKey, ownerAccessor.OwnerKey);
+
+        if (mappedPotId is Guid potId)
+        {
+            BankPotEntity pot = await dbContext.BankPots.SingleAsync(p => p.Id == potId, cancellationToken);
+            EntityOwnershipValidator.EnsureOwnedBy(pot.OwnerKey, ownerAccessor.OwnerKey);
+            if (pot.CategoryId != category.Id)
+            {
+                throw new InvalidOperationException("Pot must belong to the selected category.");
+            }
+        }
+
         transaction.CategoryId = categoryId;
         transaction.MappedPotId = mappedPotId;
 

@@ -188,6 +188,11 @@ public sealed class PeriodReportService(
             .Where(e => e.State == PatternConfirmationState.Confirmed)
             .ToListAsync(cancellationToken);
 
+        IReadOnlyDictionary<Guid, DateOnly> anchors = await CommitmentPaymentAnchorResolver.ResolveExpenseAnchorsAsync(
+            dbContext,
+            expenses,
+            cancellationToken);
+
         return expenses
             .Where(e => categoryKinds.ContainsKey(e.CategoryId))
             .Select(e => new CommitmentExpenseInput(
@@ -196,7 +201,7 @@ public sealed class PeriodReportService(
                 string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase),
                 e.FixedAmount,
                 e.MonthlyEstimate,
-                anchorFallback))
+                anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback))
             .ToList();
     }
 
@@ -209,8 +214,16 @@ public sealed class PeriodReportService(
             .Where(i => i.State == PatternConfirmationState.Confirmed)
             .ToListAsync(cancellationToken);
 
+        IReadOnlyDictionary<Guid, DateOnly> anchors = await CommitmentPaymentAnchorResolver.ResolveIncomeAnchorsAsync(
+            dbContext,
+            sources,
+            cancellationToken);
+
         return sources
-            .Select(i => new IncomeScheduleInput(i.Cadence, i.FixedAmount ?? i.EstimateAmount, anchorFallback))
+            .Select(i => new IncomeScheduleInput(
+                i.Cadence,
+                i.FixedAmount ?? i.EstimateAmount,
+                anchors.TryGetValue(i.Id, out DateOnly anchor) ? anchor : anchorFallback))
             .ToList();
     }
 }

@@ -47,6 +47,10 @@ public sealed class ExpensePatternService(
         {
             BankPotEntity pot = await dbContext.BankPots.SingleAsync(p => p.Id == potId, cancellationToken);
             EntityOwnershipValidator.EnsureOwnedBy(pot.OwnerKey, ownerAccessor.OwnerKey);
+            if (pot.CategoryId != request.CategoryId)
+            {
+                throw new InvalidOperationException("Pot must belong to the selected category.");
+            }
         }
 
         RecurringExpenseEntity entity;

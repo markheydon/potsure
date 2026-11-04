@@ -53,10 +53,12 @@ public static class MonzoAccountValidator
     /// <param name="fileDerivedAccountFingerprint">Parsed from statement metadata when available; null when the export provides no account identifier.</param>
     /// <param name="storedAccountFingerprint">Previously persisted identifier from a prior confirmed import.</param>
     /// <param name="userConfirmedAccount">True when the user explicitly confirmed this export belongs to their Monzo account.</param>
+    /// <param name="associationPreviouslyConfirmedByUser">True when a prior import established this Monzo account link.</param>
     public static MonzoAccountValidationResult ValidateAssociation(
         string? fileDerivedAccountFingerprint,
         string? storedAccountFingerprint,
-        bool userConfirmedAccount)
+        bool userConfirmedAccount,
+        bool associationPreviouslyConfirmedByUser = false)
     {
         string? fileId = string.IsNullOrWhiteSpace(fileDerivedAccountFingerprint)
             ? null
@@ -79,7 +81,7 @@ public static class MonzoAccountValidator
             return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
         }
 
-        if (userConfirmedAccount)
+        if (userConfirmedAccount || associationPreviouslyConfirmedByUser)
         {
             return new MonzoAccountValidationResult(MonzoAccountValidationOutcome.Accepted, null);
         }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Potsure.Data.Identity;
+using Potsure.Web;
 using Potsure.Web.Components.Account.Pages;
 using Potsure.Web.Components.Account.Pages.Manage;
 
@@ -47,7 +48,8 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             [FromForm] string returnUrl) =>
         {
             await signInManager.SignOutAsync();
-            return TypedResults.LocalRedirect($"~/{returnUrl}");
+            string safeReturnUrl = HostedReturnUrlValidator.Normalize(returnUrl);
+            return TypedResults.LocalRedirect($"~{safeReturnUrl}");
         });
 
         accountGroup.MapPost("/PasskeyCreationOptions", async (

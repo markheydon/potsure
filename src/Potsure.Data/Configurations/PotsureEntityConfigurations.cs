@@ -179,5 +179,8 @@ internal sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignm
             .WithMany()
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(e => new { e.OwnerKey, e.TransactionId })
+            .IsUnique()
+            .HasFilter("[TransactionId] IS NOT NULL");
     }
 }

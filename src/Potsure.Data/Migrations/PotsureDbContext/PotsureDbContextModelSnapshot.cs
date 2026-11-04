@@ -10,7 +10,7 @@ using Potsure.Data;
 
 namespace Potsure.Data.Migrations
 {
-    [DbContext(typeof(global::Potsure.Data.PotsureDbContext))]
+    [DbContext(typeof(PotsureDbContext))]
     partial class PotsureDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -207,6 +207,16 @@ namespace Potsure.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("RecurringExpenseId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.HasIndex("OwnerKey", "TransactionId")
+                        .IsUnique()
+                        .HasFilter("[TransactionId] IS NOT NULL");
 
                     b.ToTable("Assignments", (string)null);
                 });
@@ -449,7 +459,8 @@ namespace Potsure.Data.Migrations
 
                     b.Property<string>("AmountKind")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("Cadence")
                         .HasColumnType("int");
@@ -478,7 +489,8 @@ namespace Potsure.Data.Migrations
 
                     b.Property<string>("PaymentType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("State")
                         .HasColumnType("int");
@@ -493,6 +505,8 @@ namespace Potsure.Data.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("RecurringExpenses", (string)null);
                 });
@@ -603,6 +617,8 @@ namespace Potsure.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("UploadBatchId");
 
@@ -780,6 +796,25 @@ namespace Potsure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Potsure.Data.Entities.AssignmentEntity", b =>
+                {
+                    b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Potsure.Data.Entities.RecurringExpenseEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RecurringExpenseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Potsure.Data.Entities.TransactionEntity", null)
+                        .WithMany()
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Potsure.Data.Entities.BankPotEntity", b =>
                 {
                     b.HasOne("Potsure.Data.Entities.BudgetProfileEntity", "BudgetProfile")
@@ -828,8 +863,22 @@ namespace Potsure.Data.Migrations
                     b.Navigation("MonzoAccount");
                 });
 
+            modelBuilder.Entity("Potsure.Data.Entities.RecurringExpenseEntity", b =>
+                {
+                    b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Potsure.Data.Entities.TransactionEntity", b =>
                 {
+                    b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Potsure.Data.Entities.StatementUploadEntity", "UploadBatch")
                         .WithMany("Transactions")
                         .HasForeignKey("UploadBatchId")
