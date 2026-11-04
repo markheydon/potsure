@@ -7,9 +7,7 @@ var sql = builder.AddAzureSqlServer("sql")
 
 var database = sql.AddDatabase("potsure");
 
-#pragma warning disable ASPIREDOTNETPROJECT001
-var web = builder.AddDotnetProject("web", "../Potsure.Web/Potsure.Web.csproj")
-#pragma warning restore ASPIREDOTNETPROJECT001
+var web = builder.AddProject<Projects.Potsure_Web>("web")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
     .WithReference(database)

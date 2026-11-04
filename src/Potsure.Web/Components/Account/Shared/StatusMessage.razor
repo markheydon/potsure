@@ -1,9 +1,12 @@
 ﻿@if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass" role="alert">
-        @DisplayMessage
-    </div>
+    var variant = DisplayMessage.StartsWith("Error", StringComparison.Ordinal)
+        ? AlertVariant.Danger
+        : AlertVariant.Default;
+
+    <BbAlert Variant="variant">
+        <BbAlertDescription>@DisplayMessage</BbAlertDescription>
+    </BbAlert>
 }
 
 @code {

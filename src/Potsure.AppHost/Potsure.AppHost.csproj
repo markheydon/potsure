@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj">
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
+    <ProjectReference Include="..\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 
 </Project>

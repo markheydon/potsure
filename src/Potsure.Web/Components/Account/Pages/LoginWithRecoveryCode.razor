@@ -12,26 +12,31 @@
 <PageTitle>Recovery code verification</PageTitle>
 
 <h1>Recovery code verification</h1>
-<hr />
-<StatusMessage Message="@message" />
-<p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
-</p>
-<div class="row">
-    <div class="col-md-4">
+
+<BbCard Class="potsure-auth-narrow">
+    <BbCardHeader>
+        <BbCardTitle>Recovery code</BbCardTitle>
+        <BbCardDescription>
+            You have requested to log in with a recovery code. This login will not be remembered until you provide
+            an authenticator app code at log in or disable 2FA and log in again.
+        </BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent>
+        <StatusMessage Message="@message" />
         <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label for="Input.RecoveryCode" class="form-label">Recovery Code</label>
-                <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
+            <div class="potsure-form-grid">
+                <label>
+                    Recovery code
+                    <BbInput @bind-Value="Input.RecoveryCode" Autocomplete="off" Placeholder="Recovery code" />
+                    <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
+                </label>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+            <BbButton Type="ButtonType.Submit" Class="potsure-auth-primary-action">Log in</BbButton>
         </EditForm>
-    </div>
-</div>
+    </BbCardContent>
+</BbCard>
 
 @code {
     private string? message;
@@ -47,7 +52,6 @@
     {
         Input ??= new();
 
-        // Ensure the user has gone through the username & password screen first
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
             throw new InvalidOperationException("Unable to load two-factor authentication user.");
     }

@@ -513,3 +513,31 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T146 [US11] Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` for standard email/password Identity (normal `IdentityOptions.Password` policy per constitution 1.2.0 — not passkey-style 64-character minimum); rename `AddHostedPasskeyIdentity` to hosted Identity registration used from `Program.cs`; defer mandatory passkey handler wiring to post–v1.0.0 optional milestone (optional passkeys remain via template)
 - [X] T147 [US10] Replace hosted passkey step-up in `src/Potsure.Web/Components/Privacy/PrivacyDataPanel.razor.cs` with current-password confirmation (preferred) or typed-phrase fallback per amended FR-M022/FR-M023 and [plan.md](./plan.md) reauthentication notes; ensure `ReauthenticationService` grants export/delete without passkey step-up
 - [X] T148 [P] [US11] Add smoke coverage for hosted register and sign-in under Aspire Hosted mode (`Deployment__Mode=Hosted` from AppHost) in `tests/Potsure.Web.Tests/` or `tests/Potsure.E2E/` and record the exercised path in `specs/001-potsure-v1/quickstart.md` (email/password — passkeys not required for acceptance) (partial — `HostedIdentityConfigurationTests` validates password policy registration)
+
+---
+
+## Phase 24: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 23) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T152 [US11] Convert scaffolded Identity account pages (`Login`, `Register`, `ForgotPassword`, and primary Manage flows) from stock Bootstrap template markup to BlazorBlueprint v4 (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide per house patterns) per [plan.md](./plan.md) Identity presentation notes and spec Session 2026-11-04 planning note; retain optional template passkey submit without passkey-only login (partial)
+- [X] T153 [P] [US11] Add functional hosted register-and-sign-in smoke (`WebApplicationFactory` or Playwright with `Deployment__Mode=Hosted`) beyond `HostedIdentityConfigurationTests` password-policy DI registration; refresh **Hosted Identity bootstrap** copy and validation log in `specs/001-potsure-v1/quickstart.md` for **T148** and **SC-005** (partial)
+- [X] T154 [P] Re-run quickstart Scenario 8c (EF migration ordering after **T144**–**T146** `Program.cs` Identity wiring) via local `aspire run` and update the validation log in `specs/001-potsure-v1/quickstart.md` per Phase 23 post-smoke note (partial)
+
+---
+
+## Phase 25: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 24) between spec intent, plan decisions, and present codebase behaviour.
+
+- [ ] T155 [P] [US11] Add hosted-mode HTTP register-and-sign-in smoke using `WebApplicationFactory` (or Playwright against `Deployment__Mode=Hosted`) that posts to Identity account endpoints and reaches an authenticated state — not DI-only `UserManager`/`SignInManager` calls alone in `tests/Potsure.Web.Tests/HostedIdentityFunctionalTests.cs`; refresh quickstart **Hosted Identity** notes if the exercised path changes per **T153**, **T148**, and **SC-005** (partial)
+- [X] T156 [US11] Convert remaining standard Identity password-flow pages (`ResetPassword`, `ResendEmailConfirmation`, and related login recovery pages still using Bootstrap `form-control` / `btn`) to BlazorBlueprint v4 per [plan.md](./plan.md) Identity presentation and spec Session 2026-11-04 planning note; optional 2FA/passkey manage pages may remain template-style until post–v1 (partial)
+- [X] T157 [P] Re-run quickstart Scenario 8c (`aspire run`: database healthy → `ef-migrations` completed → web healthy) in an environment where the migration resource starts successfully; set validation log Scenario 8c to **Pass** or document a blocking infra defect with reproduction steps per constitution 1.2.0 Scenario 8c and **T154** (partial — documented `portForServing "web"` EF tool defect in quickstart Scenario 8c; AppHost uses `AddProject<Projects.Potsure_Web>`)
+
+---
+
+## Phase 26: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 25) between spec intent, plan decisions, and present codebase behaviour.
+
+- [ ] T158 [P] Resolve local AppHost `AddEFMigrations` orchestration in `src/Potsure.AppHost/AppHost.cs` so `ef-tool-*` migration resources finish successfully (fix `ASPNETCORE_URLS` / `portForServing "web"` substitution failure documented in quickstart Scenario 8c, or adopt a supported migration-worker fallback per [research.md](./research.md)); re-run quickstart Scenario 8c and set the validation log to **Pass** per constitution 1.2.0 Scenario 8c, plan: EF migration orchestration, and **T115**/**T154**/**T157** (partial)

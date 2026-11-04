@@ -56,9 +56,32 @@ h1:focus {
 .potsure-auth-shell {
     box-sizing: border-box;
     margin: 0 auto;
-    max-width: 28rem;
+    max-width: 42rem;
     padding: 2rem 1rem 3rem;
     width: 100%;
+}
+
+.potsure-auth-grid {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.potsure-auth-narrow {
+    max-width: 28rem;
+}
+
+.potsure-auth-primary-action {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+.potsure-auth-divider {
+    margin: 1rem 0 0.5rem;
+    text-align: center;
+}
+
+.potsure-auth-links {
+    margin-top: 1.25rem;
 }
 
 .potsure-form-field {

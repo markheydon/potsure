@@ -25,11 +25,11 @@ dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj
 
 ## Hosted Identity bootstrap (Aspire / hosted mode)
 
-> **Release gate**: Routine acceptance for this section is **blocked until Phase 23** (**T143**–**T148**) completes. Steps below describe the target validation path (**T148**); exploratory runs may fail until template Identity pages replace superseded passkey-only UI.
+Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprint on Login, Register, Forgot password, and primary Manage flows. Automated smoke: `HostedIdentityConfigurationTests` (password policy DI) and `HostedIdentityFunctionalTests` (register + password sign-in check via `AddHostedIdentity`).
 
 1. Start AppHost so web runs with `Deployment__Mode=Hosted`.
-2. Navigate to **Register** (Identity account template route under `Components/Account/Pages`).
-3. Create the first user with **email and password**; sign in.
+2. Navigate to **Register** (`/Account/Register`).
+3. Create the first user with **email and password**; sign in at `/Account/Login`.
 4. **Expect**: Financial data routes reject anonymous access; each user sees only their own data after isolation checks.
 
 ## Scenario 1 — Safe Monzo import (US1)
@@ -107,6 +107,8 @@ dotnet test Potsure.slnx -c Release
 
 **Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with Infrastructure project + Web startup per plan.
 
+**Known defect (2026-11-04 re-smoke, T154/T157)**: AppHost logs show `Could not perform substitution for environment variable ASPNETCORE_URLS` on `ef-tool-ef-migrations` with `portForServing "web"` — the migration executable does not produce the `/web` service endpoint. Until fixed upstream or in AppHost wiring, Scenario 8c remains **Partial** despite **T115** pass on 2026-11-03.
+
 ## Scenario 9 — Accessibility smoke (US12)
 
 1. Keyboard-only: import wizard → recurring summary → category health.
@@ -127,7 +129,7 @@ After deploy to dev/test ACA + Azure SQL free tier:
 
 ## Validation log
 
-Last run: 2026-11-03 (automated build/test; Aspire migration ordering verified). **T100** records this log; **Scenario 8c** closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
+Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `Potsure.Web.Tests`; Scenario 8c re-smoke after Phase 23 Identity wiring — see table). **T100** records this log; **T148** / **T153** cite `HostedIdentityFunctionalTests`; **Scenario 8c** first closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
@@ -140,9 +142,10 @@ Last run: 2026-11-03 (automated build/test; Aspire migration ordering verified).
 | 7 — Determinism | Pass | `DeterminismTests` in Release |
 | 8 — Unit/core CI | Pass | Budgeting and Statements golden tests |
 | 8b — Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c — EF migration ordering | Pass | **T115** 2026-11-03: `aspire run` — `sql`/`potsure` Healthy, `ef-migrations` Finished before web start; `aspire describe --include-hidden` lists hidden migration resource |
+| 8c — EF migration ordering | Partial | **T115** Pass 2026-11-03; **T154**/**T157** 2026-11-04 `aspire run` — `ef-tool-*` cannot substitute `ASPNETCORE_URLS` (`portForServing "web"` — service `/web` not produced by migration executable); AppHost switched to `AddProject<Projects.Potsure_Web>` (**T157** fix attempt) — re-smoke still blocked until Aspire EF tool wiring resolves |
 | 9 — Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
+| Hosted Identity (Aspire local) | Pass | **T153** 2026-11-04: `HostedIdentityFunctionalTests` + manual path in bootstrap section (**SC-005** / **T148**) |
 | Hosted stage smoke | Not run | Requires deployed ACA; hosted Register/sign-in validation |
 
 Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test` — see Phase 15 task T101.
