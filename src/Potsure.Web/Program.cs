@@ -12,6 +12,7 @@ using Potsure.Infrastructure.Tenancy;
 using Potsure.Web.Components;
 using Potsure.Web.Components.Account;
 using Potsure.Web.Configuration;
+using Potsure.Web.Features.Privacy;
 using Potsure.Web.Services;
 using Potsure.Web.Telemetry;
 using Potsure.Web.Tenancy;

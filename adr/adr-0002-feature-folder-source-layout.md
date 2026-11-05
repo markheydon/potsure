@@ -43,6 +43,8 @@ Adopt **feature-folder organisation** as the default way to group product capabi
 - Web-layer security helpers live under `Potsure.Web/Security/` (not project root).
 - Tailwind `@source` in `wwwroot/css/app-input.css` must include `Features/**/*.razor` as well as `Components/**`.
 - Public routes (`@page` URLs) are unchanged when moving files; this ADR governs layout only.
+- Web **`Features/Privacy/`** (export and delete UI) corresponds to Infrastructure **`Features/Export/`** and cross-cutting **`Deletion/`**—do not add a duplicate `Features/Export/` tree on Web.
+- Project-wide Razor imports live in **`Potsure.Web/_Imports.razor`** at the host project root.
 
 ## Consequences
 
@@ -81,6 +83,7 @@ Adopt **feature-folder organisation** as the default way to group product capabi
 - **IMP-002**: Done — `src/Potsure.Infrastructure` → `Features/{Import,Plan,Recurrence,Reports,Export}/` with cross-cutting `Persistence/`, `Tenancy/`, `Deletion/`. Namespaces: `Potsure.Infrastructure.Features.{Name}`.
 - **IMP-003**: Success = build and tests green; no route or public API breakage from moves alone.
 - **IMP-004**: Domain bounded-context projects (`Potsure.Budgeting`, `Potsure.Statements`, `Potsure.Recurrence`, `Potsure.Reporting`) remain separate assemblies for v1; `Potsure.Budgeting` stays a zero-dependency pure kernel. Optional consolidation of thin libraries is a product decision, not required for layout adoption.
+- **IMP-005**: Done — documentation and co-location closure on `001-potsure-v1`: `CONVENTIONS.md` Web feature list and Privacy mapping; `specs/001-potsure-v1/plan.md` / `tasks.md` paths aligned with `Potsure.Data`; [`src/Potsure.Infrastructure/README.md`](../src/Potsure.Infrastructure/README.md); `ExportReauthenticationGateAdapter` under `Features/Privacy/`; consolidated Razor `_Imports.razor` at Web project root. v1 layout adoption complete for Web and Infrastructure profiles; Data, bounded contexts, and AppHost unchanged per table above.
 
 ## References
 

@@ -44,7 +44,9 @@ Root `<Routes @rendermode="InteractiveServer" />` matches the template interacti
 
 ## Imports
 
-`src/Potsure.Web/Components/_Imports.razor` includes:
+Project-wide Razor usings: `src/Potsure.Web/_Imports.razor` (includes BlazorBlueprint and feature page namespaces). `Components/_Imports.razor` defers to that file.
+
+`src/Potsure.Web/_Imports.razor` includes:
 
 - `BlazorBlueprint.Components`
 - `BlazorBlueprint.Primitives`

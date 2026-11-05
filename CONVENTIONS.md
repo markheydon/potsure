@@ -47,12 +47,22 @@ Namespaces: `Potsure.Infrastructure.Features.{FeatureName}` for feature code.
 
 ### `Potsure.Web` (Blazor profile)
 
+Product capability folders (orchestration lives in Infrastructure under the same names where 1:1):
+
+- **`Features/Import/`** — statement import wizard UI.
+- **`Features/Plan/`** — budget period, presets, pots, funding settings.
+- **`Features/Recurrence/`** — pattern review and recurring summary UI.
+- **`Features/Reports/`** — reports, attribution, one-off categorisation UI.
+- **`Features/Privacy/`** — export and permanent deletion UI (`/privacy`). Maps to Infrastructure **`Features/Export/`** and **`Deletion/`** (not a separate Infrastructure `Privacy/` folder).
+
 - **`Features/{Name}/Pages/`** — routable product UI (`@page`).
 - **`Features/{Name}/Components/`** — non-route UI used only within that feature.
 - **`Components/`** — app shell only: `App.razor`, `Routes.razor`, `Layout/`, `Shared/`, shell `Pages/` (home, error), Identity **`Account/`** (template-shaped).
-- **`Configuration/`**, **`Services/`**, **`Security/`**, **`Tenancy/`**, **`Telemetry/`**, **`Resources/`** — cross-cutting web host code (not feature domains).
+- **`Configuration/`**, **`Services/`**, **`Security/`**, **`Tenancy/`**, **`Telemetry/`**, **`Resources/`** — cross-cutting web host code (not feature domains). Privacy-specific adapters (e.g. export reauthentication bridge) may live under **`Features/Privacy/`** when they change with that UI.
 
-Namespaces for feature code: `Potsure.Web.Features.{Name}.Pages` or `.Components`.
+Namespaces for feature code: `Potsure.Web.Features.{Name}.Pages`, `.Components`, or feature root (e.g. `Potsure.Web.Features.Privacy` for co-located helpers).
+
+Project-wide Razor `@using` directives: **`_Imports.razor`** at the Web project root (shell `Components/_Imports.razor` is a pointer only).
 
 Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update this section when layout changes.
 

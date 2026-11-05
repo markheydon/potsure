@@ -1,6 +1,7 @@
 using Potsure.Infrastructure.Features.Export;
+using Potsure.Web.Services;
 
-namespace Potsure.Web.Services;
+namespace Potsure.Web.Features.Privacy;
 
 /// <summary>
 /// Bridges web reauthentication to export and deletion gates.

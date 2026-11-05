@@ -10,5 +10,8 @@ Blazor Server host for Potsure. Folder layout follows [ADR-0002](../../adr/adr-0
 | Cross-feature chrome (headers, loading) | `Components/Shared/` |
 | Identity / Account template | `Components/Account/` |
 | Host config, reauth, OTel, security helpers | `Configuration/`, `Services/`, `Security/`, `Telemetry/`, `Tenancy/` |
+| Privacy export/delete bridge types | `Features/Privacy/` (e.g. reauthentication adapter for export) |
+
+Razor `@using` directives: project root **`_Imports.razor`**.
 
 After Razor markup changes, rebuild Tailwind: `npm run build:css` (see `.agents/skills/blazor-blueprint/references/potsure-integration.md`).

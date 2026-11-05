@@ -66,9 +66,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T014 Implement required income, limiting category (tie: Needs → Wants → Savings & Debt), shortfall, yes/no conclusion in `src/Potsure.Budgeting/RequiredIncomeCalculator.cs` per contracts/budgeting-core.md and FR-M018
 - [X] T015 Implement runway comparison (`ProjectedRemainingSpend > allocation − actual activity + recorded funding`) in `src/Potsure.Budgeting/RunwayCalculator.cs` per FR-M020
 - [X] T016 [P] Add golden scenario fixtures and tests in `tests/Potsure.Budgeting.Tests/` covering contracts/budgeting-core.md minimum catalogue (8 scenarios)
-- [X] T017 Define EF entity types and configurations in `src/Potsure.Infrastructure/Persistence/` from data-model.md (`BudgetProfile`, `BudgetPeriod`, `BudgetCategory`, `BankPot`, `Transaction`, `IncomeSource`, `RecurringExpense`, `Assignment`, `StatementUpload`, `MonzoAccountAssociation`)
-- [X] T018 Add `UserId` on user-owned entities, global query filters, and ownership validation helpers in `src/Potsure.Infrastructure/Persistence/Tenancy/` per research.md
-- [X] T019 Create initial EF migration in `src/Potsure.Infrastructure/Persistence/Migrations/` and document idempotent deploy approach in `docs/deployment-database.md`
+- [X] T017 Define EF entity types and configurations in `src/Potsure.Data/` from data-model.md (`BudgetProfile`, `BudgetPeriod`, `BudgetCategory`, `BankPot`, `Transaction`, `IncomeSource`, `RecurringExpense`, `Assignment`, `StatementUpload`, `MonzoAccountAssociation`)
+- [X] T018 Add `UserId` on user-owned entities, global query filters in `src/Potsure.Data/` and ownership validation helpers in `src/Potsure.Infrastructure/Tenancy/` per research.md
+- [X] T019 Create initial EF migration in `src/Potsure.Data/Migrations/` and document idempotent deploy approach in `docs/deployment-database.md`
 - [X] T020 Configure ASP.NET Core Data Protection key ring persistence to SQL in `src/Potsure.Infrastructure/` reconciled with Aspire SQL resource
 - [X] T021 Implement deployment mode options (local-only vs hosted) in `src/Potsure.Web/Configuration/DeploymentModeOptions.cs` with FR-M024 network non-exposure for local-only
 - [ ] T022 Configure ASP.NET Core Identity with passkey support and SQL persistence in `src/Potsure.Web/` for hosted mode (FR-M025; no password fallback v1) — **Superseded 2026-11-04** (passkey-primary / no-password policy incompatible with constitution 1.2.0); **replaced by T143**–**T146** (not acceptance evidence while unchecked)
@@ -79,7 +79,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T027 Configure OpenTelemetry in `src/Potsure.Web/` excluding upload bodies, payee text, account refs, and export payloads per research.md
 - [X] T028 Register DI composition root in `src/Potsure.Web/Program.cs` and `src/Potsure.Infrastructure/DependencyInjection.cs`
 - [X] T107 [P] Register runtime SQL via `builder.AddSqlServerDbContext<PotsureDbContext>("potsure")` in `src/Potsure.Web/Program.cs` aligned with AppHost `AddDatabase("potsure")`; no runtime `UseSqlServer` or hand-authored connection strings in web startup (constitution 1.2.0, plan.md AppHost resource model)
-- [X] T108 [P] Restrict `UseSqlServer(connectionString)` to `src/Potsure.Infrastructure/Persistence/PotsureDbContextFactory.cs` for EF design-time migrations only; document fallback connection for local `dotnet ef` in `docs/deployment-database.md`
+- [X] T108 [P] Restrict `UseSqlServer(connectionString)` to `src/Potsure.Data/DesignTime/` for EF design-time migrations only; document fallback connection for local `dotnet ef` in `docs/deployment-database.md`
 
 ### EF migration orchestration (plan amend 2026-11-03)
 

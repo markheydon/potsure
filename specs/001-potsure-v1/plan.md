@@ -178,9 +178,9 @@ sql (Azure SQL resource)
               └── web (WithReference database; WaitForCompletion migrations)
 ```
 
-- Prefer **Aspire 13.6 `AddEFMigrations`** on the `Potsure.Web` project resource (startup project for EF CLI) with `WithMigrationsProject<Projects.Potsure_Infrastructure>()`, optional explicit `DbContext` type name `Potsure.Infrastructure.Persistence.PotsureDbContext`, `WithReference(database)`, `WaitFor(database)`, and `RunDatabaseUpdateOnStart()` for local `aspire run` / AppHost dev only.
+- Prefer **Aspire 13.6 `AddEFMigrations`** on the `Potsure.Web` project resource (startup project for EF CLI) with `WithMigrationsProject` pointing at **`Potsure.Data`**, explicit `DbContext` type names `Potsure.Data.PotsureDbContext` and `Potsure.Data.PotsureDataProtectionDbContext`, `WithReference(database)`, `WaitFor(database)`, and `RunDatabaseUpdateOnStart()` for local `aspire run` / AppHost dev only.
 - Web resource: keep `WithReference(database)`; replace “web starts when database is healthy only” with **`WaitForCompletion(migrations)`** so schema exists before Blazor/Identity touch SQL.
-- AppHost may need a **project reference** to `Potsure.Infrastructure` solely so `WithMigrationsProject` resolves — not a runtime dependency inversion (Infrastructure must not reference AppHost).
+- AppHost references **`Potsure.Data`** for `WithMigrationsProject` — not a runtime dependency inversion (Data must not reference AppHost).
 - **Hosted publish**: `RunDatabaseUpdateOnStart` does not deploy; use `PublishAsMigrationScript()` / migration bundle and/or the controlled job documented in `docs/deployment-database.md` (single runner, no migrate-all-replicas).
 - Do **not** add a dedicated migration worker project unless `AddEFMigrations` proves incompatible with this layout after inspection.
 - Do **not** call `Database.MigrateAsync()` (or equivalent) from `Potsure.Web` startup; do **not** combine `BudgetProfileSeeder` or other app-data init into the migration resource.
@@ -189,10 +189,11 @@ sql (Azure SQL resource)
 
 | Concern | Location | Notes |
 |---------|----------|--------|
-| `PotsureDbContext`, entities, `IEntityTypeConfiguration` | `src/Potsure.Infrastructure/Persistence/` | Tenancy filters, Identity + Data Protection keys |
-| Migration artefacts (`Migrations/`, snapshot) | `src/Potsure.Infrastructure/Persistence/Migrations/` | Source-controlled; created via `dotnet ef migrations add` |
-| Design-time `DbContext` | `PotsureDbContextFactory` in Infrastructure | `UseSqlServer` + config fallback **for `dotnet ef` only** (T108) |
+| `PotsureDbContext`, entities, `IEntityTypeConfiguration` | `src/Potsure.Data/` | Tenancy filters, Identity + Data Protection keys |
+| Migration artefacts (`Migrations/`, snapshot) | `src/Potsure.Data/Migrations/` | Source-controlled; created via `dotnet ef migrations add` |
+| Design-time `DbContext` | `DesignTime/` factories in `Potsure.Data` | `UseSqlServer` + config fallback **for `dotnet ef` only** (T108); see `docs/deployment-database.md` |
 | Runtime SQL registration | `Potsure.Web/Program.cs` | `AddSqlServerDbContext<PotsureDbContext>("potsure")` |
+| Repositories, services, seeding | `src/Potsure.Infrastructure/` | Feature orchestration under `Features/`; `Persistence/` for repositories and seeders |
 | Schema apply (local Aspire) | AppHost `AddEFMigrations` resource | Runs `dotnet ef database update`; completes then exits |
 | Schema apply (hosted) | CI / release job or published script | Idempotent reviewed SQL; backup/restore discipline |
 
@@ -200,11 +201,11 @@ sql (Azure SQL resource)
 
 ```bash
 dotnet ef migrations add <Name> \
-  --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
+  --project src/Potsure.Data/Potsure.Data.csproj \
   --startup-project src/Potsure.Web/Potsure.Web.csproj
 
 dotnet ef database update \
-  --project src/Potsure.Infrastructure/Potsure.Infrastructure.csproj \
+  --project src/Potsure.Data/Potsure.Data.csproj \
   --startup-project src/Potsure.Web/Potsure.Web.csproj
 ```
 
