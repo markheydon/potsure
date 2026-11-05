@@ -324,7 +324,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Release evidence (constitution II / SC-007)
 
-- [ ] T149 [P] Close Playwright E2E release evidence: `tests/Potsure.E2E/KeyJourneysTests.cs` exercises CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
+- [X] T149 [P] Close Playwright E2E release evidence: `tests/Potsure.E2E/KeyJourneysTests.cs` exercises CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
 - [ ] T150 [US12] Run quickstart Scenario 9 keyboard-only audit on category health, budget balance, and recurring summary; update validation log in `specs/001-potsure-v1/quickstart.md` (**SC-007**)
 - [ ] T151 [P] Close **SC-003** release evidence: overlapping re-import scenarios (US2 AC7 / quickstart Scenario 2) demonstrate assignment memory without manual re-entry; non-partial integration coverage in **T106** / **T140**–**T142** or documented equivalent
 

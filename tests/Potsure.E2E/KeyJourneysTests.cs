@@ -40,19 +40,12 @@ public sealed class KeyJourneysTests
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             IPage page = await browser.NewPageAsync();
 
-            await page.GotoAsync($"{trimmed}/import");
-            ILocator importHeading = page.Locator("#import-heading");
-            await importHeading.WaitForAsync();
-            Assert.Contains("Import Monzo", await importHeading.InnerTextAsync());
+            await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
 
-            await page.Locator("input[type='file']").SetInputFilesAsync(fixturePath);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Confirm mapping and import" }).ClickAsync();
-            await page.GetByText("imported", new() { Exact = false }).WaitForAsync(new() { Timeout = 60_000 });
+            await ImportJourney.UploadMonzoFixtureAndImportAsync(page, fixturePath);
 
             await page.GotoAsync($"{trimmed}/recurrence/review");
-            ILocator reviewHeading = page.Locator("#recurrence-review-heading");
-            await reviewHeading.WaitForAsync();
-            Assert.Contains("Review recurring", await reviewHeading.InnerTextAsync());
+            await page.Locator("h1").Filter(new() { HasText = "Review recurring patterns" }).WaitForAsync(new() { Timeout = 60_000 });
             ILocator confirmButton = page.GetByRole(AriaRole.Button, new() { Name = "Confirm" }).First;
             if (await confirmButton.CountAsync() > 0)
             {
@@ -63,14 +56,26 @@ public sealed class KeyJourneysTests
             await page.Locator("h1").Filter(new() { HasText = "Category health" }).WaitForAsync();
 
             await page.GotoAsync($"{trimmed}/privacy");
-            ILocator exportHeading = page.Locator("#export-heading");
-            await exportHeading.WaitForAsync();
+            await page.Locator("h1").Filter(new() { HasText = "Export and delete data" }).WaitForAsync();
             await page.GetByRole(AriaRole.Button, new() { Name = "Export data" }).ClickAsync();
-            await page.GetByPlaceholder("EXPORT").FillAsync("EXPORT");
+            ILocator hostedPassword = page.GetByPlaceholder("Current password");
+            ILocator exportPhrase = page.GetByPlaceholder("EXPORT");
+            await hostedPassword.Or(exportPhrase).First.WaitForAsync(new() { Timeout = 30_000 });
+
+            if (await hostedPassword.IsVisibleAsync())
+            {
+                string password = Environment.GetEnvironmentVariable("POTSURE_E2E_PASSWORD") ?? "Password1";
+                await hostedPassword.FillAsync(password);
+            }
+            else
+            {
+                await exportPhrase.FillAsync("EXPORT");
+            }
+
             await page.GetByRole(AriaRole.Button, new() { Name = "Continue export" }).ClickAsync();
             await page.GetByText("Export ready", new() { Exact = false }).WaitForAsync(new() { Timeout = 30_000 });
         }
-        catch (PlaywrightException ex)
+        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
         {
             Assert.Fail($"Playwright journey failed: {ex.Message}");
         }
