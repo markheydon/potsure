@@ -1,4 +1,4 @@
-namespace Potsure.Web;
+namespace Potsure.Web.Security;
 
 /// <summary>
 /// Validates post-authentication return URLs to prevent open redirects.

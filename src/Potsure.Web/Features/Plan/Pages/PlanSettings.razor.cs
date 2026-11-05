@@ -7,7 +7,7 @@ using Potsure.Infrastructure.Services;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
 
-namespace Potsure.Web.Components.Plan;
+namespace Potsure.Web.Features.Plan.Pages;
 
 public partial class PlanSettings
 {

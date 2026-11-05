@@ -1,4 +1,4 @@
-namespace Potsure.Web.Validation;
+namespace Potsure.Web.Security;
 
 /// <summary>
 /// Shared input validation for uploads and forms (FR-M028).

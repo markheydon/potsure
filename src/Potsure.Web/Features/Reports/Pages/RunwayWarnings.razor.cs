@@ -5,7 +5,7 @@ using Potsure.Infrastructure.Reporting;
 using Potsure.Infrastructure.Services;
 using Potsure.Reporting;
 
-namespace Potsure.Web.Components.Reports;
+namespace Potsure.Web.Features.Reports.Pages;
 
 public partial class RunwayWarnings
 {

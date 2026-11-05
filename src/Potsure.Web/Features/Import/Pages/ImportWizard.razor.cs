@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Potsure.Infrastructure.StatementImport;
 using Potsure.Statements;
-using Potsure.Web.Validation;
+using Potsure.Web.Security;
 
-namespace Potsure.Web.Components.Import;
+namespace Potsure.Web.Features.Import.Pages;
 
 public partial class ImportWizard
 {

@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Potsure.Data.Identity;
-using Potsure.Web;
 using Potsure.Web.Components.Account.Pages;
 using Potsure.Web.Components.Account.Pages.Manage;
+using Potsure.Web.Security;
 
 namespace Microsoft.AspNetCore.Routing;
 

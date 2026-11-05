@@ -5,7 +5,7 @@ using Potsure.Data;
 using Potsure.Infrastructure.Queries;
 using Potsure.Infrastructure.Services;
 
-namespace Potsure.Web.Components.Reports;
+namespace Potsure.Web.Features.Reports.Pages;
 
 public partial class TransactionAttributionReview
 {

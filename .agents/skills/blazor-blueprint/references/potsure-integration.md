@@ -38,7 +38,7 @@ Regenerate app CSS:
 cd src/Potsure.Web && npm install && npm run build:css
 ```
 
-`app-input.css` contains only the BlazorBlueprint template pipeline (`@import`, `@source` for `Components/**`, `@custom-variant dark`, `@layer base` border bridge, `@theme`, `.container`). No Potsure-specific class rules.
+`app-input.css` contains only the BlazorBlueprint template pipeline (`@import`, `@source` for `Components/**` and `Features/**`, `@custom-variant dark`, `@layer base` border bridge, `@theme`, `.container`). No Potsure-specific class rules.
 
 Root `<Routes @rendermode="InteractiveServer" />` matches the template interactive host.
 
@@ -60,7 +60,7 @@ Root `<Routes @rendermode="InteractiveServer" />` matches the template interacti
 
 ## Interactive pages
 
-Feature `.razor` files use `@rendermode InteractiveServer`. Identity account pages use `[ExcludeFromInteractiveRouting]` and `@layout AuthLayout`.
+Feature `.razor` files live under `src/Potsure.Web/Features/{Name}/Pages/` and use `@rendermode InteractiveServer`. Identity account pages use `[ExcludeFromInteractiveRouting]` and `@layout AuthLayout`.
 
 ## Account / auth UI (login & signup blueprints)
 

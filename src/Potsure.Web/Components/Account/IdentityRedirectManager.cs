@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Potsure.Data.Identity;
+using Potsure.Web.Security;
 
 namespace Potsure.Web.Components.Account;
 

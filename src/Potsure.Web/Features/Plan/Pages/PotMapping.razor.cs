@@ -4,7 +4,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Services;
 
-namespace Potsure.Web.Components.Plan;
+namespace Potsure.Web.Features.Plan.Pages;
 
 public partial class PotMapping
 {

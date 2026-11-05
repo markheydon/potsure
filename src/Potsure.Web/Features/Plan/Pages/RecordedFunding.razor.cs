@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Infrastructure.Services;
 
-namespace Potsure.Web.Components.Plan;
+namespace Potsure.Web.Features.Plan.Pages;
 
 public partial class RecordedFunding
 {

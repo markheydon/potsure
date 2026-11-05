@@ -7,7 +7,7 @@ using Potsure.Infrastructure.Reporting;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
 
-namespace Potsure.Web.Components.Reports;
+namespace Potsure.Web.Features.Reports.Pages;
 
 public partial class BudgetBalance
 {

@@ -10,6 +10,7 @@
 
 /* Scan this project's markup for utility classes. */
 @source "../../Components/**/*.razor";
+@source "../../Features/**/*.razor";
 @source "../../Components/App.razor";
 
 /* Class-based dark mode (toggle .dark on <html>). */

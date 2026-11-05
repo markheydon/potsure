@@ -6,7 +6,7 @@ using Potsure.Infrastructure.Export;
 using Potsure.Web.Configuration;
 using Potsure.Web.Services;
 
-namespace Potsure.Web.Components.Privacy;
+namespace Potsure.Web.Features.Privacy.Pages;
 
 public partial class PrivacyDataPanel
 {

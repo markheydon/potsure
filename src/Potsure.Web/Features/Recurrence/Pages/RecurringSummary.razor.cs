@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Potsure.Infrastructure.Queries;
 
-namespace Potsure.Web.Components.Recurrence;
+namespace Potsure.Web.Features.Recurrence.Pages;
 
 public partial class RecurringSummary
 {

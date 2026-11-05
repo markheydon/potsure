@@ -114,7 +114,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T036 [US1] Implement de-duplication by Monzo Transaction ID else date+amount+normalised description in `src/Potsure.Statements/TransactionDeduplicator.cs` per FR-M004
 - [X] T037 [US1] Implement upload pipeline (stream parse → validate → stage → dedupe → atomic commit; temp cleanup on all exits) in `src/Potsure.Infrastructure/Imports/StatementImportService.cs` per research.md
 - [X] T038 [US1] Persist `StatementUpload`, `ImportStatistics`, and remembered `MonzoColumnMapping` in `src/Potsure.Infrastructure/Persistence/Repositories/StatementUploadRepository.cs`
-- [X] T039 [US1] Build import wizard UI (mapping confirm/adjust, account confirm, summary with skip reasons and transfer counts) in `src/Potsure.Web/Components/Import/`
+- [X] T039 [US1] Build import wizard UI (mapping confirm/adjust, account confirm, summary with skip reasons and transfer counts) in `src/Potsure.Web/Features/Import/Pages/`
 - [X] T040 [US1] Ensure FR-M003: every skipped row reported; no silent drops in `StatementImportService` and import summary DTO
 
 **Checkpoint**: US1 independent test passes via quickstart Scenario 1.
@@ -148,9 +148,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T047 [US3] Implement working period CRUD (inclusive `StartDate`/`EndDate`; single period only FR-M031) in `src/Potsure.Infrastructure/Services/BudgetPeriodService.cs`
 - [X] T048 [US3] Implement preset switch with immediate allocation recalculation from unchanged budgeted income in `src/Potsure.Infrastructure/Services/AllocationPresetService.cs` (FR-M011)
 - [X] T049 [US3] Implement optional budgeted income suggestion from confirmed income patterns without auto-apply in `src/Potsure.Infrastructure/Services/BudgetedIncomeSuggestionService.cs` (FR-M031)
-- [X] T050 [US3] Build settings UI for preset, period dates, and budgeted income confirmation in `src/Potsure.Web/Components/Plan/PlanSettings.razor`
+- [X] T050 [US3] Build settings UI for preset, period dates, and budgeted income confirmation in `src/Potsure.Web/Features/Plan/Pages/PlanSettings.razor`
 - [X] T051 [US3] Wire period-scoped date filtering helper (both start and end inclusive) in `src/Potsure.Reporting/PeriodScope.cs` for downstream reports
-- [X] T103 [US3] Present `ActualIncomeInPeriod` separately from `BudgetedIncome` and forecast fields in plan settings UI and read models in `src/Potsure.Reporting/PeriodSummaryBuilder.cs` and `src/Potsure.Web/Components/Plan/PlanSettings.razor` (FR-M019)
+- [X] T103 [US3] Present `ActualIncomeInPeriod` separately from `BudgetedIncome` and forecast fields in plan settings UI and read models in `src/Potsure.Reporting/PeriodSummaryBuilder.cs` and `src/Potsure.Web/Features/Plan/Pages/PlanSettings.razor` (FR-M019)
 
 **Checkpoint**: US3 independent test; quickstart Scenario 3.
 
@@ -175,8 +175,8 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T057 [US2] Implement merge/split workflows requiring user resolution of category, optional pot, and tag before save in `src/Potsure.Infrastructure/Services/PatternMergeSplitService.cs` per FR-M008
 - [X] T058 [US2] Implement auto-attribution of matching debits to confirmed expense patterns with per-transaction override persistence in `src/Potsure.Infrastructure/Services/TransactionAttributionService.cs` per FR-M010a
 - [X] T106 [US2] Add re-import integration test asserting remembered pattern assignments and auto-attribution without manual re-entry in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (SC-003)
-- [X] T059 [US2] Build detection review UI (suggested vs confirmed, income vs expense) in `src/Potsure.Web/Components/Recurrence/`
-- [X] T117 [P] [US2] Add UK English onboarding copy that three months of statement history is recommended for automatic recurring detection (**FR-S004**) in `src/Potsure.Web/Components/Recurrence/` and/or import completion summary without blocking one-month onboarding
+- [X] T059 [US2] Build detection review UI (suggested vs confirmed, income vs expense) in `src/Potsure.Web/Features/Recurrence/Pages/`
+- [X] T117 [P] [US2] Add UK English onboarding copy that three months of statement history is recommended for automatic recurring detection (**FR-S004**) in `src/Potsure.Web/Features/Recurrence/Pages/` and/or import completion summary without blocking one-month onboarding
 - [X] T060 [US2] Project confirmed expense commitments cadence-aware into selected period in `src/Potsure.Reporting/CommitmentProjector.cs` for FR-M018 inputs
 
 **Checkpoint**: US2 independent test; quickstart Scenario 2.
@@ -190,9 +190,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 **Independent Test**: Configure pots; verify combined totals count each amount once (spec US4).
 
 - [X] T061 [P] [US4] Implement `BankPot` CRUD with exactly one `CategoryId` each in `src/Potsure.Infrastructure/Services/BankPotService.cs` (FR-M013; no hierarchy)
-- [X] T062 [US4] Support `PotMappingMode` UX state (none, category-named, expense-specific) in `src/Potsure.Web/Components/Plan/PotMapping.razor`
+- [X] T062 [US4] Support `PotMappingMode` UX state (none, category-named, expense-specific) in `src/Potsure.Web/Features/Plan/Pages/PotMapping.razor`
 - [X] T063 [US4] Roll pot recorded funding and allocations into category totals once in `src/Potsure.Reporting/CategoryRollup.cs` per FR-M017
-- [X] T064 [US4] Allow category-only budgeting when user chooses no pots in `src/Potsure.Web/Components/Plan/` (FR-M014)
+- [X] T064 [US4] Allow category-only budgeting when user chooses no pots in `src/Potsure.Web/Features/Plan/Pages/` (FR-M014)
 
 **Checkpoint**: US4 independent test with category-named and expense-specific pot fixtures.
 
@@ -206,7 +206,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 - [X] T065 [P] [US5] Implement recorded funding updates on category (`RecordedFundingDirect`) and pot (`RecordedFunding`) in `src/Potsure.Infrastructure/Services/RecordedFundingService.cs` (FR-M015, FR-M016)
 - [X] T066 [US5] Implement planned future funding fields separately from recorded funding in `src/Potsure.Infrastructure/Services/PlannedFundingService.cs` (Key Entity: Planned future funding; US5 acceptance — distinct from imports and recorded funding)
-- [X] T067 [US5] Build funding entry UI in `src/Potsure.Web/Components/Plan/RecordedFunding.razor` showing four measures context from FR-M017
+- [X] T067 [US5] Build funding entry UI in `src/Potsure.Web/Features/Plan/Pages/RecordedFunding.razor` showing four measures context from FR-M017
 
 **Checkpoint**: US5 independent test; funding unchanged after re-import.
 
@@ -223,8 +223,8 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T070 [US6] Implement over-allocation persistent indicator when mapped pot plus unassigned recorded funding exceeds category allocation in `src/Potsure.Reporting/OverAllocationEvaluator.cs` (allow save; show warning FR-M017a)
 - [X] T071 [US6] Implement one-off transaction categorisation (expense debits, refunds, credits) affecting actuals only in `src/Potsure.Infrastructure/Services/OneOffCategorisationService.cs` per FR-M037
 - [X] T072 [US6] Assemble `PeriodSummary` per category in `src/Potsure.Reporting/PeriodSummaryBuilder.cs` using `Potsure.Budgeting` calculators
-- [X] T073 [US6] Build category health report UI with optional pot breakdown in `src/Potsure.Web/Components/Reports/CategoryHealth.razor`
-- [X] T104 [US6] Label actual receipt income separately from budgeted income and forecasts on category health and related report headers in `src/Potsure.Web/Components/Reports/CategoryHealth.razor` (FR-M019)
+- [X] T073 [US6] Build category health report UI with optional pot breakdown in `src/Potsure.Web/Features/Reports/Pages/CategoryHealth.razor`
+- [X] T104 [US6] Label actual receipt income separately from budgeted income and forecasts on category health and related report headers in `src/Potsure.Web/Features/Reports/Pages/CategoryHealth.razor` (FR-M019)
 - [X] T074 [US6] Add reporting determinism test (repeat view identical totals) in `tests/Potsure.Reporting.Tests/DeterminismTests.cs` for FR-M036
 
 **Checkpoint**: US6 independent test; quickstart Scenarios 4 and 7.
@@ -238,9 +238,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 **Independent Test**: Shortfall shows limiting category, monetary gap, qualified yes/no (spec US7).
 
 - [X] T075 [US7] Wire `RequiredIncomeCalculator` to cadence-projected commitments only in `src/Potsure.Reporting/BudgetBalanceReportBuilder.cs` (exclude income patterns, one-offs, funding)
-- [X] T076 [US7] Build budget balance report UI with income timing from expected dates (not assumed four payments per month) in `src/Potsure.Web/Components/Reports/BudgetBalance.razor`
+- [X] T076 [US7] Build budget balance report UI with income timing from expected dates (not assumed four payments per month) in `src/Potsure.Web/Features/Reports/Pages/BudgetBalance.razor`
 - [X] T077 [US7] Ensure messaging does not imply future costs covered by unreceived money (FR-M033) in report copy resources under `src/Potsure.Web/Resources/`
-- [X] T105 [US7] Keep actual receipts and planned income visually and structurally separate on budget balance and runway report components in `src/Potsure.Web/Components/Reports/` (FR-M019; complements FR-M033)
+- [X] T105 [US7] Keep actual receipts and planned income visually and structurally separate on budget balance and runway report components in `src/Potsure.Web/Features/Reports/Pages/` (FR-M019; complements FR-M033)
 - [X] T078 [US7] Extend golden tests for budget balance scenarios in `tests/Potsure.Budgeting.Tests/BudgetBalanceGoldenTests.cs`
 
 **Checkpoint**: US7 independent test; quickstart Scenario 5.
@@ -256,7 +256,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T079 [P] [US8] Implement forecast horizon setting on `BudgetProfile` (`ForecastHorizonMonths` default 3) in `src/Potsure.Infrastructure/Services/ForecastHorizonService.cs` per FR-M035 (Must: default 3 months and user override)
 - [X] T080 [US8] Compute projected remaining spend including variable estimates in `src/Potsure.Reporting/RunwayProjector.cs` per FR-M020 and FR-M034
 - [X] T081 [US8] Surface uncertainty flags for statement gaps and uncertain income in `src/Potsure.Reporting/UncertaintyFlagsBuilder.cs` per FR-M032
-- [X] T082 [US8] Build runway warnings UI with optional pot detail in `src/Potsure.Web/Components/Reports/RunwayWarnings.razor`
+- [X] T082 [US8] Build runway warnings UI with optional pot detail in `src/Potsure.Web/Features/Reports/Pages/RunwayWarnings.razor`
 
 **Checkpoint**: US8 independent test; quickstart partial-month labelling scenario.
 
@@ -269,7 +269,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 **Independent Test**: Summary shows cadence, amounts, assignments, income splits; suggestions listed apart (spec US9).
 
 - [X] T083 [P] [US9] Build read model query for confirmed vs suggested patterns in `src/Potsure.Infrastructure/Queries/RecurringSummaryQuery.cs`
-- [X] T084 [US9] Build recurring summary page in `src/Potsure.Web/Components/Recurrence/RecurringSummary.razor` per FR-M021
+- [X] T084 [US9] Build recurring summary page in `src/Potsure.Web/Features/Recurrence/Pages/RecurringSummary.razor` per FR-M021
 
 **Checkpoint**: US9 independent test after US2 data present.
 
@@ -285,7 +285,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T086 [P] [US10] Implement CSV ZIP export (`transactions.csv`, `plan.csv`, `metadata.json`) in `src/Potsure.Infrastructure/Export/CsvZipExporter.cs`
 - [X] T087 [US10] Implement export orchestration with format choice and reauthentication in `src/Potsure.Infrastructure/Export/ExportService.cs` (FR-M022)
 - [X] T088 [US10] Implement transactional permanent deletion of all user financial data in `src/Potsure.Infrastructure/Deletion/UserDataDeletionService.cs` per FR-M023 and data-model.md Deletion section
-- [X] T089 [US10] Build export and delete UI with confirmation flows in `src/Potsure.Web/Components/Privacy/`
+- [X] T089 [US10] Build export and delete UI with confirmation flows in `src/Potsure.Web/Features/Privacy/Pages/`
 - [X] T090 [US10] Add export format contract tests in `tests/Potsure.Infrastructure.Tests/ExportFormatTests.cs`
 
 **Checkpoint**: US10 independent test; quickstart Scenario 6.
@@ -298,8 +298,8 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 **Independent Test**: Keyboard-only import → recurring → category health → export; narrow viewport reports (spec US12).
 
-- [X] T091 [P] [US12] Audit and fix focus order and keyboard activation on import wizard in `src/Potsure.Web/Components/Import/`
-- [X] T092 [P] [US12] Audit and fix keyboard navigation on recurring review and reports in `src/Potsure.Web/Components/Recurrence/` and `Components/Reports/`
+- [X] T091 [P] [US12] Audit and fix focus order and keyboard activation on import wizard in `src/Potsure.Web/Features/Import/Pages/`
+- [X] T092 [P] [US12] Audit and fix keyboard navigation on recurring review and reports in `src/Potsure.Web/Features/Recurrence/Pages/` and `Features/Reports/Pages/`
 - [X] T093 [US12] Apply responsive layout adjustments for primary report content without horizontal scroll in `src/Potsure.Web/wwwroot/app.css` and component markup
 - [X] T094 [US12] Provide textual equivalents for chart data on category health and budget balance per SC-007 in report components
 
@@ -511,7 +511,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T144 [US11] Call `MapAdditionalIdentityEndpoints()` from `src/Potsure.Web/Program.cs` and align account routes with template paths; register no-op or logging `IEmailSender<ApplicationUser>` for v1 self-host per [research.md](./research.md)
 - [X] T145 [US11] Remove or replace `src/Potsure.Web/Configuration/HostedPasskeySignInEndpoints.cs`, `src/Potsure.Web/Configuration/HostedPasskeyStepUpEndpoints.cs`, and passkey-only `src/Potsure.Web/Components/Account/PasskeySignIn.razor`; update `src/Potsure.Web/Components/Account/RedirectToLogin.razor` and `Program.cs` to use template sign-in/register flows instead of `MapHostedPasskeySignInEndpoints` / `MapHostedPasskeyStepUpEndpoints`
 - [X] T146 [US11] Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` for standard email/password Identity (normal `IdentityOptions.Password` policy per constitution 1.2.0 — not passkey-style 64-character minimum); rename `AddHostedPasskeyIdentity` to hosted Identity registration used from `Program.cs`; defer mandatory passkey handler wiring to post–v1.0.0 optional milestone (optional passkeys remain via template)
-- [X] T147 [US10] Replace hosted passkey step-up in `src/Potsure.Web/Components/Privacy/PrivacyDataPanel.razor.cs` with current-password confirmation (preferred) or typed-phrase fallback per amended FR-M022/FR-M023 and [plan.md](./plan.md) reauthentication notes; ensure `ReauthenticationService` grants export/delete without passkey step-up
+- [X] T147 [US10] Replace hosted passkey step-up in `src/Potsure.Web/Features/Privacy/Pages/PrivacyDataPanel.razor.cs` with current-password confirmation (preferred) or typed-phrase fallback per amended FR-M022/FR-M023 and [plan.md](./plan.md) reauthentication notes; ensure `ReauthenticationService` grants export/delete without passkey step-up
 - [X] T148 [P] [US11] Add smoke coverage for hosted register and sign-in under Aspire Hosted mode (`Deployment__Mode=Hosted` from AppHost) in `tests/Potsure.Web.Tests/` or `tests/Potsure.E2E/` and record the exercised path in `specs/001-potsure-v1/quickstart.md` (email/password — passkeys not required for acceptance) (partial — `HostedIdentityConfigurationTests` validates password policy registration)
 
 ---

@@ -7,7 +7,7 @@ using Potsure.Data.Entities;
 using Potsure.Infrastructure.Services;
 using Potsure.Recurrence;
 
-namespace Potsure.Web.Components.Recurrence;
+namespace Potsure.Web.Features.Recurrence.Pages;
 
 public partial class DetectionReview
 {

@@ -1,5 +1,7 @@
 namespace Potsure.Web.Tests;
 
+using Potsure.Web.Security;
+
 public sealed class HostedReturnUrlValidatorTests
 {
     [Theory]

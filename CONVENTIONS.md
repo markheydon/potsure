@@ -3,7 +3,7 @@
 # Conventions
 
 **Project:** Potsure  
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-05
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
 
@@ -11,15 +11,26 @@ When in doubt, follow this file. Significant architecture changes need an ADR.
 
 ## Project Structure
 
+Source layout follows **[ADR-0002: Feature-folder source layout](adr/adr-0002-feature-folder-source-layout.md)** (incremental adoption across projects).
+
 ```
 src/
-├── Potsure.Data/          # EF Core DbContexts, entities, migrations
-├── Potsure.Infrastructure/ # Services, repositories, runtime seeding
-├── Potsure.Web/
+├── Potsure.Data/             # EF Core DbContexts, entities, migrations
+├── Potsure.Infrastructure/   # Services, repositories, runtime seeding
+├── Potsure.Web/                # Blazor host — see profile below
 └── …
 tests/
 └── …
 ```
+
+### `Potsure.Web` (Blazor profile)
+
+- **`Features/{Name}/Pages/`** — routable product UI (`@page`).
+- **`Features/{Name}/Components/`** — non-route UI used only within that feature.
+- **`Components/`** — app shell only: `App.razor`, `Routes.razor`, `Layout/`, `Shared/`, shell `Pages/` (home, error), Identity **`Account/`** (template-shaped).
+- **`Configuration/`**, **`Services/`**, **`Security/`**, **`Tenancy/`**, **`Telemetry/`**, **`Resources/`** — cross-cutting web host code (not feature domains).
+
+Namespaces for feature code: `Potsure.Web.Features.{Name}.Pages` or `.Components`.
 
 Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update this section when layout changes.
 
