@@ -3,7 +3,9 @@
 
 <PageTitle>Recorded funding</PageTitle>
 
-<PotsurePageHeader Title="Recorded and planned funding" HeadingLevel="1" Class="bb:mb-4" />
+<PotsurePageHeader Title="Recorded and planned funding"
+                   Description="Recorded funding is what you have already set aside; imports do not change it."
+                   HeadingLevel="1" />
 
 @if (_loading)
 {
@@ -12,53 +14,61 @@
 else if (_error is not null)
 {
     <BbAlert Variant="AlertVariant.Warning">
-        <BbAlertTitle>Funding unavailable</BbAlertTitle>
-        <BbAlertDescription>@_error</BbAlertDescription>
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Funding unavailable</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
     </BbAlert>
 }
 else
 {
-    <BbTypographyMuted>
-        Four measures on reports: allocation, recorded funding, actual activity, and under/over.
-        Recorded funding is what you have already set aside; imports do not change it.
-    </BbTypographyMuted>
+    <BbAlert Variant="AlertVariant.Info">
+        <Icon><LucideIcon Name="info" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertDescription>
+                Four measures on reports: allocation, recorded funding, actual activity, and under/over.
+                Recorded funding is what you have already set aside; imports do not change it.
+            </BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
 
-    @foreach (FundingFormRow row in _rows)
-    {
-        <section class="bb:space-y-4 bb:mb-6" aria-label="@row.Kind.ToString()">
-            <PotsurePageHeader Title="@row.Kind.ToString()" HeadingLevel="2" Class="bb:mb-4" />
-            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
-                <div>
+    <div class="bb:grid bb:items-start bb:gap-6 bb:md:grid-cols-2 bb:lg:grid-cols-3">
+        @foreach (FundingFormRow row in _rows)
+        {
+            <PotsureSection Title="@row.Kind.ToString()">
+<ChildContent>
+                <div class="bb:grid bb:gap-2">
                     <BbLabel>Recorded funding (category)</BbLabel>
                     <BbInput Type="InputType.Number"
                              Value="@FormatDecimal(row.RecordedDirect)"
                              ValueChanged="@(v => row.RecordedDirect = ParseDecimal(v, row.RecordedDirect))" />
                 </div>
-                <div>
+                <div class="bb:grid bb:gap-2">
                     <BbLabel>Planned future funding (category)</BbLabel>
                     <BbInput Type="InputType.Number"
                              Value="@FormatDecimal(row.PlannedDirect)"
                              ValueChanged="@(v => row.PlannedDirect = ParseDecimal(v, row.PlannedDirect))" />
                 </div>
-            </div>
-            @if (row.Pots.Count > 0)
-            {
-                <PotsurePageHeader Title="Pot recorded funding" HeadingLevel="3" Class="bb:mb-4" />
-                <BbItemGroup Class="bb:grid bb:gap-4 bb:max-w-2xl">
+                @if (row.Pots.Count > 0)
+                {
+                    <BbSeparator />
+                    <BbTypographySmall Class="bb:font-medium">Pot recorded funding</BbTypographySmall>
                     @foreach (PotFundingForm pot in row.Pots)
                     {
-                        <BbItem>
-                            <BbItemContent Class="bb:grid bb:gap-2">
-                                <BbLabel>@pot.Name</BbLabel>
-                                <BbInput Type="InputType.Number"
-                                         Value="@FormatDecimal(pot.Recorded)"
-                                         ValueChanged="@(v => pot.Recorded = ParseDecimal(v, pot.Recorded))" />
-                            </BbItemContent>
-                        </BbItem>
+                        <div class="bb:grid bb:gap-2">
+                            <BbLabel>@pot.Name</BbLabel>
+                            <BbInput Type="InputType.Number"
+                                     Value="@FormatDecimal(pot.Recorded)"
+                                     ValueChanged="@(v => pot.Recorded = ParseDecimal(v, pot.Recorded))" />
+                        </div>
                     }
-                </BbItemGroup>
-            }
-            <BbButton Variant="ButtonVariant.Default" OnClick="() => SaveRowAsync(row)">Save @row.Kind</BbButton>
-        </section>
-    }
+                }
+</ChildContent>
+                <Footer>
+                    <BbButton Variant="ButtonVariant.Default" OnClick="() => SaveRowAsync(row)">Save @row.Kind</BbButton>
+                </Footer>
+            </PotsureSection>
+        }
+    </div>
 }

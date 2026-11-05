@@ -1,10 +1,14 @@
-<div class="bb:flex bb:flex-col bb:items-center bb:justify-center bb:gap-3 bb:py-8" role="status">
-    <BbSpinner Size="SpinnerSize.Large" AriaLabel="@Message" />
-    @if (!string.IsNullOrWhiteSpace(Message))
-    {
-        <BbTypographyMuted>@Message</BbTypographyMuted>
-    }
-</div>
+<BbCard>
+    <BbCardContent Class="bb:flex bb:flex-col bb:items-center bb:justify-center bb:gap-3 bb:py-10">
+        <div class="bb:flex bb:flex-col bb:items-center bb:gap-3" role="status">
+            <BbSpinner Size="SpinnerSize.Large" AriaLabel="@Message" />
+            @if (!string.IsNullOrWhiteSpace(Message))
+            {
+                <BbTypographyMuted>@Message</BbTypographyMuted>
+            }
+        </div>
+    </BbCardContent>
+</BbCard>
 
 @code {
     [Parameter]

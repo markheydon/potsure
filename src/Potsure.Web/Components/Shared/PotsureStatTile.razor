@@ -1,0 +1,48 @@
+<BbCard Class="@Class">
+    <BbCardHeader Class="bb:pb-2">
+        <div class="bb:flex bb:items-center bb:justify-between bb:gap-2">
+            <BbCardDescription>@Label</BbCardDescription>
+            @if (!string.IsNullOrWhiteSpace(Icon))
+            {
+                <LucideIcon Name="@Icon" Size="18" Class="bb:text-muted-foreground" />
+            }
+        </div>
+        <BbCardTitle As="p" Class="bb:text-2xl bb:tabular-nums">@Value</BbCardTitle>
+    </BbCardHeader>
+    @if (!string.IsNullOrWhiteSpace(Hint) || !string.IsNullOrWhiteSpace(Badge))
+    {
+        <BbCardContent Class="bb:flex bb:flex-wrap bb:items-center bb:gap-2">
+            @if (!string.IsNullOrWhiteSpace(Badge))
+            {
+                <BbBadge Variant="@BadgeVariant">@Badge</BbBadge>
+            }
+            @if (!string.IsNullOrWhiteSpace(Hint))
+            {
+                <BbTypographyMuted>@Hint</BbTypographyMuted>
+            }
+        </BbCardContent>
+    }
+</BbCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = "";
+
+    [Parameter]
+    public string? Hint { get; set; }
+
+    [Parameter]
+    public string? Icon { get; set; }
+
+    [Parameter]
+    public string? Badge { get; set; }
+
+    [Parameter]
+    public BadgeVariant BadgeVariant { get; set; } = BadgeVariant.Secondary;
+
+    [Parameter]
+    public string? Class { get; set; }
+}

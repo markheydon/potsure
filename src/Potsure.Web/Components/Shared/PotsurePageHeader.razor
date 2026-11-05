@@ -1,11 +1,15 @@
-<BbSectionHeader Title="@Title"
-                 Description="@Description"
-                 HeadingLevel="@HeadingLevel"
-                 Separator="@Separator"
-                 Class="@Class"
-                 AdditionalAttributes="@AdditionalAttributes">
-    <Actions>@Actions</Actions>
-</BbSectionHeader>
+﻿<div class="bb:flex bb:flex-col bb:gap-4 bb:sm:flex-row">
+    <BbSectionHeader Title="@Title"
+                     Description="@Description"
+                     HeadingLevel="@HeadingLevel"
+                     Separator="@Separator"
+                     Class="@HeaderClass"
+                     AdditionalAttributes="@AdditionalAttributes" />
+    @if (Actions is not null)
+    {
+        <div class="bb:flex bb:flex-wrap bb:gap-2">@Actions</div>
+    }
+</div>
 
 @code {
     [Parameter]
@@ -28,4 +32,6 @@
 
     [Parameter]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string HeaderClass => string.IsNullOrWhiteSpace(Class) ? "bb:flex-1 bb:min-w-0" : $"bb:flex-1 bb:min-w-0 {Class}";
 }

@@ -1,18 +1,21 @@
-@page "/import"
+﻿@page "/import"
 @rendermode InteractiveServer
 
 <PageTitle>Import statement</PageTitle>
 
 <PotsurePageHeader Title="Import Monzo statement"
+                   Description="Upload a CSV export from Monzo to bring your transactions into Potsure."
                    HeadingLevel="1"
-                   Class="bb:mb-4"
                    AdditionalAttributes="@(new Dictionary<string, object> { ["tabindex"] = "-1", ["id"] = "import-heading" })" />
 
 @if (_isBusy)
 {
-    <BbAlert Variant="AlertVariant.Default">
-        <BbAlertTitle>Importing</BbAlertTitle>
-        <BbAlertDescription>Processing your CSV file…</BbAlertDescription>
+    <BbAlert Variant="AlertVariant.Info">
+        <Icon><BbSpinner AriaLabel="Importing" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Importing</BbAlertTitle>
+            <BbAlertDescription>Processing your CSV file…</BbAlertDescription>
+        </ChildContent>
     </BbAlert>
 }
 else if (_summary is not null && !_awaitingAccountConfirmation)
@@ -24,17 +27,27 @@ else
     @if (_awaitingAccountConfirmation)
     {
         <BbAlert Variant="AlertVariant.Warning">
-            <BbAlertTitle>Confirm account</BbAlertTitle>
-            <BbAlertDescription>
-                We could not verify this export against your linked Monzo account. Confirm it is yours before importing.
-            </BbAlertDescription>
+            <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+            <ChildContent>
+                <BbAlertTitle>Confirm account</BbAlertTitle>
+                <BbAlertDescription>
+                    We could not verify this export against your linked Monzo account. Confirm it is yours before importing.
+                </BbAlertDescription>
+            </ChildContent>
         </BbAlert>
     }
 
     @if (_awaitingMappingConfirmation && _preview is not null)
     {
-        <section class="bb:space-y-4" aria-label="Confirm column mapping">
-            <PotsurePageHeader Title="Confirm column mapping" HeadingLevel="2" Class="bb:mb-4" />
+        <PotsureSection Title="Confirm column mapping"
+                        AdditionalAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Confirm column mapping" })">
+            <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-2">
+                <BbBadge Variant="BadgeVariant.SoftSuccess">@_preview.ParsedRowCount row(s) ready</BbBadge>
+                @if (_preview.ParseErrorCount > 0)
+                {
+                    <BbBadge Variant="BadgeVariant.SoftWarning">@_preview.ParseErrorCount row(s) skipped</BbBadge>
+                }
+            </div>
             <BbTypographyMuted>
                 We detected a Monzo export with @_preview.ParsedRowCount row(s) ready to import
                 (@_preview.ParseErrorCount row(s) skipped due to validation errors).
@@ -89,18 +102,18 @@ else
                     </BbCollapsibleContent>
                 </BbCollapsible>
             }
-        </section>
+        </PotsureSection>
     }
 
     <section class="bb:space-y-4" aria-labelledby="import-heading">
-        <BbCard>
+        <BbCard Class="bb:w-full bb:max-w-4xl">
             <BbCardHeader>
                 <BbCardTitle>Upload CSV</BbCardTitle>
                 <BbCardDescription>
                     Select a Monzo statement export (.csv). Rows that cannot be imported are listed in the summary.
                 </BbCardDescription>
             </BbCardHeader>
-            <BbCardContent>
+            <BbCardContent Class="bb:space-y-4">
                 <BbFileUpload Accept=".csv,text/csv"
                               MaxFileSize="10485760"
                               Multiple="false"
@@ -114,12 +127,13 @@ else
                     <BbTypographyP>Selected: @_selectedFileName</BbTypographyP>
                 }
             </BbCardContent>
-            <BbCardFooter>
+            <BbCardFooter Class="bb:justify-end bb:gap-2">
                 @if (_awaitingAccountConfirmation)
                 {
-                    <BbCheckbox @bind-Checked="_accountConfirmed">
-                        I confirm this export is from my Monzo account
-                    </BbCheckbox>
+                    <div class="bb:flex bb:items-center bb:gap-2">
+                        <BbCheckbox @bind-Checked="_accountConfirmed" Id="confirm-account" />
+                        <BbLabel For="confirm-account" Class="bb:font-normal">I confirm this export is from my Monzo account</BbLabel>
+                    </div>
                     <BbButton Variant="ButtonVariant.Default"
                               Disabled="@(!_accountConfirmed || _pendingFile is null)"
                               OnClick="ConfirmAccountAndImportAsync">
@@ -150,7 +164,10 @@ else
 @if (!string.IsNullOrEmpty(_errorMessage))
 {
     <BbAlert Variant="AlertVariant.Danger">
-        <BbAlertTitle>Import failed</BbAlertTitle>
-        <BbAlertDescription>@_errorMessage</BbAlertDescription>
+        <Icon><LucideIcon Name="circle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Import failed</BbAlertTitle>
+            <BbAlertDescription>@_errorMessage</BbAlertDescription>
+        </ChildContent>
     </BbAlert>
 }

@@ -1,31 +1,23 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="bb:relative bb:min-h-screen bb:flex bb:flex-col">
-    <header class="bb:sticky bb:top-0 bb:z-50 bb:w-full bb:border-b bb:bg-background">
-        <div class="bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl bb:flex bb:h-14 bb:items-center bb:gap-2 bb:flex-wrap">
-            <BbLink Href="/" Class="bb:flex bb:items-center bb:gap-2 bb:shrink-0 bb:no-underline">
-                <LucideIcon Name="piggy-bank" Size="24" Class="bb:text-primary" />
-                <BbTypographySmall Class="bb:font-semibold">Potsure</BbTypographySmall>
-            </BbLink>
+<BbSidebarProvider>
+    <AppSidebar />
 
-            <PrimaryNav />
-
-            <div class="bb:flex bb:shrink-0 bb:items-center bb:justify-end bb:gap-1">
+    <BbSidebarInset>
+        <header class="bb:sticky bb:top-0 bb:z-40 bb:flex bb:h-14 bb:items-center bb:gap-2 bb:border-b bb:bg-background bb:px-4">
+            <BbSidebarTrigger />
+            <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-4" />
+            <BbTypographySmall Class="bb:font-medium">Potsure</BbTypographySmall>
+            <div class="bb:flex bb:flex-1 bb:items-center bb:justify-end bb:gap-1">
                 <BbDarkModeToggle Variant="ButtonVariant.Ghost" />
             </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="bb:flex-1 bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl bb:py-6">
-        @Body
-    </main>
-
-    <footer class="bb:border-t bb:py-4">
-        <div class="bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl">
-            <BbTypographyMuted>Potsure  -  budgeting from your Monzo exports</BbTypographyMuted>
+        <div class="bb:flex bb:flex-1 bb:flex-col bb:gap-6 bb:p-6">
+            @Body
         </div>
-    </footer>
-</div>
+    </BbSidebarInset>
+</BbSidebarProvider>
 
 <BbToastProvider Position="ToastPosition.BottomRight" />
 <BbDialogProvider />

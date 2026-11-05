@@ -1,9 +1,9 @@
-@page "/reports/runway"
+﻿@page "/reports/runway"
 @rendermode InteractiveServer
 
 <PageTitle>Runway warnings</PageTitle>
 
-<PotsurePageHeader Title="Category runway" HeadingLevel="1" Class="bb:mb-4" />
+<PotsurePageHeader Title="Category runway" HeadingLevel="1" />
 
 @if (_loading)
 {
@@ -18,15 +18,14 @@ else if (_error is not null)
 }
 else
 {
-    <section aria-labelledby="runway-horizon">
-        <PotsurePageHeader Title="Forecast horizon" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Forecast horizon">
         <BbLabel>Months ahead</BbLabel>
         <BbInput Type="InputType.Number"
                  Value="@_horizonMonths.ToString()"
                  ValueChanged="@(v => _horizonMonths = ParseHorizonMonths(v, _horizonMonths))"
                  AdditionalAttributes="@(HorizonInputAttributes)" />
         <BbButton Variant="ButtonVariant.Default" OnClick="SaveHorizonAsync">Update horizon</BbButton>
-    </section>
+    </PotsureSection>
 
     @if (_flags.Messages.Count > 0)
     {
@@ -45,12 +44,11 @@ else
         </BbAlert>
     }
 
-    <section aria-labelledby="runway-income-measures">
-        <PotsurePageHeader Title="Income (separate from commitments)" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Income (separate from commitments)">
         <BbTypographyMuted>
             @ReportCopy.BudgetedIncomeHeading and @ReportCopy.ActualReceiptsHeading are not mixed with projected spend below.
         </BbTypographyMuted>
-    </section>
+    </PotsureSection>
 
     <BbDataTable TData="RunwayTableRow"
                  Data="@_runwayTableRows"
@@ -87,8 +85,7 @@ else
 
     @if (_variableExpenses.Count > 0)
     {
-        <section aria-labelledby="runway-variable">
-            <PotsurePageHeader Title="Variable expense coverage" HeadingLevel="2" Class="bb:mb-4" />
+        <PotsureSection Title="Variable expense coverage">
             <BbItemGroup>
                 @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
                 {
@@ -97,13 +94,12 @@ else
                     </BbItem>
                 }
             </BbItemGroup>
-        </section>
+        </PotsureSection>
     }
 
     @if (_potBreakdown.Count > 0)
     {
-        <section aria-labelledby="runway-pots">
-            <PotsurePageHeader Title="Mapped pots (funding context)" HeadingLevel="2" Class="bb:mb-4" />
+        <PotsureSection Title="Mapped pots (funding context)">
             <BbItemGroup>
                 @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
                 {
@@ -112,7 +108,7 @@ else
                     </BbItem>
                 }
             </BbItemGroup>
-        </section>
+        </PotsureSection>
     }
 
     <div class="bb:mt-4" id="runway-text-summary">

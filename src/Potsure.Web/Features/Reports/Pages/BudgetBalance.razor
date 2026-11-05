@@ -1,9 +1,9 @@
-@page "/reports/budget-balance"
+﻿@page "/reports/budget-balance"
 @rendermode InteractiveServer
 
 <PageTitle>Budget balance</PageTitle>
 
-<PotsurePageHeader Title="Budget balance" HeadingLevel="1" Class="bb:mb-4" />
+<PotsurePageHeader Title="Budget balance" HeadingLevel="1" />
 
 @if (_loading)
 {
@@ -35,8 +35,7 @@ else if (_report is not null)
         </BbBarChart>
     </section>
 
-    <section aria-labelledby="balance-income">
-        <PotsurePageHeader Title="Income (separate measures)" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Income (separate measures)">
         <BbItemGroup Class="bb:grid bb:gap-2 bb:sm:grid-cols-2">
             <BbItem>
                 <BbItemContent>
@@ -51,10 +50,9 @@ else if (_report is not null)
                 </BbItemContent>
             </BbItem>
         </BbItemGroup>
-    </section>
+    </PotsureSection>
 
-    <section aria-labelledby="balance-commitments">
-        <PotsurePageHeader Title="@ReportCopy.CommitmentsHeading" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="@ReportCopy.CommitmentsHeading">
         <BbItemGroup>
             @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
             {
@@ -63,10 +61,9 @@ else if (_report is not null)
                 </BbItem>
             }
         </BbItemGroup>
-    </section>
+    </PotsureSection>
 
-    <section aria-labelledby="balance-required">
-        <PotsurePageHeader Title="Required income" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Required income">
         <BbTypographyP>
             Overall required:
             £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2")
@@ -109,12 +106,11 @@ else if (_report is not null)
                 <BbAlertDescription>Yes  -  planned income meets required income for this period.</BbAlertDescription>
             </BbAlert>
         }
-    </section>
+    </PotsureSection>
 
     @if (_variableExpenses.Count > 0)
     {
-        <section aria-labelledby="balance-variable">
-            <PotsurePageHeader Title="Variable expense coverage" HeadingLevel="2" Class="bb:mb-4" />
+        <PotsureSection Title="Variable expense coverage">
             <BbItemGroup>
                 @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
                 {
@@ -123,7 +119,7 @@ else if (_report is not null)
                     </BbItem>
                 }
             </BbItemGroup>
-        </section>
+        </PotsureSection>
     }
 
     <BbTypographyMuted Class="bb:mt-4"
@@ -135,8 +131,7 @@ else if (_report is not null)
 
     @if (_report.Value.ExpectedIncomePayments.Count > 0)
     {
-        <section aria-labelledby="balance-expected-income">
-            <PotsurePageHeader Title="@ReportCopy.ExpectedIncomeHeading" HeadingLevel="2" Class="bb:mb-4" />
+        <PotsureSection Title="@ReportCopy.ExpectedIncomeHeading">
             <BbItemGroup>
                 @foreach (ExpectedIncomePayment payment in _report.Value.ExpectedIncomePayments)
                 {
@@ -145,6 +140,6 @@ else if (_report is not null)
                     </BbItem>
                 }
             </BbItemGroup>
-        </section>
+        </PotsureSection>
     }
 }

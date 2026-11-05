@@ -3,7 +3,22 @@
 
 <PageTitle>Plan settings</PageTitle>
 
-<PotsurePageHeader Title="Plan settings" HeadingLevel="1" Class="bb:mb-4" />
+<PotsurePageHeader Title="Plan settings"
+                   Description="Choose your allocation preset, budget period and planned income."
+                   HeadingLevel="1">
+    <Actions>
+        <PotsureRelatedNav>
+            <BbButton Href="/plan/pots" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="piggy-bank" Size="15" /></Icon>
+                <ChildContent>Pot mapping</ChildContent>
+            </BbButton>
+            <BbButton Href="/plan/funding" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="wallet" Size="15" /></Icon>
+                <ChildContent>Recorded funding</ChildContent>
+            </BbButton>
+        </PotsureRelatedNav>
+    </Actions>
+</PotsurePageHeader>
 
 @if (_loading)
 {
@@ -12,22 +27,25 @@
 else if (_error is not null)
 {
     <BbAlert Variant="AlertVariant.Warning">
-        <BbAlertTitle>Could not save plan</BbAlertTitle>
-        <BbAlertDescription>@_error</BbAlertDescription>
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Could not save plan</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
     </BbAlert>
 }
 else
 {
-    <section aria-labelledby="plan-income-heading">
-        <PotsurePageHeader Title="Income and period" HeadingLevel="2" Class="bb:mb-4" />
-        <BbTypographyMuted>
-            <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
-            Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
-        </BbTypographyMuted>
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <PotsureSection Title="Income and period" Class="bb:w-full bb:max-w-4xl">
+<ChildContent>
+            <BbTypographyMuted>
+                <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
+                Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
+            </BbTypographyMuted>
 
-        <EditForm Model="_form" OnValidSubmit="SaveAsync">
-            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
-                <div>
+            <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
+                <div class="bb:grid bb:gap-2">
                     <BbLabel>Allocation preset</BbLabel>
                     <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
                         <BbSelectTrigger>
@@ -42,40 +60,38 @@ else
                     </BbSelect>
                 </div>
 
-                <div>
-                    <BbLabel>Period start (inclusive)</BbLabel>
-                    <BbDatePicker Value="@((DateTime?)_form.StartDate)"
-                                  ValueChanged="@(d => _form.StartDate = d ?? _form.StartDate)" />
-                </div>
-
-                <div>
-                    <BbLabel>Period end (inclusive)</BbLabel>
-                    <BbDatePicker Value="@((DateTime?)_form.EndDate)"
-                                  ValueChanged="@(d => _form.EndDate = d ?? _form.EndDate)" />
-                </div>
-
-                <div>
+                <div class="bb:grid bb:gap-2">
                     <BbLabel>Planned income (budgeted)</BbLabel>
                     <BbInput Type="InputType.Number"
                              Value="@FormatDecimal(_form.BudgetedIncome)"
                              ValueChanged="@(v => _form.BudgetedIncome = ParseDecimal(v, _form.BudgetedIncome))" />
                 </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Period start (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.StartDate)"
+                                  ValueChanged="@(d => _form.StartDate = d ?? _form.StartDate)" />
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Period end (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.EndDate)"
+                                  ValueChanged="@(d => _form.EndDate = d ?? _form.EndDate)" />
+                </div>
             </div>
 
             @if (_incomeSuggestion is not null)
             {
-                <BbAlert Variant="AlertVariant.Default">
-                    <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
-                    <BbAlertDescription>
-                        £@_incomeSuggestion.SuggestedAmount.ToString("F2")  -  @_incomeSuggestion.Rationale
-                    </BbAlertDescription>
+                <BbAlert Variant="AlertVariant.Info">
+                    <Icon><LucideIcon Name="lightbulb" Size="18" /></Icon>
+                    <ChildContent>
+                        <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
+                        <BbAlertDescription>
+                            £@_incomeSuggestion.SuggestedAmount.ToString("F2")  -  @_incomeSuggestion.Rationale
+                        </BbAlertDescription>
+                    </ChildContent>
                 </BbAlert>
             }
-
-            <PotsureRelatedNav>
-                <BbLink Href="/plan/pots">Pot mapping</BbLink>
-                <BbLink Href="/plan/funding">Recorded funding</BbLink>
-            </PotsureRelatedNav>
 
             @if (_actualReceiptsInPeriod is not null)
             {
@@ -84,8 +100,11 @@ else
                     £@_actualReceiptsInPeriod.Value.ToString("F2")
                 </BbTypographyMuted>
             }
+</ChildContent>
 
-            <BbButton Type="ButtonType.Submit" Disabled="_saving">Save plan</BbButton>
-        </EditForm>
-    </section>
+            <Footer>
+                <BbButton Type="ButtonType.Submit" Disabled="_saving">Save plan</BbButton>
+            </Footer>
+        </PotsureSection>
+    </EditForm>
 }

@@ -1,9 +1,9 @@
-@page "/recurrence/review"
+﻿@page "/recurrence/review"
 @rendermode InteractiveServer
 
 <PageTitle>Recurring patterns</PageTitle>
 
-<PotsurePageHeader Title="Review recurring patterns" HeadingLevel="1" Class="bb:mb-4" />
+<PotsurePageHeader Title="Review recurring patterns" HeadingLevel="1" />
 
 @if (_loading)
 {
@@ -30,8 +30,7 @@ else
         </BbAlert>
     }
 
-    <section aria-label="Suggested">
-        <PotsurePageHeader Title="Suggested" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Suggested">
         @if (_suggested.Count == 0)
         {
             <BbTypographyP>No new suggestions. Import more history or open the recurring summary for confirmed patterns.</BbTypographyP>
@@ -124,10 +123,9 @@ else
                 }
             </div>
         }
-    </section>
+    </PotsureSection>
 
-    <section aria-label="Confirmed or rejected">
-        <PotsurePageHeader Title="Confirmed or rejected" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Confirmed or rejected">
         <div class="bb:flex bb:flex-col bb:gap-4">
             @foreach (RecurrenceReviewItem item in _confirmedOrRejected)
             {
@@ -138,19 +136,20 @@ else
                     (@FormatCadence(item))
                     @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
                     {
-                        <BbCheckbox Checked="@_mergeSelection.Contains(item.Label)"
-                                    CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))">
-                            Include in merge
-                        </BbCheckbox>
+                        <div class="bb:flex bb:items-center bb:gap-2">
+                            <BbCheckbox Id="@($"merge-{item.Label}")"
+                                        Checked="@_mergeSelection.Contains(item.Label)"
+                                        CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))" />
+                            <BbLabel For="@($"merge-{item.Label}")" Class="bb:font-normal">Include in merge</BbLabel>
+                        </div>
                     }
                     </BbCardContent>
                 </BbCard>
             }
         </div>
-    </section>
+    </PotsureSection>
 
-    <section aria-label="Merge expense patterns">
-        <PotsurePageHeader Title="Merge expense patterns" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Merge expense patterns">
         <BbTypographyMuted>Select confirmed expenses above, then merge into one pattern.</BbTypographyMuted>
         @if (_mergeRequiresExplicitResolution)
         {
@@ -189,10 +188,9 @@ else
         <BbLabel>Tag (optional)</BbLabel>
         <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
-    </section>
+    </PotsureSection>
 
-    <section aria-label="Split expense pattern">
-        <PotsurePageHeader Title="Split expense pattern" HeadingLevel="2" Class="bb:mb-4" />
+    <PotsureSection Title="Split expense pattern">
         <BbLabel>Source pattern</BbLabel>
         <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
             <BbSelectTrigger>
@@ -256,7 +254,7 @@ else
         </BbSelect>
         <BbInput @bind-Value="_splitPartTwoTag" Placeholder="Second part tag (optional)" />
         <BbButton OnClick="SplitPatternAsync">Split pattern</BbButton>
-    </section>
+    </PotsureSection>
 
     <PotsureRelatedNav>
         <BbLink Href="/recurrence/summary">Open recurring summary</BbLink>
