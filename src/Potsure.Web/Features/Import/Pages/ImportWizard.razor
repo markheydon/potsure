@@ -20,7 +20,7 @@
 }
 else if (_summary is not null && !_awaitingAccountConfirmation)
 {
-    <ImportSummaryView Summary="_summary" OnImportAnother="ResetWizard" />
+    <ImportSummaryView Summary="_summary" FileName="_selectedFileName" OnImportAnother="ResetWizard" />
 }
 else
 {
@@ -31,7 +31,9 @@ else
             <ChildContent>
                 <BbAlertTitle>Confirm account</BbAlertTitle>
                 <BbAlertDescription>
-                    We could not verify this export against your linked Monzo account. Confirm it is yours before importing.
+                    Monzo CSV exports do not include an account identifier, so we cannot match this file automatically on your first upload.
+                    Tick the box below to confirm this export is yours; we remember that link for future imports.
+                    There is no separate Monzo account settings page.
                 </BbAlertDescription>
             </ChildContent>
         </BbAlert>

@@ -157,7 +157,8 @@ public partial class ImportWizard
         }
         catch (Exception)
         {
-            _errorMessage = "Import failed. Check the summary for skipped rows and try again.";
+            _errorMessage =
+                "Import failed before completing. Try again; if it keeps failing, check the Aspire dashboard logs for the web resource.";
         }
         finally
         {

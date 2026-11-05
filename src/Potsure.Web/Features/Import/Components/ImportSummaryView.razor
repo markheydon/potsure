@@ -2,9 +2,9 @@
 
 <div class="bb:flex bb:flex-col bb:gap-6">
     <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2 bb:lg:grid-cols-4">
-        <PotsureStatTile Label="Imported" Value="@Summary.ImportedCount.ToString()" Icon="circle-check" />
-        <PotsureStatTile Label="Skipped" Value="@Summary.SkippedCount.ToString()" Icon="skip-forward" />
-        <PotsureStatTile Label="Duplicates" Value="@Summary.DedupedCount.ToString()" Icon="copy" />
+        <PotsureStatTile Label="New transactions" Value="@Summary.ImportedCount.ToString()" Icon="circle-check" />
+        <PotsureStatTile Label="Skipped rows" Value="@Summary.SkippedCount.ToString()" Icon="skip-forward" />
+        <PotsureStatTile Label="Already imported" Value="@Summary.DedupedCount.ToString()" Icon="copy" />
         <PotsureStatTile Label="Transfers excluded" Value="@Summary.TransferExcludedCount.ToString()" Icon="arrow-left-right" />
     </div>
 
@@ -24,10 +24,16 @@
 
     <BbCard>
         <BbCardHeader>
-            <BbCardTitle>Import summary</BbCardTitle>
-            <BbCardDescription>Upload @Summary.UploadId</BbCardDescription>
+            <BbCardTitle>Import complete</BbCardTitle>
+            <BbCardDescription>@OutcomeDescription</BbCardDescription>
         </BbCardHeader>
         <BbCardContent>
+            @if (Summary.DedupedCount > 0)
+            {
+                <BbTypographyMuted Class="bb:mb-4">
+                    Rows marked as already imported match transactions from a previous upload. Potsure does not add them again.
+                </BbTypographyMuted>
+            }
             <BbAlert Variant="AlertVariant.Info">
                 <Icon><LucideIcon Name="lightbulb" Size="18" /></Icon>
                 <ChildContent>
@@ -49,6 +55,49 @@
     [Parameter, EditorRequired]
     public StatementImportSummary Summary { get; set; } = null!;
 
+    [Parameter]
+    public string? FileName { get; set; }
+
     [Parameter, EditorRequired]
     public EventCallback OnImportAnother { get; set; }
+
+    private string OutcomeDescription
+    {
+        get
+        {
+            List<string> parts = new();
+
+            if (!string.IsNullOrWhiteSpace(FileName))
+            {
+                parts.Add($"Processed {FileName}.");
+            }
+
+            if (Summary.ImportedCount > 0 && Summary.DedupedCount > 0)
+            {
+                parts.Add(
+                    $"Added {Summary.ImportedCount} new transaction{(Summary.ImportedCount == 1 ? string.Empty : "s")}; " +
+                    $"{Summary.DedupedCount} row{(Summary.DedupedCount == 1 ? string.Empty : "s")} were already in Potsure.");
+            }
+            else if (Summary.ImportedCount > 0)
+            {
+                parts.Add(
+                    $"Added {Summary.ImportedCount} new transaction{(Summary.ImportedCount == 1 ? string.Empty : "s")}.");
+            }
+            else if (Summary.DedupedCount > 0)
+            {
+                parts.Add(
+                    $"No new transactions were added; all {Summary.DedupedCount} row{(Summary.DedupedCount == 1 ? string.Empty : "s")} in this file were already imported.");
+            }
+            else if (Summary.SkippedCount > 0)
+            {
+                parts.Add("No transactions were imported. Check skipped rows above for details.");
+            }
+            else
+            {
+                parts.Add("Nothing new was found in this file.");
+            }
+
+            return string.Join(" ", parts);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Potsure.Budgeting;
 using Potsure.Data;
@@ -230,32 +231,36 @@ public sealed class StatementImportService(
                 });
             }
 
-            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
-                await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-            dbContext.Transactions.AddRange(entities);
-            EnsureMonzoAssociation(userConfirmedAccount, fileDerivedFingerprint, ref association);
-
             ImportStatistics statistics = new(
                 entities.Count,
                 parseResult.Errors.Count,
                 dedupe.DuplicateCount,
                 transferExcluded);
 
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await uploadRepository.CompleteAsync(upload.Id, statistics, skippedReasons, cancellationToken);
+            IExecutionStrategy executionStrategy = dbContext.Database.CreateExecutionStrategy();
+            await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
+                    await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-            Dictionary<string, string> mapToRemember = columnMap is { Count: > 0 }
-                ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
-                : BuildDefaultColumnMap(layout);
-            RememberedMonzoColumnMapping remembered = new(layout.FileHeaders, mapToRemember);
-            await profileSeeder.EnsureProfileAsync(cancellationToken);
-            await uploadRepository.SaveRememberedColumnMappingJsonAsync(
-                JsonSerializer.Serialize(remembered),
-                cancellationToken);
+                dbContext.Transactions.AddRange(entities);
+                EnsureMonzoAssociation(userConfirmedAccount, fileDerivedFingerprint, ref association);
 
-            await transaction.CommitAsync(cancellationToken);
-            committed = true;
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await uploadRepository.CompleteAsync(upload.Id, statistics, skippedReasons, cancellationToken);
+
+                Dictionary<string, string> mapToRemember = columnMap is { Count: > 0 }
+                    ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
+                    : BuildDefaultColumnMap(layout);
+                RememberedMonzoColumnMapping remembered = new(layout.FileHeaders, mapToRemember);
+                await profileSeeder.EnsureProfileAsync(cancellationToken);
+                await uploadRepository.SaveRememberedColumnMappingJsonAsync(
+                    JsonSerializer.Serialize(remembered),
+                    cancellationToken);
+
+                await transaction.CommitAsync(cancellationToken);
+                committed = true;
+            });
 
             logger.LogInformation(
                 "Statement import {UploadId} completed for owner {OwnerKey}: imported {ImportedCount}, deduped {DedupedCount}, skipped {SkippedCount}",
