@@ -20,7 +20,7 @@
 }
 else if (_summary is not null && !_awaitingAccountConfirmation)
 {
-    <ImportSummaryView Summary="_summary" FileName="_selectedFileName" OnImportAnother="ResetWizard" />
+    <ImportSummaryView Summary="@_summary" FileName="@_selectedFileName" OnImportAnother="ResetWizard" />
 }
 else
 {

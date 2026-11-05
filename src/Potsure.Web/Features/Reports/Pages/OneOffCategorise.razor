@@ -75,7 +75,7 @@ else
                         <BbSelectContent>
                             @foreach (CategoryOption category in _categories)
                             {
-                                <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                                <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
                             }
                         </BbSelectContent>
                     </BbSelect>

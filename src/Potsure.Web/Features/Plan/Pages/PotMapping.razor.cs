@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
+using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Plan.Pages;
 
@@ -59,7 +60,8 @@ public partial class PotMapping
             .Include(p => p.Categories)
             .SingleAsync();
         _mode = profile.PotMappingMode;
-        _categories = profile.Categories
+        _categories = BudgetCategoryDisplay
+            .OrderByStrategy(profile.Categories, static c => c.Kind)
             .Select(c => new CategoryOption(c.Id, c.Kind))
             .ToList();
         if (_categories.Count > 0 && _newPotCategoryId == Guid.Empty)
@@ -103,23 +105,10 @@ public partial class PotMapping
         }
     }
 
-    private static string FormatMode(PotMappingMode mode) =>
-        mode switch
-        {
-            PotMappingMode.None => "No pots (category-only)",
-            PotMappingMode.CategoryNamedPots => "Category-named pots",
-            PotMappingMode.ExpenseSpecificPots => "Expense-specific pots",
-            _ => mode.ToString(),
-        };
-
-    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
+    private string SelectedNewPotCategoryLabel =>
+        _categories.FirstOrDefault(c => c.Id == _newPotCategoryId) is { } selected
+            ? BudgetCategoryDisplay.Format(selected.Kind)
+            : "Select category";
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
 }

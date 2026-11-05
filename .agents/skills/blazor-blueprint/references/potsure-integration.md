@@ -90,6 +90,7 @@ Prefer `Bb*` styled components; layout `<div>`s use **`bb:`** utilities from `bl
 
 | Instead of | Use |
 |------------|-----|
+| Raw enum / Guid in closed `BbSelect` | `BbSelectItem` `Text="..."` **and** `BbSelectValue` child content with the formatted label (`ChildContent Context="ignored"` inside `EditForm` to avoid Razor `context` clash). Closed trigger does not always resolve `Text` from items alone. |
 | `<h1>` / `<h2>` page titles | `PotsurePageHeader` or `BbSectionHeader` / `BbTypographyH*` |
 | Muted / body copy | `BbTypographyMuted`, `BbTypographyP` |
 | Plain `<a href>` | `BbLink` or `BbButton` `Variant="Link"` |

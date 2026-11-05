@@ -65,13 +65,7 @@ public partial class BudgetBalance
     }
 
     private static string FormatKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
+        BudgetCategoryDisplay.Format(kind);
 
     private sealed record BudgetBalanceChartRow(string Label, double Amount, string Fill);
 }

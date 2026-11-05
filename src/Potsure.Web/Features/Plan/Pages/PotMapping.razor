@@ -32,19 +32,23 @@ else if (_error is not null)
 }
 else
 {
-    <PotsureSection Title="Mapping mode"
-                    Description="Choose no pots for category-only budgeting (FR-M014)."
+    <PotsureSection Title="How do you use Monzo pots?"
+                    Description="Choose whether Potsure tracks Monzo pots or only category totals. You can change this at any time."
                     Class="bb:w-full bb:max-w-4xl">
         <div class="bb:grid bb:gap-2 bb:max-w-md">
-            <BbLabel For="pot-mode-select">Pot mapping mode</BbLabel>
+            <BbLabel For="pot-mode-select">Pot mapping</BbLabel>
             <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
                 <BbSelectTrigger Id="pot-mode-select">
-                    <BbSelectValue Placeholder="Select mode" />
+                    <BbSelectValue Placeholder="Select how you use pots">
+                        <ChildContent Context="ignored">
+                            @PotMappingModeDisplay.Format(_mode)
+                        </ChildContent>
+                    </BbSelectValue>
                 </BbSelectTrigger>
                 <BbSelectContent>
-                    @foreach (PotMappingMode mode in Enum.GetValues<PotMappingMode>())
+                    @foreach (PotMappingMode mode in PotMappingModeDisplay.OptionsInDisplayOrder)
                     {
-                        <BbSelectItem TValue="PotMappingMode" Value="@mode" Text="@FormatMode(mode)" />
+                        <BbSelectItem TValue="PotMappingMode" Value="@mode" Text="@PotMappingModeDisplay.Format(mode)" />
                     }
                 </BbSelectContent>
             </BbSelect>
@@ -73,9 +77,9 @@ else
                         <BbDataTableColumn TData="BankPotReadModel" TValue="string"
                                            Header="Name"
                                            Property="@(pot => pot.Name)" />
-                        <BbDataTableColumn TData="BankPotReadModel" TValue="BudgetCategoryKind"
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="string"
                                            Header="Category"
-                                           Property="@(pot => pot.CategoryKind)" />
+                                           Property="@(pot => BudgetCategoryDisplay.Format(pot.CategoryKind))" />
                         <BbDataTableColumn TData="BankPotReadModel" TValue="decimal"
                                            Header="Recorded funding">
                             <CellTemplate Context="pot">
@@ -98,12 +102,16 @@ else
                     <BbLabel>Category</BbLabel>
                     <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="Select category" />
+                            <BbSelectValue Placeholder="Select category">
+                                <ChildContent Context="ignored">
+                                    @SelectedNewPotCategoryLabel
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             @foreach (CategoryOption option in _categories)
                             {
-                                <BbSelectItem TValue="Guid" Value="@option.Id" Text="@FormatCategoryKind(option.Kind)" />
+                                <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
                             }
                         </BbSelectContent>
                     </BbSelect>
@@ -120,7 +128,10 @@ else
         <BbAlert Variant="AlertVariant.Info">
             <Icon><LucideIcon Name="info" Size="18" /></Icon>
             <ChildContent>
-                <BbAlertDescription>Category-only budgeting is active. <BbLink Href="/plan">Return to plan settings</BbLink>.</BbAlertDescription>
+                <BbAlertDescription>
+                    You are budgeting by category only (no Monzo pot mapping). Change pot mapping above if you use Monzo pots.
+                    <BbLink Href="/plan">Plan settings</BbLink>
+                </BbAlertDescription>
             </ChildContent>
         </BbAlert>
     }

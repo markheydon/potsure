@@ -9,6 +9,8 @@ using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Recurrence;
 
+using Potsure.Web.Resources;
+
 namespace Potsure.Web.Features.Recurrence.Pages;
 
 public partial class DetectionReview
@@ -119,11 +121,14 @@ public partial class DetectionReview
 
     private async Task LoadCategoriesAsync()
     {
-        _categories = await DbContext.BudgetCategories
-            .AsNoTracking()
-            .OrderBy(c => c.Kind)
-            .Select(c => new CategoryOption(c.Id, c.Kind))
-            .ToListAsync();
+        _categories = BudgetCategoryDisplay
+            .OrderByStrategy(
+                await DbContext.BudgetCategories
+                    .AsNoTracking()
+                    .Select(c => new CategoryOption(c.Id, c.Kind))
+                    .ToListAsync(),
+                static c => c.Kind)
+            .ToList();
 
         if (_categories.Count > 0)
         {
@@ -386,15 +391,6 @@ public partial class DetectionReview
             ? item.IncomeCadence?.ToString() ?? "Unknown"
             : item.ExpenseCadence?.ToString() ?? "Unknown";
 
-    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
-
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
 
     private sealed record PotOption(Guid Id, string Name, BudgetCategoryKind CategoryKind);
@@ -404,6 +400,23 @@ public partial class DetectionReview
 
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
         _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
+
+    private string CategoryLabel(Guid categoryId) =>
+        _categories.FirstOrDefault(c => c.Id == categoryId) is { } category
+            ? BudgetCategoryDisplay.Format(category.Kind)
+            : "Category";
+
+    private string PotSelectionLabel(Guid selection) =>
+        selection == Guid.Empty
+            ? "None"
+            : _pots.FirstOrDefault(p => p.Id == selection)?.Name ?? "None";
+
+    private static string IncomeCadenceLabel(IncomeCadence cadence) =>
+        cadence switch
+        {
+            IncomeCadence.AdHoc => "Ad hoc",
+            _ => cadence.ToString(),
+        };
 
     private void SetMergeIncluded(string label, bool included)
     {

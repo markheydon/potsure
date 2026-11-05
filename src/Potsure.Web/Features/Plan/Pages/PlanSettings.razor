@@ -36,6 +36,17 @@ else if (_error is not null)
 }
 else
 {
+    @if (_saveMessage is not null)
+    {
+        <BbAlert Variant="AlertVariant.Success" AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+            <Icon><LucideIcon Name="circle-check" Size="18" /></Icon>
+            <ChildContent>
+                <BbAlertTitle>Plan saved</BbAlertTitle>
+                <BbAlertDescription>@_saveMessage</BbAlertDescription>
+            </ChildContent>
+        </BbAlert>
+    }
+
     <EditForm Model="_form" OnValidSubmit="SaveAsync">
         <PotsureSection Title="Income and period" Class="bb:w-full bb:max-w-4xl">
 <ChildContent>
@@ -107,7 +118,9 @@ else
 </ChildContent>
 
             <Footer>
-                <BbButton Type="ButtonType.Submit" Disabled="_saving">Save plan</BbButton>
+                <BbButton Type="ButtonType.Submit" Disabled="_saving">
+                    @(_saving ? "Saving…" : "Save plan")
+                </BbButton>
             </Footer>
         </PotsureSection>
     </EditForm>

@@ -137,12 +137,4 @@ public partial class TransactionAttributionReview
 
     private sealed record PatternOption(Guid Id, string Label);
 
-    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
 }

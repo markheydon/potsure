@@ -4,6 +4,7 @@ using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Reporting;
+using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
@@ -75,13 +76,7 @@ public partial class RunwayWarnings
     }
 
     private static string FormatKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
+        BudgetCategoryDisplay.Format(kind);
 
     private sealed class RunwayTableRow(RunwayProjectionLine line)
     {

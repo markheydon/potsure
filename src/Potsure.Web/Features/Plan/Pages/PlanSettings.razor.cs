@@ -31,6 +31,7 @@ public partial class PlanSettings
     private bool _loading = true;
     private bool _saving;
     private string? _error;
+    private string? _saveMessage;
     private decimal? _actualReceiptsInPeriod;
 
     protected override async Task OnInitializedAsync()
@@ -66,6 +67,7 @@ public partial class PlanSettings
     {
         _saving = true;
         _error = null;
+        _saveMessage = null;
         try
         {
             DateOnly start = DateOnly.FromDateTime(_form.StartDate);
@@ -76,6 +78,8 @@ public partial class PlanSettings
 
             PeriodSummary summary = await ReportService.GetPeriodSummaryAsync();
             _actualReceiptsInPeriod = summary.ActualIncomeInPeriod.Amount;
+            _saveMessage =
+                $"Your preset, period ({start:dd MMM yyyy} to {end:dd MMM yyyy}), and planned income were updated.";
         }
         catch (Exception ex)
         {

@@ -57,12 +57,16 @@ else
                                 <BbLabel>Cadence</BbLabel>
                                 <BbSelect TValue="IncomeCadence" @bind-Value="_incomeCadenceByLabel[item.Label]">
                                     <BbSelectTrigger>
-                                        <BbSelectValue Placeholder="Cadence" />
+                                        <BbSelectValue Placeholder="Cadence">
+                                            <ChildContent Context="ignored">
+                                                @IncomeCadenceLabel(_incomeCadenceByLabel[item.Label])
+                                            </ChildContent>
+                                        </BbSelectValue>
                                     </BbSelectTrigger>
                                     <BbSelectContent>
                                         @foreach (IncomeCadence cadence in Enum.GetValues<IncomeCadence>())
                                         {
-                                            <BbSelectItem TValue="IncomeCadence" Value="@cadence" Text="@cadence.ToString()" />
+                                            <BbSelectItem TValue="IncomeCadence" Value="@cadence" Text="@IncomeCadenceLabel(cadence)" />
                                         }
                                     </BbSelectContent>
                                 </BbSelect>
@@ -86,12 +90,16 @@ else
                                 <BbLabel>Category</BbLabel>
                                 <BbSelect TValue="Guid" @bind-Value="_expenseCategoryByLabel[item.Label]">
                                     <BbSelectTrigger>
-                                        <BbSelectValue Placeholder="Category" />
+                                        <BbSelectValue Placeholder="Category">
+                                            <ChildContent Context="ignored">
+                                                @CategoryLabel(_expenseCategoryByLabel[item.Label])
+                                            </ChildContent>
+                                        </BbSelectValue>
                                     </BbSelectTrigger>
                                     <BbSelectContent>
                                         @foreach (CategoryOption category in _categories)
                                         {
-                                            <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                                            <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
                                         }
                                     </BbSelectContent>
                                 </BbSelect>
@@ -100,7 +108,11 @@ else
                                           Value="@GetExpensePotSelection(item.Label)"
                                           ValueChanged="@(id => SetExpensePotSelection(item.Label, id))">
                                     <BbSelectTrigger>
-                                        <BbSelectValue Placeholder="None" />
+                                        <BbSelectValue Placeholder="None">
+                                            <ChildContent Context="ignored">
+                                                @PotSelectionLabel(GetExpensePotSelection(item.Label))
+                                            </ChildContent>
+                                        </BbSelectValue>
                                     </BbSelectTrigger>
                                     <BbSelectContent>
                                         <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
@@ -163,19 +175,27 @@ else
         <BbLabel>Category</BbLabel>
         <BbSelect TValue="Guid" @bind-Value="_mergeCategoryId">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="Category" />
+                <BbSelectValue Placeholder="Category">
+                    <ChildContent Context="ignored">
+                        @CategoryLabel(_mergeCategoryId)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 @foreach (CategoryOption category in _categories)
                 {
-                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
                 }
             </BbSelectContent>
         </BbSelect>
         <BbLabel>Mapped pot (optional)</BbLabel>
         <BbSelect TValue="Guid" @bind-Value="MergePotSelection">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="None" />
+                <BbSelectValue Placeholder="None">
+                    <ChildContent Context="ignored">
+                        @PotSelectionLabel(MergePotSelection)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
@@ -194,7 +214,11 @@ else
         <BbLabel>Source pattern</BbLabel>
         <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="Select…" />
+                <BbSelectValue Placeholder="Select…">
+                    <ChildContent Context="ignored">
+                        @(string.IsNullOrEmpty(SplitSourceSelection) ? "Select…" : SplitSourceSelection)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 @foreach (RecurrenceReviewItem item in _confirmedOrRejected.Where(i => !i.IsIncome && i.State == PatternConfirmationState.Confirmed))
@@ -206,18 +230,26 @@ else
         <BbInput @bind-Value="_splitPartOneLabel" Placeholder="First part label" />
         <BbSelect TValue="Guid" @bind-Value="_splitPartOneCategoryId">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="First part category" />
+                <BbSelectValue Placeholder="First part category">
+                    <ChildContent Context="ignored">
+                        @CategoryLabel(_splitPartOneCategoryId)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 @foreach (CategoryOption category in _categories)
                 {
-                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
                 }
             </BbSelectContent>
         </BbSelect>
         <BbSelect TValue="Guid" @bind-Value="SplitPartOnePotSelection">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="First part pot" />
+                <BbSelectValue Placeholder="First part pot">
+                    <ChildContent Context="ignored">
+                        @PotSelectionLabel(SplitPartOnePotSelection)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
@@ -231,18 +263,26 @@ else
         <BbInput @bind-Value="_splitPartTwoLabel" Placeholder="Second part label" />
         <BbSelect TValue="Guid" @bind-Value="_splitPartTwoCategoryId">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="Second part category" />
+                <BbSelectValue Placeholder="Second part category">
+                    <ChildContent Context="ignored">
+                        @CategoryLabel(_splitPartTwoCategoryId)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 @foreach (CategoryOption category in _categories)
                 {
-                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@FormatCategoryKind(category.Kind)" />
+                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
                 }
             </BbSelectContent>
         </BbSelect>
         <BbSelect TValue="Guid" @bind-Value="SplitPartTwoPotSelection">
             <BbSelectTrigger>
-                <BbSelectValue Placeholder="Second part pot" />
+                <BbSelectValue Placeholder="Second part pot">
+                    <ChildContent Context="ignored">
+                        @PotSelectionLabel(SplitPartTwoPotSelection)
+                    </ChildContent>
+                </BbSelectValue>
             </BbSelectTrigger>
             <BbSelectContent>
                 <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />

@@ -2,7 +2,7 @@
 
 **Purpose:** Capture UX and quality improvements discovered during manual testing and dogfooding. Items here are **not** in scope for the current v1.0.0 release gate unless explicitly promoted into `specs/001-potsure-v1/tasks.md`.
 
-**Last updated:** 2026-11-05 (dashboard stepper direction; plan settings UX notes)
+**Last updated:** 2026-11-05 (import mapping UI feedback)
 
 ---
 
@@ -31,6 +31,26 @@ Exact step labels, order (2 vs 3 relative to spec scenarios), and "complete" rul
 | **BL-009** | Date display (Plan settings and elsewhere) | Period dates showed US short-date form because server culture was not UK despite UK English UI ([plan.md](../specs/001-potsure-v1/plan.md)). | **Fixed** Nov 2025: default `en-GB` via `RequestLocalization` in `Program.cs` (v1 single-locale product). |
 | **BL-011** | User-chosen locale | v1 defaults to UK formatting for all users; some may want another locale later. | Post-v1: profile or settings page to override display culture (persist per user), while keeping storage/API on invariant/`DateOnly` and Monzo `dd/MM/yyyy` import parsing unchanged. |
 | **BL-010** | Enum labels in `BbSelect` | Allocation preset trigger showed raw enum name (`FiftyThirtyTwenty`) until the dropdown opened. | **Fixed** Nov 2025 on Plan settings (explicit `FormatPreset` in `BbSelectValue`). Scan other enum selects if reported. |
+| **BL-012** | Plan settings terminology | Manual testing (Nov 2025): labels feel like internal jargon, not plain English. Users unsure what to enter or which date range to pick. | **Aligns with spec (US3, FR-M031)**  -  behaviour is correct; **copy and helper text** need work, not a new product model. See breakdown below. |
+| **BL-014** | `BbSelect` closed labels | Enum names (`CategoryNamedPots`), GUIDs, or `None` show in the trigger until the menu opens; `BbSelectItem.Text` alone is not enough (BlazorBlueprint). Same class of bug as **BL-010** on Plan preset. | **Fixed on Pot mapping** (mode + category) and Plan preset. **Audit remaining** Guid/category selects on Detection review, attribution, one-off categorise, privacy export format, etc. Pattern documented in `blazor-blueprint` `potsure-integration.md`. |
+| **BL-015** | Pot mapping page copy | FR-M014 in UI, confusing "category-only" messaging, mode names unclear. | **Partially fixed** Nov 2025 (`PotMappingModeDisplay`, section copy). **BL-014** fixes dropdown display; deeper onboarding tie to US4 / Monzo pot workflows still open. |
+| **BL-016** | Category order in pickers | Users expect **Needs → Wants → Savings and debt** everywhere. | **Fixed** Nov 2025: `BudgetCategoryDisplay.StrategyOrder` for pot mapping category list; other loaders already used enum order. Reports use budgeting `TieBreakOrder` in core calculators. Centralise any remaining ad-hoc lists on `BudgetCategoryDisplay`. |
+| **BL-017** | Pot mapping rules and maintenance | Manual testing (Nov 2025): In **three pots named after categories** mode, users can still add unlimited pots; no UI to **edit** or **delete** a pot after a typo. | **Spec (US4)**: either three category-named pots **or** multiple expense-specific pots (each 1:1 with a category), or category-only ([spec.md](../specs/001-potsure-v1/spec.md) US4). **Backend** already has `BankPotService.UpdateAsync` / `DeleteAsync` (T061); **UI** only exposes create. **Direction:** enforce mode-specific limits in create (e.g. category-named: at most one pot per category, max three; block duplicate category mapping; optional suggested names Needs/Wants/Savings); add edit/delete (or rename + reassign category) on pot list; confirm delete when recorded funding &gt; 0 or transactions reference pot. Promote with US4 independent test scenarios. |
+| **BL-013** | Plan save feedback | Save persisted but gave no visible confirmation (logs showed successful `UPDATE` on period/profile/categories). | **Fixed locally** Nov 2025 (success alert + "Saving…" on button); not yet on `main`/PR branch unless committed. |
+
+### BL-012: Plan settings copy (spec alignment notes)
+
+Product intent from [spec.md](../specs/001-potsure-v1/spec.md) **US3** and **FR-M031** (for when rewriting labels):
+
+| Current UI (approx.) | User confusion | What the product actually means (spec) | Copy direction (draft) |
+|----------------------|----------------|----------------------------------------|-------------------------|
+| **Allocation preset** | Sounds technical; not obviously a budgeting rule | One of two **fixed category splits** (50/30/20 or 75/15/10) applied to **Needs / Wants / Savings & Debt** only ([budgeting-core.md](../specs/001-potsure-v1/contracts/budgeting-core.md)). | e.g. **Budget split model** or **Needs / Wants / Savings split**, with subtitle naming 50/30/20 or 75/15/10. |
+| **Period start / Period end (inclusive)** | Calendar year? Jan–Dec? What is the period *for*? | **Single working budget window** for reports and period-scoped totals  -  **any** inclusive date range the user chooses, **not** tied to payday or tax year ([FR-M031](spec.md)). Default seed is often **current calendar month**, not forced to 1 Jan–31 Dec. Transactions on both boundary dates count. | e.g. **Budget window** or **Planning period**; short explainer: "Reports and category totals use transactions between these dates (both days included). Pick the range you want to plan and review  -  for example this month, last three months, or a custom range." |
+| **Planned income (budgeted)** | Feels like **monthly** take-home | **Total income you expect across the whole selected period** (one number for that window). Category allocations = preset % × **this total** ([US3 AC3](spec.md)). **Actual receipts** from statements stay separate on reports ([FR-M019](spec.md), `ReportCopy`). | e.g. **Total planned income for this period** with explicit "not monthly unless your period is one month"; optional helper showing period length or £/month equivalent as **display only**. |
+
+**Not against spec:** Clarifying that income is **per period total** and period is **user-chosen window** matches FR-M031. **Against spec would be:** implying monthly-only input, auto-applying suggested income without confirm, or multiple saved periods.
+
+**Promotion path:** UX/copy task under US3 or post-v1 polish; may touch `PlanSettings.razor`, `ReportCopy.cs`, and dashboard stepper Step 2 wording (**BL-001** / **BL-002**). Consider a short in-page "How this plan works" collapsible rather than tooltip-only.
 
 ## Import and Monzo account
 
@@ -38,6 +58,7 @@ Exact step labels, order (2 vs 3 relative to spec scenarios), and "complete" rul
 |----|--------|-------------|-------------------|
 | **BL-004** | First-upload account confirm | Monzo CSVs lack an account identifier; first import requires a one-time checkbox (no separate settings page). Copy was unclear before Nov 2025 testing. | **Partially addressed** in import wizard messaging; revisit if users still miss the flow. |
 | **BL-005** | Duplicate rows on re-import | Re-uploading the same file after a partial or retried import shows many "already imported" rows. Behaviour is correct but was confusing before summary copy improved. | **Partially addressed** in import summary labels and narrative; consider a single-line link to "what dedupe means" in docs or UI. |
+| **BL-018** | Import column mapping UI | Official Monzo CSV with full auto-detect still shows a large **Confirm column mapping** table every time; feels redundant when headers match and all required columns are detected. | **Spec tension:** [FR-M002](../specs/001-potsure-v1/spec.md) and **T138** require user **confirm or adjust** before import (not silent skip when remembered layout matches). **UX direction (feedback):** for **trusted official layout** (supported Monzo layout, no missing required headers, auto-map complete), default to a compact summary + primary **Import** / **Confirm mapping and import**, with the full header mapping table in a **collapsible** ("Check or change column mapping"). Expand by default when mapping incomplete, parse preview errors, or non-standard/unsupported-adjacent layout. Keeps spec confirm step without blocking happy path. |
 
 ## Local development (Aspire)
 

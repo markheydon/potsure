@@ -115,12 +115,4 @@ public partial class OneOffCategorise
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
 
-    private static string FormatCategoryKind(BudgetCategoryKind kind) =>
-        kind switch
-        {
-            BudgetCategoryKind.Needs => "Needs",
-            BudgetCategoryKind.Wants => "Wants",
-            BudgetCategoryKind.SavingsAndDebt => "Savings and debt",
-            _ => kind.ToString(),
-        };
 }
