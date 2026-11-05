@@ -1,8 +1,10 @@
+using System.Globalization;
 using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Potsure.Data;
@@ -74,6 +76,17 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "RequestVerificationToken";
 });
 
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.GetCultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("en-GB");
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    CultureInfo[] supported = [CultureInfo.GetCultureInfo("en-GB")];
+    options.DefaultRequestCulture = new RequestCulture("en-GB");
+    options.SupportedCultures = supported;
+    options.SupportedUICultures = supported;
+});
+
 if (deployment.Mode == DeploymentMode.Hosted)
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -106,6 +119,8 @@ if (deployment.Mode == DeploymentMode.Hosted)
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+app.UseRequestLocalization();
 
 if (!app.Environment.IsDevelopment())
 {

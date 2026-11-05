@@ -49,7 +49,11 @@ else
                     <BbLabel>Allocation preset</BbLabel>
                     <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="Select preset" />
+                            <BbSelectValue Placeholder="Select preset">
+                                <ChildContent Context="ignored">
+                                    @FormatPreset(_form.Preset)
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
