@@ -8,31 +8,31 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
         @if (passkey?.Name is { } name)
         {
-            <BbCardTitle Class="text-2xl">Rename passkey</BbCardTitle>
+            <BbCardTitle Class="bb:text-2xl">Rename passkey</BbCardTitle>
             <BbCardDescription>Enter a new name for your "@name" passkey.</BbCardDescription>
         }
         else
         {
-            <BbCardTitle Class="text-2xl">Name your passkey</BbCardTitle>
+            <BbCardTitle Class="bb:text-2xl">Name your passkey</BbCardTitle>
             <BbCardDescription>Enter a name for your passkey.</BbCardDescription>
         }
     </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" OnValidSubmit="Rename" FormName="rename-passkey" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary Class="text-sm text-destructive" role="alert" />
-            <div class="grid gap-4 max-w-2xl">
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                 <BbFormFieldInput TValue="string"
                                   @bind-Value="Input.Name"
                                   Label="Passkey name"
                                   Placeholder="My passkey"
                                   Required="true" />
             </div>
-            <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Continue</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full bb:mt-2">Continue</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

@@ -3,7 +3,7 @@
 
 <PageTitle>Recurring patterns</PageTitle>
 
-<PotsurePageHeader Title="Review recurring patterns" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Review recurring patterns" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -31,14 +31,14 @@ else
     }
 
     <section aria-label="Suggested">
-        <PotsurePageHeader Title="Suggested" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Suggested" HeadingLevel="2" Class="bb:mb-4" />
         @if (_suggested.Count == 0)
         {
             <BbTypographyP>No new suggestions. Import more history or open the recurring summary for confirmed patterns.</BbTypographyP>
         }
         else
         {
-            <div class="flex flex-col gap-4">
+            <div class="bb:flex bb:flex-col bb:gap-4">
                 @foreach (RecurrenceReviewItem item in _suggested)
                 {
                     <BbCard>
@@ -115,7 +115,7 @@ else
                                 <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
                             </div>
                         }
-                        <div class="flex flex-wrap gap-2 mt-4">
+                        <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-4">
                             <BbButton OnClick="() => ConfirmAsync(item)">Confirm</BbButton>
                             <BbButton Variant="ButtonVariant.Outline" OnClick="() => RejectAsync(item)">Reject</BbButton>
                         </div>
@@ -127,8 +127,8 @@ else
     </section>
 
     <section aria-label="Confirmed or rejected">
-        <PotsurePageHeader Title="Confirmed or rejected" HeadingLevel="2" Class="mb-4" />
-        <div class="flex flex-col gap-4">
+        <PotsurePageHeader Title="Confirmed or rejected" HeadingLevel="2" Class="bb:mb-4" />
+        <div class="bb:flex bb:flex-col bb:gap-4">
             @foreach (RecurrenceReviewItem item in _confirmedOrRejected)
             {
                 <BbCard>
@@ -150,7 +150,7 @@ else
     </section>
 
     <section aria-label="Merge expense patterns">
-        <PotsurePageHeader Title="Merge expense patterns" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Merge expense patterns" HeadingLevel="2" Class="bb:mb-4" />
         <BbTypographyMuted>Select confirmed expenses above, then merge into one pattern.</BbTypographyMuted>
         @if (_mergeRequiresExplicitResolution)
         {
@@ -192,7 +192,7 @@ else
     </section>
 
     <section aria-label="Split expense pattern">
-        <PotsurePageHeader Title="Split expense pattern" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Split expense pattern" HeadingLevel="2" Class="bb:mb-4" />
         <BbLabel>Source pattern</BbLabel>
         <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
             <BbSelectTrigger>

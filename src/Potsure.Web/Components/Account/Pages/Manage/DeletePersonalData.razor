@@ -20,18 +20,18 @@
     </BbAlertDescription>
 </BbAlert>
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle Class="text-2xl">Delete personal data</BbCardTitle>
+        <BbCardTitle Class="bb:text-2xl">Delete personal data</BbCardTitle>
         <BbCardDescription>Permanently remove your account and all associated data.</BbCardDescription>
     </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary Class="text-sm text-destructive" role="alert" />
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
             @if (requirePassword)
             {
-                <div class="grid gap-4 max-w-2xl">
+                <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                     <BbFormFieldInput TValue="string"
                                       @bind-Value="Input.Password"
                                       Label="Password"
@@ -41,7 +41,7 @@
                                       Required="true" />
                 </div>
             }
-            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive" Class="w-full mt-2">Delete data and close my account</BbButton>
+            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive" Class="bb:w-full bb:mt-2">Delete data and close my account</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

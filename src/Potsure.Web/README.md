@@ -14,4 +14,4 @@ Blazor Server host for Potsure. Folder layout follows [ADR-0002](../../adr/adr-0
 
 Razor `@using` directives: project root **`_Imports.razor`**.
 
-After Razor markup changes, rebuild Tailwind: `npm run build:css` (see `.agents/skills/blazor-blueprint/references/potsure-integration.md`).
+Styling: Sunset theme in `wwwroot/styles/themes/default.css` and **`bb:`** layout utilities (no app Tailwind build). See `.agents/skills/blazor-blueprint/references/potsure-integration.md`.

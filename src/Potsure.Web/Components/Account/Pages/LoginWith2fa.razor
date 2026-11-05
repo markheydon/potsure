@@ -20,20 +20,20 @@
         <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
         <input type="hidden" name="RememberMe" value="@RememberMe" />
         <DataAnnotationsValidator />
-        <ValidationSummary Class="text-sm text-destructive" role="alert" />
-        <div class="space-y-4">
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
             <BbFormFieldInput TValue="string"
                               @bind-Value="Input.TwoFactorCode"
                               Label="Authenticator code"
                               Autocomplete="off"
                               Placeholder="000000"
                               Required="true" />
-            <div class="flex items-center gap-2">
+            <div class="bb:flex bb:items-center bb:gap-2">
                 <BbCheckbox @bind-Checked="Input.RememberMachine" Id="login-2fa-remember-machine" />
-                <BbLabel For="login-2fa-remember-machine" Class="font-normal">Remember this machine</BbLabel>
+                <BbLabel For="login-2fa-remember-machine" Class="bb:font-normal">Remember this machine</BbLabel>
             </div>
-            <BbButton Type="ButtonType.Submit" Class="w-full">Log in</BbButton>
-            <BbTypographyMuted Class="text-center text-sm">
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Log in</BbButton>
+            <BbTypographyMuted Class="bb:text-center bb:text-sm">
                 Don't have access to your authenticator device?
                 <BbLink Href="@RecoveryCodeHref">Log in with a recovery code</BbLink>
             </BbTypographyMuted>

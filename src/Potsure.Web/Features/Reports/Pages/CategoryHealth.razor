@@ -3,7 +3,7 @@
 
 <PageTitle>Category health</PageTitle>
 
-<PotsurePageHeader Title="Category health" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Category health" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -18,9 +18,9 @@ else if (_error is not null)
 }
 else if (_summary is not null)
 {
-    <section class="space-y-4" aria-label="Income">
-        <PotsurePageHeader Title="Income" HeadingLevel="2" Class="mb-4" />
-        <BbItemGroup Class="grid gap-2 sm:grid-cols-2">
+    <section class="bb:space-y-4" aria-label="Income">
+        <PotsurePageHeader Title="Income" HeadingLevel="2" Class="bb:mb-4" />
+        <BbItemGroup Class="bb:grid bb:gap-2 bb:sm:grid-cols-2">
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
@@ -42,7 +42,7 @@ else if (_summary is not null)
         <section aria-label="Category measures chart">
             <PotsurePageHeader Title="Category measures chart"
                                HeadingLevel="2"
-                               Class="sr-only mb-4" />
+                               Class="bb:sr-only bb:mb-4" />
             <BbBarChart Data="@_categoryChartRows"
                         Config="@_categoryChartConfig"
                         Title="Category measures"
@@ -111,7 +111,7 @@ else if (_summary is not null)
     @if (_potBreakdown.Count > 0)
     {
         <section aria-label="Mapped bank pots">
-            <PotsurePageHeader Title="Mapped bank pots" HeadingLevel="2" Class="mb-4" />
+            <PotsurePageHeader Title="Mapped bank pots" HeadingLevel="2" Class="bb:mb-4" />
             <BbDataTable TData="CategoryPotBreakdownLine"
                            Data="@_potBreakdown"
                            ShowToolbar="false"
@@ -144,7 +144,7 @@ else if (_summary is not null)
         </section>
     }
 
-    <div class="mt-4" id="category-health-text-summary">
+    <div class="bb:mt-4" id="category-health-text-summary">
         <BbTypographyMuted>Textual summary:</BbTypographyMuted>
         <BbItemGroup>
             @foreach (CategoryPeriodSummary row in _summary.Value.Categories)

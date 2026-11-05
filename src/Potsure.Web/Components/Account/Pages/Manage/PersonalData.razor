@@ -10,9 +10,9 @@
 
 <StatusMessage />
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle Class="text-2xl">Personal data</BbCardTitle>
+        <BbCardTitle Class="bb:text-2xl">Personal data</BbCardTitle>
         <BbCardDescription>Download or delete your account data.</BbCardDescription>
     </BbCardHeader>
     <BbCardContent>
@@ -24,7 +24,7 @@
             <AntiforgeryToken />
             <BbButton Type="ButtonType.Submit">Download</BbButton>
         </form>
-        <div class="flex flex-wrap gap-2">
+        <div class="bb:flex bb:flex-wrap bb:gap-2">
             <BbButton Variant="ButtonVariant.Destructive" Href="Account/Manage/DeletePersonalData">Delete</BbButton>
         </div>
     </BbCardContent>

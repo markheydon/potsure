@@ -3,7 +3,7 @@
 
 <PageTitle>Runway warnings</PageTitle>
 
-<PotsurePageHeader Title="Category runway" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Category runway" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -19,7 +19,7 @@ else if (_error is not null)
 else
 {
     <section aria-labelledby="runway-horizon">
-        <PotsurePageHeader Title="Forecast horizon" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Forecast horizon" HeadingLevel="2" Class="bb:mb-4" />
         <BbLabel>Months ahead</BbLabel>
         <BbInput Type="InputType.Number"
                  Value="@_horizonMonths.ToString()"
@@ -46,7 +46,7 @@ else
     }
 
     <section aria-labelledby="runway-income-measures">
-        <PotsurePageHeader Title="Income (separate from commitments)" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Income (separate from commitments)" HeadingLevel="2" Class="bb:mb-4" />
         <BbTypographyMuted>
             @ReportCopy.BudgetedIncomeHeading and @ReportCopy.ActualReceiptsHeading are not mixed with projected spend below.
         </BbTypographyMuted>
@@ -88,7 +88,7 @@ else
     @if (_variableExpenses.Count > 0)
     {
         <section aria-labelledby="runway-variable">
-            <PotsurePageHeader Title="Variable expense coverage" HeadingLevel="2" Class="mb-4" />
+            <PotsurePageHeader Title="Variable expense coverage" HeadingLevel="2" Class="bb:mb-4" />
             <BbItemGroup>
                 @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
                 {
@@ -103,7 +103,7 @@ else
     @if (_potBreakdown.Count > 0)
     {
         <section aria-labelledby="runway-pots">
-            <PotsurePageHeader Title="Mapped pots (funding context)" HeadingLevel="2" Class="mb-4" />
+            <PotsurePageHeader Title="Mapped pots (funding context)" HeadingLevel="2" Class="bb:mb-4" />
             <BbItemGroup>
                 @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
                 {
@@ -115,7 +115,7 @@ else
         </section>
     }
 
-    <div class="mt-4" id="runway-text-summary">
+    <div class="bb:mt-4" id="runway-text-summary">
         <BbTypographyMuted>Textual summary:</BbTypographyMuted>
         <BbItemGroup>
             @foreach (RunwayProjectionLine line in _lines)

@@ -22,8 +22,8 @@
     <StatusMessage Message="@errorMessage" />
     <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
         <DataAnnotationsValidator />
-        <ValidationSummary Class="text-sm text-destructive" role="alert" />
-        <div class="space-y-4">
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
             <BbFormFieldInput TValue="string"
                               @bind-Value="Input.Email"
                               Label="Email"
@@ -38,17 +38,17 @@
                               Placeholder="Password"
                               Type="InputType.Password"
                               Required="true" />
-            <div class="flex justify-end">
+            <div class="bb:flex bb:justify-end">
                 <BbLink Href="Account/ForgotPassword"
-                        Class="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                        Class="bb:text-sm bb:text-muted-foreground bb:underline-offset-4 bb:hover:underline">
                     Forgot your password?
                 </BbLink>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="bb:flex bb:items-center bb:gap-2">
                 <BbCheckbox @bind-Checked="Input.RememberMe" Id="login-remember-me" />
-                <BbLabel For="login-remember-me" Class="font-normal">Remember me</BbLabel>
+                <BbLabel For="login-remember-me" Class="bb:font-normal">Remember me</BbLabel>
             </div>
-            <BbButton Type="ButtonType.Submit" Class="w-full">Log in</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Log in</BbButton>
             <AuthOrContinueDivider />
             <PasskeySubmit Operation="PasskeyOperation.Request"
                            Name="Input.Passkey"

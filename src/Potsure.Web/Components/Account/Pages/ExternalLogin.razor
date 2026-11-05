@@ -31,10 +31,10 @@
             Enter an email address for this site and click Register to finish logging in.
         </BbAlertDescription>
     </BbAlert>
-    <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post" Class="mt-4">
+    <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post" Class="bb:mt-4">
         <DataAnnotationsValidator />
-        <ValidationSummary Class="text-sm text-destructive" role="alert" />
-        <div class="space-y-4">
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
             <BbFormFieldInput TValue="string"
                               @bind-Value="Input.Email"
                               Label="Email"
@@ -42,7 +42,7 @@
                               Placeholder="name@example.com"
                               Type="InputType.Email"
                               Required="true" />
-            <BbButton Type="ButtonType.Submit" Class="w-full">Register</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Register</BbButton>
         </div>
     </EditForm>
 </AuthFormCard>

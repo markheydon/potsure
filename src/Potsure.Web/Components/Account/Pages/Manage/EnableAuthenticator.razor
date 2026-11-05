@@ -21,7 +21,7 @@
 else
 {
     <StatusMessage Message="@message" />
-    <div class="space-y-6">
+    <div class="bb:space-y-6">
         <BbTypographyP>To use an authenticator app, go through the following steps:</BbTypographyP>
 
         <BbFormSection Title="1. Get an authenticator app" ShowSeparator="false">
@@ -48,11 +48,11 @@ else
                 Once you have scanned the QR code or entered the key above, your two-factor authentication app will provide you
                 with a unique code. Enter the code in the confirmation box below.
             </BbTypographyP>
-            <BbCard Class="w-full max-w-2xl">
+            <BbCard Class="bb:w-full bb:max-w-2xl">
                 <BbCardContent>
                     <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
                         <DataAnnotationsValidator />
-                        <div class="grid gap-4 max-w-2xl">
+                        <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                             <BbFormFieldInput TValue="string"
                                               @bind-Value="Input.Code"
                                               Label="Verification code"
@@ -60,8 +60,8 @@ else
                                               Placeholder="Enter the code"
                                               Required="true" />
                         </div>
-                        <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Verify</BbButton>
-                        <ValidationSummary Class="text-sm text-destructive" role="alert" />
+                        <BbButton Type="ButtonType.Submit" Class="bb:w-full bb:mt-2">Verify</BbButton>
+                        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
                     </EditForm>
                 </BbCardContent>
             </BbCard>

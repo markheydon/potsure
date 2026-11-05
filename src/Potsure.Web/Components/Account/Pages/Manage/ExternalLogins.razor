@@ -44,10 +44,10 @@
 }
 @if (otherLogins?.Count > 0)
 {
-    <BbSeparator Class="mb-4" />
+    <BbSeparator Class="bb:mb-4" />
     <form action="Account/Manage/LinkExternalLogin" method="post">
         <AntiforgeryToken />
-        <div class="flex flex-wrap gap-2">
+        <div class="bb:flex bb:flex-wrap bb:gap-2">
             @foreach (var provider in otherLogins)
             {
                 <BbButton Type="ButtonType.Submit"

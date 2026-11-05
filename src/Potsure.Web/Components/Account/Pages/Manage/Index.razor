@@ -12,35 +12,35 @@
 
 <StatusMessage />
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle Class="text-2xl">Edit profile</BbCardTitle>
+        <BbCardTitle Class="bb:text-2xl">Edit profile</BbCardTitle>
         <BbCardDescription>Update your personal information.</BbCardDescription>
     </BbCardHeader>
-    <BbCardContent Class="space-y-6">
+    <BbCardContent Class="bb:space-y-6">
         <BbSeparator />
-        <div class="flex items-center gap-4">
+        <div class="bb:flex bb:items-center bb:gap-4">
             <BbAvatar Size="AvatarSize.Large">
                 <BbAvatarFallback>@ProfileInitials</BbAvatarFallback>
             </BbAvatar>
         </div>
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary Class="text-sm text-destructive" role="alert" />
-            <div class="space-y-4">
-                <div class="grid gap-2">
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+            <div class="bb:space-y-4">
+                <div class="bb:grid bb:gap-2">
                     <BbLabel For="profile-username">Username</BbLabel>
                     <BbInput Id="profile-username" Value="@username" Disabled="true" Placeholder="Username" />
                 </div>
-                <div class="space-y-2">
-                    <div class="grid gap-2">
+                <div class="bb:space-y-2">
+                    <div class="bb:grid bb:gap-2">
                         <BbLabel For="profile-email">Email</BbLabel>
                         <BbInput Id="profile-email" Value="@email" Disabled="true" Placeholder="Email" />
                     </div>
-                    <BbTypographyMuted Class="text-sm">This is your primary email.</BbTypographyMuted>
-                    <BbTypographyMuted Class="text-sm">
+                    <BbTypographyMuted Class="bb:text-sm">This is your primary email.</BbTypographyMuted>
+                    <BbTypographyMuted Class="bb:text-sm">
                         To change it, go to
-                        <BbLink Href="Account/Manage/Email" Class="underline-offset-4 hover:underline">Manage email</BbLink>.
+                        <BbLink Href="Account/Manage/Email" Class="bb:underline-offset-4 bb:hover:underline">Manage email</BbLink>.
                     </BbTypographyMuted>
                 </div>
                 <BbFormFieldInput TValue="string"
@@ -48,8 +48,8 @@
                                   Label="Phone number"
                                   Placeholder="Enter your phone number" />
             </div>
-            <BbSeparator Class="my-6" />
-            <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <BbSeparator Class="bb:mt-6 bb:mb-4" />
+            <div class="bb:flex bb:flex-col-reverse bb:gap-2 bb:sm:flex-row bb:sm:justify-end">
                 <BbButton Variant="ButtonVariant.Outline" Href="/">Cancel</BbButton>
                 <BbButton Type="ButtonType.Submit">Save changes</BbButton>
             </div>

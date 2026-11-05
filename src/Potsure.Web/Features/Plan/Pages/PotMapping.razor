@@ -3,7 +3,7 @@
 
 <PageTitle>Pot mapping</PageTitle>
 
-<PotsurePageHeader Title="Bank pot mapping" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Bank pot mapping" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -19,7 +19,7 @@ else if (_error is not null)
 else
 {
     <section aria-labelledby="pot-mode-heading">
-        <PotsurePageHeader Title="Mapping mode" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Mapping mode" HeadingLevel="2" Class="bb:mb-4" />
         <BbTypographyMuted>Choose no pots for category-only budgeting (FR-M014).</BbTypographyMuted>
         <BbLabel For="pot-mode-select">Pot mapping mode</BbLabel>
         <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
@@ -38,7 +38,7 @@ else
     @if (_mode != PotMappingMode.None)
     {
         <section aria-labelledby="pot-list-heading">
-            <PotsurePageHeader Title="Pots" HeadingLevel="2" Class="mb-4" />
+            <PotsurePageHeader Title="Pots" HeadingLevel="2" Class="bb:mb-4" />
             @if (_pots.Count == 0)
             {
                 <BbTypographyP>Add a pot mapped to exactly one category.</BbTypographyP>
@@ -67,7 +67,7 @@ else
                 </BbDataTable>
             }
 
-            <div class="grid gap-4 max-w-2xl">
+            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                 <div>
                     <BbLabel>New pot name</BbLabel>
                     <BbInput @bind-Value="_newPotName" />

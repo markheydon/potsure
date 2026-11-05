@@ -1,27 +1,27 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="relative min-h-screen flex flex-col">
-    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div class="container flex h-14 items-center gap-2 flex-wrap">
-            <BbLink Href="/" Class="flex items-center space-x-2 shrink-0 no-underline">
-                <LucideIcon Name="piggy-bank" Size="24" Class="text-primary" />
-                <BbTypographySmall Class="font-bold">Potsure</BbTypographySmall>
+<div class="bb:relative bb:min-h-screen bb:flex bb:flex-col">
+    <header class="bb:sticky bb:top-0 bb:z-50 bb:w-full bb:border-b bb:bg-background">
+        <div class="bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl bb:flex bb:h-14 bb:items-center bb:gap-2 bb:flex-wrap">
+            <BbLink Href="/" Class="bb:flex bb:items-center bb:gap-2 bb:shrink-0 bb:no-underline">
+                <LucideIcon Name="piggy-bank" Size="24" Class="bb:text-primary" />
+                <BbTypographySmall Class="bb:font-semibold">Potsure</BbTypographySmall>
             </BbLink>
 
             <PrimaryNav />
 
-            <div class="flex shrink-0 items-center justify-end gap-1">
+            <div class="bb:flex bb:shrink-0 bb:items-center bb:justify-end bb:gap-1">
                 <BbDarkModeToggle Variant="ButtonVariant.Ghost" />
             </div>
         </div>
     </header>
 
-    <main class="flex-1 container py-6">
+    <main class="bb:flex-1 bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl bb:py-6">
         @Body
     </main>
 
-    <footer class="border-t py-4">
-        <div class="container">
+    <footer class="bb:border-t bb:py-4">
+        <div class="bb:mx-auto bb:w-full bb:px-4 bb:max-w-4xl">
             <BbTypographyMuted>Potsure  -  budgeting from your Monzo exports</BbTypographyMuted>
         </div>
     </footer>

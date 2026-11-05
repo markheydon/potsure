@@ -1,15 +1,15 @@
 ﻿@inherits LayoutComponentBase
 @layout Potsure.Web.Components.Layout.MainLayout
 
-<div class="grid gap-6 lg:grid-cols-[16rem_1fr]">
-    <aside class="space-y-4">
+<div class="bb:flex bb:flex-col bb:gap-6">
+    <aside class="bb:space-y-4 bb:w-full bb:max-w-60">
         <div>
-            <BbCardTitle Class="text-xl font-semibold tracking-tight border-0 p-0 shadow-none">Manage account</BbCardTitle>
+            <BbCardTitle Class="bb:text-xl bb:font-semibold bb:tracking-tight bb:border-0 bb:p-0 bb:shadow-none">Manage account</BbCardTitle>
             <BbTypographyMuted>Change your account settings</BbTypographyMuted>
         </div>
         <ManageNavMenu />
     </aside>
-    <div class="min-w-0">
+    <div class="bb:min-w-0">
         @Body
     </div>
 </div>

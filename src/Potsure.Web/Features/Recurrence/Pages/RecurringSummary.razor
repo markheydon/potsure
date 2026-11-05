@@ -3,7 +3,7 @@
 
 <PageTitle>Recurring summary</PageTitle>
 
-<PotsurePageHeader Title="Confirmed recurring summary" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Confirmed recurring summary" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -19,7 +19,7 @@ else if (_error is not null)
 else if (_model is not null)
 {
     <section aria-labelledby="summary-income">
-        <PotsurePageHeader Title="Confirmed income" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Confirmed income" HeadingLevel="2" Class="bb:mb-4" />
         @if (_model.ConfirmedIncome.Count == 0)
         {
             <BbTypographyP>No confirmed income patterns yet.</BbTypographyP>
@@ -59,7 +59,7 @@ else if (_model is not null)
     </section>
 
     <section aria-labelledby="summary-expenses">
-        <PotsurePageHeader Title="Confirmed expenses" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Confirmed expenses" HeadingLevel="2" Class="bb:mb-4" />
         @if (_model.ConfirmedExpenses.Count == 0)
         {
             <BbTypographyP>No confirmed expense patterns yet.</BbTypographyP>
@@ -105,7 +105,7 @@ else if (_model is not null)
     </section>
 
     <section aria-labelledby="summary-suggestions">
-        <PotsurePageHeader Title="Suggestions (not confirmed)" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Suggestions (not confirmed)" HeadingLevel="2" Class="bb:mb-4" />
         @if (_model.Suggestions.Count == 0)
         {
             <BbTypographyP>No open suggestions.</BbTypographyP>

@@ -8,7 +8,7 @@
 @if (externalLogins.Length > 0)
 {
     <form action="Account/PerformExternalLogin" method="post">
-        <div class="flex flex-wrap gap-2">
+        <div class="bb:flex bb:flex-wrap bb:gap-2">
             <AntiforgeryToken />
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
             @foreach (var provider in externalLogins)

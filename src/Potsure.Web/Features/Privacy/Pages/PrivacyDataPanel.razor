@@ -6,11 +6,11 @@
 <PotsurePageHeader Title="Export and delete data"
                    Description="Export your financial data or permanently delete it. You will be asked to reauthenticate before either action completes."
                    HeadingLevel="1"
-                   Class="mb-4" />
+                   Class="bb:mb-4" />
 
 <section aria-label="Export">
-    <PotsurePageHeader Title="Export" HeadingLevel="2" Class="mb-4" />
-    <div class="grid gap-4 max-w-2xl">
+    <PotsurePageHeader Title="Export" HeadingLevel="2" Class="bb:mb-4" />
+    <div class="bb:grid bb:gap-4 bb:max-w-2xl">
         <div>
             <BbLabel>Format</BbLabel>
             <BbSelect TValue="ExportFormat" @bind-Value="_exportFormat">
@@ -27,8 +27,8 @@
     <BbButton Disabled="_busy" OnClick="BeginExport">Export data</BbButton>
     @if (_showExportReauth)
     {
-        <div class="rounded-lg border p-4 space-y-4" aria-label="Confirm export">
-            <PotsurePageHeader Title="Confirm export" HeadingLevel="3" Class="mb-4" />
+        <div class="bb:rounded-lg bb:border bb:p-4 bb:space-y-4" aria-label="Confirm export">
+            <PotsurePageHeader Title="Confirm export" HeadingLevel="3" Class="bb:mb-4" />
             @if (IsHosted)
             {
                 <BbTypographyP>Enter your current account password to confirm export.</BbTypographyP>
@@ -61,7 +61,7 @@
 </section>
 
 <section aria-label="Permanent deletion">
-    <PotsurePageHeader Title="Permanent deletion" HeadingLevel="2" Class="mb-4" />
+    <PotsurePageHeader Title="Permanent deletion" HeadingLevel="2" Class="bb:mb-4" />
     <BbAlert Variant="AlertVariant.Warning">
         <BbAlertTitle>Irreversible</BbAlertTitle>
         <BbAlertDescription>
@@ -76,8 +76,8 @@
     </BbButton>
     @if (_showDeleteReauth)
     {
-        <div class="rounded-lg border p-4 space-y-4" aria-label="Confirm deletion">
-            <PotsurePageHeader Title="Confirm deletion" HeadingLevel="3" Class="mb-4" />
+        <div class="bb:rounded-lg bb:border bb:p-4 bb:space-y-4" aria-label="Confirm deletion">
+            <PotsurePageHeader Title="Confirm deletion" HeadingLevel="3" Class="bb:mb-4" />
             @if (IsHosted)
             {
                 <BbTypographyP>Enter your current account password to confirm permanent deletion.</BbTypographyP>

@@ -3,7 +3,7 @@
 
 <PageTitle>Plan settings</PageTitle>
 
-<PotsurePageHeader Title="Plan settings" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Plan settings" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -19,14 +19,14 @@ else if (_error is not null)
 else
 {
     <section aria-labelledby="plan-income-heading">
-        <PotsurePageHeader Title="Income and period" HeadingLevel="2" Class="mb-4" />
+        <PotsurePageHeader Title="Income and period" HeadingLevel="2" Class="bb:mb-4" />
         <BbTypographyMuted>
             <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
             Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
         </BbTypographyMuted>
 
         <EditForm Model="_form" OnValidSubmit="SaveAsync">
-            <div class="grid gap-4 max-w-2xl">
+            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                 <div>
                     <BbLabel>Allocation preset</BbLabel>
                     <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">

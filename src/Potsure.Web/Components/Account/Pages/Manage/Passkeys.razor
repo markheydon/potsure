@@ -14,12 +14,12 @@
 
 <StatusMessage />
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle Class="text-2xl">Passkeys</BbCardTitle>
+        <BbCardTitle Class="bb:text-2xl">Passkeys</BbCardTitle>
         <BbCardDescription>Register and manage passkeys for passwordless sign-in.</BbCardDescription>
     </BbCardHeader>
-    <BbCardContent Class="space-y-4">
+    <BbCardContent Class="bb:space-y-4">
 
 @if (currentPasskeys is { Count: > 0 })
 {
@@ -43,7 +43,7 @@
                     }
                     <form @formname="@($"update-passkey-{credentialId}")" @onsubmit="UpdatePasskey" method="post">
                         <AntiforgeryToken />
-                        <div class="flex flex-wrap gap-2">
+                        <div class="bb:flex bb:flex-wrap bb:gap-2">
                             <input type="hidden" name="CredentialId" value="@credentialId" />
                             <BbButton Type="ButtonType.Submit"
                                       AdditionalAttributes="@(new Dictionary<string, object> { ["name"] = "Action", ["value"] = "rename", ["title"] = "Rename this passkey" })">

@@ -3,17 +3,17 @@
 
 @inject SignInManager<ApplicationUser> SignInManager
 
-<nav aria-label="Manage account" class="flex flex-col gap-1">
-    <BbButton Href="Account/Manage" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Profile</BbButton>
-    <BbButton Href="Account/Manage/Email" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Email</BbButton>
-    <BbButton Href="Account/Manage/ChangePassword" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Password</BbButton>
+<nav aria-label="Manage account" class="bb:flex bb:flex-col bb:gap-1">
+    <BbButton Href="Account/Manage" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Profile</BbButton>
+    <BbButton Href="Account/Manage/Email" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Email</BbButton>
+    <BbButton Href="Account/Manage/ChangePassword" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Password</BbButton>
     @if (hasExternalLogins)
     {
-        <BbButton Href="Account/Manage/ExternalLogins" Variant="ButtonVariant.Ghost" Class="w-full justify-start">External logins</BbButton>
+        <BbButton Href="Account/Manage/ExternalLogins" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">External logins</BbButton>
     }
-    <BbButton Href="Account/Manage/TwoFactorAuthentication" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Two-factor authentication</BbButton>
-    <BbButton Href="Account/Manage/Passkeys" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Passkeys</BbButton>
-    <BbButton Href="Account/Manage/PersonalData" Variant="ButtonVariant.Ghost" Class="w-full justify-start">Personal data</BbButton>
+    <BbButton Href="Account/Manage/TwoFactorAuthentication" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Two-factor authentication</BbButton>
+    <BbButton Href="Account/Manage/Passkeys" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Passkeys</BbButton>
+    <BbButton Href="Account/Manage/PersonalData" Variant="ButtonVariant.Ghost" Class="bb:w-full bb:justify-start">Personal data</BbButton>
 </nav>
 
 @code {

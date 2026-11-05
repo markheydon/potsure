@@ -41,7 +41,7 @@ Adopt **feature-folder organisation** as the default way to group product capabi
 ### Web-specific implementation (reference)
 
 - Web-layer security helpers live under `Potsure.Web/Security/` (not project root).
-- Tailwind `@source` in `wwwroot/css/app-input.css` must include `Features/**/*.razor` as well as `Components/**`.
+- App styling: Sunset theme CSS plus **`bb:`** layout utilities from BlazorBlueprint (no consumer Tailwind build in `Potsure.Web`).
 - Public routes (`@page` URLs) are unchanged when moving files; this ADR governs layout only.
 - Web **`Features/Privacy/`** (export and delete UI) corresponds to Infrastructure **`Features/Export/`** and cross-cutting **`Deletion/`** - do not add a duplicate `Features/Export/` tree on Web.
 - Project-wide Razor imports live in **`Potsure.Web/_Imports.razor`** at the host project root.

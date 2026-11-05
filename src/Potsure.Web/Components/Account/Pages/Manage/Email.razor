@@ -21,19 +21,19 @@
     <AntiforgeryToken />
 </form>
 
-<BbCard Class="w-full max-w-2xl">
+<BbCard Class="bb:w-full bb:max-w-2xl">
     <BbCardHeader>
-        <BbCardTitle Class="text-2xl">Manage email</BbCardTitle>
+        <BbCardTitle Class="bb:text-2xl">Manage email</BbCardTitle>
         <BbCardDescription>Update or verify your email address.</BbCardDescription>
     </BbCardHeader>
     <BbCardContent>
         <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary Class="text-sm text-destructive" role="alert" />
-            <div class="grid gap-4 max-w-2xl">
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                 @if (isEmailConfirmed)
                 {
-                    <div class="grid gap-1.5 mb-4">
+                    <div class="bb:grid bb:gap-2 bb:mb-4">
                         <BbLabel>Email</BbLabel>
                         <BbInput Value="@email" Disabled="true" Placeholder="Enter your email" />
                         <BbTypographyMuted>Verified</BbTypographyMuted>
@@ -41,7 +41,7 @@
                 }
                 else
                 {
-                    <div class="grid gap-1.5 mb-4">
+                    <div class="bb:grid bb:gap-2 bb:mb-4">
                         <BbLabel>Email</BbLabel>
                         <BbInput Value="@email" Disabled="true" Placeholder="Enter your email" />
                     </div>
@@ -55,7 +55,7 @@
                                   Type="InputType.Email"
                                   Required="true" />
             </div>
-            <BbButton Type="ButtonType.Submit" Class="w-full mt-2">Change email</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full bb:mt-2">Change email</BbButton>
         </EditForm>
     </BbCardContent>
 </BbCard>

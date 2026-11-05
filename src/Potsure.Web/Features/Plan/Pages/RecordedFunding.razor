@@ -3,7 +3,7 @@
 
 <PageTitle>Recorded funding</PageTitle>
 
-<PotsurePageHeader Title="Recorded and planned funding" HeadingLevel="1" Class="mb-4" />
+<PotsurePageHeader Title="Recorded and planned funding" HeadingLevel="1" Class="bb:mb-4" />
 
 @if (_loading)
 {
@@ -25,9 +25,9 @@ else
 
     @foreach (FundingFormRow row in _rows)
     {
-        <section class="space-y-4 mb-6" aria-label="@row.Kind.ToString()">
-            <PotsurePageHeader Title="@row.Kind.ToString()" HeadingLevel="2" Class="mb-4" />
-            <div class="grid gap-4 max-w-2xl">
+        <section class="bb:space-y-4 bb:mb-6" aria-label="@row.Kind.ToString()">
+            <PotsurePageHeader Title="@row.Kind.ToString()" HeadingLevel="2" Class="bb:mb-4" />
+            <div class="bb:grid bb:gap-4 bb:max-w-2xl">
                 <div>
                     <BbLabel>Recorded funding (category)</BbLabel>
                     <BbInput Type="InputType.Number"
@@ -43,12 +43,12 @@ else
             </div>
             @if (row.Pots.Count > 0)
             {
-                <PotsurePageHeader Title="Pot recorded funding" HeadingLevel="3" Class="mb-4" />
-                <BbItemGroup Class="grid gap-4 max-w-2xl">
+                <PotsurePageHeader Title="Pot recorded funding" HeadingLevel="3" Class="bb:mb-4" />
+                <BbItemGroup Class="bb:grid bb:gap-4 bb:max-w-2xl">
                     @foreach (PotFundingForm pot in row.Pots)
                     {
                         <BbItem>
-                            <BbItemContent Class="grid gap-1.5">
+                            <BbItemContent Class="bb:grid bb:gap-2">
                                 <BbLabel>@pot.Name</BbLabel>
                                 <BbInput Type="InputType.Number"
                                          Value="@FormatDecimal(pot.Recorded)"

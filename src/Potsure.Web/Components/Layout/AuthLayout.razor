@@ -1,14 +1,8 @@
 @inherits LayoutComponentBase
 @layout Potsure.Web.Components.Layout.MainLayout
 
-<div class="relative flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] bg-muted p-6 sm:p-8 rounded-lg">
-    <div class="absolute inset-0 rounded-lg"
-         style="background-image: radial-gradient(circle, color-mix(in oklch, var(--foreground) 10%, transparent) 1px, transparent 1px); background-size: 24px 24px;">
-    </div>
-    <div class="absolute inset-0 rounded-lg"
-         style="background: radial-gradient(ellipse at center, transparent 40%, var(--muted) 100%);">
-    </div>
-    <div class="relative z-10 w-full max-w-sm">
+<div class="bb:flex bb:flex-col bb:items-center bb:py-8">
+    <div class="bb:w-full bb:max-w-sm">
         @Body
     </div>
 </div>

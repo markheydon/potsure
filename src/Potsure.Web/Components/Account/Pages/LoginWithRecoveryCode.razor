@@ -17,15 +17,15 @@
     <StatusMessage Message="@message" />
     <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
         <DataAnnotationsValidator />
-        <ValidationSummary Class="text-sm text-destructive" role="alert" />
-        <div class="space-y-4">
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
             <BbFormFieldInput TValue="string"
                               @bind-Value="Input.RecoveryCode"
                               Label="Recovery code"
                               Autocomplete="off"
                               Placeholder="Recovery code"
                               Required="true" />
-            <BbButton Type="ButtonType.Submit" Class="w-full">Log in</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Log in</BbButton>
         </div>
     </EditForm>
 </AuthFormCard>

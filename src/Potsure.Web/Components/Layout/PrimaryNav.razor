@@ -1,10 +1,10 @@
 @rendermode InteractiveServer
 
 <BbResponsiveNavProvider>
-    <div class="flex flex-1 items-center gap-2 min-w-0">
+    <div class="bb:flex bb:flex-1 bb:items-center bb:gap-2 bb:min-w-0">
         <BbResponsiveNavTrigger aria-label="Open navigation menu" />
         <BbResponsiveNavItems Items="_navItems"
-                              DesktopClass="flex-1"
+                              DesktopClass="bb:flex-1"
                               MobileHeader="@MobileHeader" />
     </div>
 </BbResponsiveNavProvider>
@@ -26,7 +26,7 @@
     private static RenderFragment MobileHeader => builder =>
     {
         builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", "font-semibold");
+        builder.AddAttribute(1, "class", "bb:font-semibold");
         builder.AddContent(2, "Navigation");
         builder.CloseElement();
     };

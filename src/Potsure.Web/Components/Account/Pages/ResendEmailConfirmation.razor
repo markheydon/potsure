@@ -23,15 +23,15 @@
     <StatusMessage Message="@message" />
     <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
         <DataAnnotationsValidator />
-        <ValidationSummary Class="text-sm text-destructive" role="alert" />
-        <div class="space-y-4">
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
             <BbFormFieldInput TValue="string"
                               @bind-Value="Input.Email"
                               Label="Email"
                               Placeholder="name@example.com"
                               Type="InputType.Email"
                               Required="true" />
-            <BbButton Type="ButtonType.Submit" Class="w-full">Resend confirmation email</BbButton>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Resend confirmation email</BbButton>
         </div>
     </EditForm>
 </AuthFormCard>
