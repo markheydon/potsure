@@ -85,7 +85,7 @@ else if (_report is not null)
                         @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
                         {
                             <BbItem>
-                                <BbItemTitle>@pot.PotName — recorded funding £@pot.RecordedFunding.ToString("F2")</BbItemTitle>
+                                <BbItemTitle>@pot.PotName  -  recorded funding £@pot.RecordedFunding.ToString("F2")</BbItemTitle>
                             </BbItem>
                         }
                     </BbItemGroup>
@@ -106,7 +106,7 @@ else if (_report is not null)
         {
             <BbAlert Variant="AlertVariant.Default">
                 <BbAlertTitle>Balance conclusion</BbAlertTitle>
-                <BbAlertDescription>Yes — planned income meets required income for this period.</BbAlertDescription>
+                <BbAlertDescription>Yes  -  planned income meets required income for this period.</BbAlertDescription>
             </BbAlert>
         }
     </section>

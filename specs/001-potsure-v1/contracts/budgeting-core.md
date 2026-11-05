@@ -46,7 +46,7 @@ Deterministic calculations for preset allocations, category health, required inc
 | Field | Rule |
 |-------|------|
 | `RequiredByCategory[c]` | `Commitments[c] / presetPercent[c]` (guard div-by-zero) |
-| `RequiredTotal` | Max or sum per documented algorithm in implement (spec: per-category and overall requirement — use **maximum** of category required incomes as overall income needed to satisfy all category ratios simultaneously) |
+| `RequiredTotal` | Max or sum per documented algorithm in implement (spec: per-category and overall requirement  -  use **maximum** of category required incomes as overall income needed to satisfy all category ratios simultaneously) |
 | `LimitingCategory` | Category with highest `RequiredByCategory`; tie → Needs, then Wants, then Savings & Debt |
 | `Shortfall` | `max(0, RequiredTotal − BudgetedIncome)` |
 | `Conclusion` | Yes if `BudgetedIncome >= RequiredTotal` else No + monetary gap |

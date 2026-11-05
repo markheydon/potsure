@@ -95,10 +95,10 @@ else if (_model is not null)
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
                                        Header="Coverage"
-                                       Property="@(row => row.EstimateCoverageLabel ?? "—")" />
+                                       Property="@(row => row.EstimateCoverageLabel ?? "-")" />
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
                                        Header="Tag"
-                                       Property="@(row => row.Tag ?? "—")" />
+                                       Property="@(row => row.Tag ?? "-")" />
                 </Columns>
             </BbDataTable>
         }
@@ -116,7 +116,7 @@ else if (_model is not null)
                 @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
                 {
                     <BbItem>
-                        <BbItemTitle>@row.Label — @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</BbItemTitle>
+                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</BbItemTitle>
                     </BbItem>
                 }
             </BbItemGroup>

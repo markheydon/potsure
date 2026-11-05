@@ -47,7 +47,7 @@ Headers: `Id,MonzoTransactionId,Date,Time,Type,Name,Amount,Currency,Description,
 
 ### `plan.csv`
 
-Headers: `Section,Key,Value` — rows for preset, period, budgeted income, category allocations, pot funding, confirmed pattern summaries.
+Headers: `Section,Key,Value`  -  rows for preset, period, budgeted income, category allocations, pot funding, confirmed pattern summaries.
 
 ### `metadata.json`
 

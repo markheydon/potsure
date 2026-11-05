@@ -130,7 +130,7 @@ else if (_summary is not null)
                     <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
                                        Header="Allocation to pot">
                         <CellTemplate Context="pot">
-                            @(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "—")
+                            @(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "-")
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="decimal"

@@ -1,6 +1,6 @@
 # Potsure
 
-Web application for running a **pots-based budget** from bank statements with minimal manual upkeep. Potsure discovers recurring income and payments from uploads, lets you confirm them instead of retyping, and shows **planned vs. actual** spending by category—the same check a spreadsheet gives, without weekly reconciliation drudgery.
+Web application for running a **pots-based budget** from bank statements with minimal manual upkeep. Potsure discovers recurring income and payments from uploads, lets you confirm them instead of retyping, and shows **planned vs. actual** spending by category - the same check a spreadsheet gives, without weekly reconciliation drudgery.
 
 Product direction and success criteria: [GOALS.md](GOALS.md). Boundaries: [SCOPE.md](SCOPE.md).
 
@@ -30,4 +30,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security concerns: [SECURITY.md](SECURIT
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT  -  see [LICENSE](LICENSE).

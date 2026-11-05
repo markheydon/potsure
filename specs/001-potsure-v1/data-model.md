@@ -9,7 +9,7 @@ Conceptual model aligned with spec key entities, planning prompt, and FR-M001–
 
 - Physical tables map from aggregates below via EF Core in `Potsure.Infrastructure`.
 - Schema changes ship as **versioned EF migrations** in source control (not ad hoc DDL at runtime).
-- **Applying** migrations is an orchestration/deployment step (Aspire `AddEFMigrations` locally; controlled job when hosted) — see [plan.md](plan.md) and [research.md](research.md). Runtime services seed **application** data (e.g. default budget categories on profile create) separately from schema migration.
+- **Applying** migrations is an orchestration/deployment step (Aspire `AddEFMigrations` locally; controlled job when hosted)  -  see [plan.md](plan.md) and [research.md](research.md). Runtime services seed **application** data (e.g. default budget categories on profile create) separately from schema migration.
 
 ## Ownership and scope
 

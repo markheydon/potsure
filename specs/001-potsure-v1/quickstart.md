@@ -19,9 +19,9 @@ aspire run --apphost src/Potsure.AppHost
 - **Stable local ports**: AppHost `Properties/launchSettings.json` pins the dashboard (`https://localhost:17134` by default) and web HTTP (`http://localhost:5191` via AppHost endpoint config). Re-run without `--isolated` so ports stay fixed; `--isolated` randomises ports for parallel instances.
 - Open the dashboard at the URL above (login token in the console may change each run; the host/port should not).
 - **GitHub Codespaces / dev tunnels**: open the forwarded **web** URL from the Aspire dashboard (not `https://localhost:7049` from `launchSettings.json`). Hosted mode honours `X-Forwarded-*` headers in Development so post-login redirects stay on your forwarded host.
-- Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in — not passkey enrolment; see `docs/local-only-mode.md`).
+- Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in  -  not passkey enrolment; see `docs/local-only-mode.md`).
 - SQL container and `potsure` database healthy before migrations run.
-- **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)` — no manual `database update` needed for local cold start (Scenario 8c / **T115**).
+- **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)`  -  no manual `database update` needed for local cold start (Scenario 8c / **T115**).
 - **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.2.0). Re-run after **Phase 23** Identity wiring (**T144**–**T146**) changes `Program.cs`.
 - **Migration ordering smoke** (post T111–T114): In the Aspire dashboard, the EF migrations resource reaches **Finished/Active** before the web resource starts; web must not crash on missing tables on cold SQL container. Hidden migration resource visible via `aspire describe --include-hidden` if needed.
 
@@ -34,7 +34,7 @@ Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprin
 3. Create the first user with **email and password**; sign in at `/Account/Login`.
 4. **Expect**: Financial data routes reject anonymous access; each user sees only their own data after isolation checks.
 
-## Scenario 1 — Safe Monzo import (US1)
+## Scenario 1  -  Safe Monzo import (US1)
 
 1. Start app (local-only **or** hosted: register first user via **Register** with email/password, then sign in).
 2. Confirm or set Monzo account association.
@@ -42,45 +42,45 @@ Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprin
 4. Confirm auto-detected column mapping; import.
 5. **Expect**: Row counts match file minus reported skips; transfer rows excluded from uncategorised; dedupe message on second overlapping upload.
 
-## Scenario 2 — Recurring confirmation (US2)
+## Scenario 2  -  Recurring confirmation (US2)
 
 1. With ≥1 month of fixture data, open detection review.
 2. Confirm one expense → assign Needs + optional pot; confirm income with splits totalling 100%.
 3. Re-upload same period fixture.
 4. **Expect**: Assignments remembered; matched debits auto-attributed; income splits visible but do not change category allocations. (**SC-003** evidence: integration tests **T106** / **T140**–**T142**; release sign-off **T151**.)
 
-## Scenario 3 — Preset and period (US3)
+## Scenario 3  -  Preset and period (US3)
 
 1. Default preset 50/30/20; set inclusive period covering fixture dates.
 2. Enter budgeted income; verify allocations = preset × income.
 3. Switch to 75/15/10.
 4. **Expect**: Allocations update immediately; recorded funding and actuals unchanged.
 
-## Scenario 4 — Category health (US6)
+## Scenario 4  -  Category health (US6)
 
 1. With confirmed patterns and one one-off categorised debit.
 2. Open category health.
 3. **Expect**: Four measures per category; under/over = allocation − actual; uncategorised warning for orphan debits; one-off not in forecast list.
 
-## Scenario 5 — Budget balance (US7)
+## Scenario 5  -  Budget balance (US7)
 
 1. Set budgeted income below commitment-implied requirement.
 2. Open budget balance report.
 3. **Expect**: Limiting category, shortfall, no/not covered messaging; commitments from recurring expenses only ([budgeting-core.md](contracts/budgeting-core.md)).
 
-## Scenario 6 — Export and delete (US10)
+## Scenario 6  -  Export and delete (US10)
 
 1. Reauthenticate (hosted: confirm account password, or typed phrase where that flow applies); export JSON bundle and CSV ZIP separately.
 2. Verify files match [export-formats.md](contracts/export-formats.md).
 3. Permanent delete account data.
 4. **Expect**: No retrievable transactions/plan; confirmation shown.
 
-## Scenario 7 — Determinism (FR-M036)
+## Scenario 7  -  Determinism (FR-M036)
 
 1. Open category health and budget balance twice without changes.
 2. **Expect**: Identical totals both times.
 
-## Scenario 8 — Unit/core-only (CI)
+## Scenario 8  -  Unit/core-only (CI)
 
 ```bash
 dotnet test tests/Potsure.Budgeting.Tests -c Release
@@ -89,7 +89,7 @@ dotnet test tests/Potsure.Statements.Tests -c Release
 
 **Expect**: Golden parsing files pass; budgeting golden scenarios match independently verified expected results.
 
-## Scenario 8b — Dependency hygiene (constitution 1.2.0)
+## Scenario 8b  -  Dependency hygiene (constitution 1.2.0)
 
 After any change to `Directory.Packages.props`:
 
@@ -98,20 +98,20 @@ dotnet package list --outdated
 dotnet test Potsure.slnx -c Release
 ```
 
-**Expect**: Outdated packages reviewed/upgraded where compatible; full test suite green after version bumps (AGENTS.md — not `--no-build` only).
+**Expect**: Outdated packages reviewed/upgraded where compatible; full test suite green after version bumps (AGENTS.md  -  not `--no-build` only).
 
-## Scenario 8c — EF migration orchestration (Aspire local)
+## Scenario 8c  -  EF migration orchestration (Aspire local)
 
 1. Stop AppHost; remove local SQL container/volume if reproducing cold start (optional).
 2. Start AppHost (`dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj`).
 3. Observe dashboard ordering: `potsure` database healthy → migration resource runs and **completes** → web becomes healthy.
-4. Confirm no `Database.MigrateAsync` (or similar) in `Potsure.Web` startup — schema apply is AppHost-only locally per [plan.md](plan.md).
+4. Confirm no `Database.MigrateAsync` (or similar) in `Potsure.Web` startup  -  schema apply is AppHost-only locally per [plan.md](plan.md).
 
 **Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with Infrastructure project + Web startup per plan.
 
-**Known defect (2026-11-04 re-smoke, T154/T157)**: AppHost logs show `Could not perform substitution for environment variable ASPNETCORE_URLS` on `ef-tool-ef-migrations` with `portForServing "web"` — the migration executable does not produce the `/web` service endpoint. Until fixed upstream or in AppHost wiring, Scenario 8c remains **Partial** despite **T115** pass on 2026-11-03.
+**Known defect (2026-11-04 re-smoke, T154/T157)**: AppHost logs show `Could not perform substitution for environment variable ASPNETCORE_URLS` on `ef-tool-ef-migrations` with `portForServing "web"`  -  the migration executable does not produce the `/web` service endpoint. Until fixed upstream or in AppHost wiring, Scenario 8c remains **Partial** despite **T115** pass on 2026-11-03.
 
-## Scenario 9 — Accessibility smoke (US12)
+## Scenario 9  -  Accessibility smoke (US12)
 
 1. Keyboard-only: import wizard → recurring summary → category health.
 2. Narrow viewport: primary report columns without horizontal scroll on main content.
@@ -131,26 +131,26 @@ After deploy to dev/test ACA + Azure SQL free tier:
 
 ## Validation log
 
-Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `Potsure.Web.Tests`; Scenario 8c re-smoke after Phase 23 Identity wiring — see table). **T100** records this log; **T148** / **T153** cite `HostedIdentityFunctionalTests`; **Scenario 8c** first closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
+Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `Potsure.Web.Tests`; Scenario 8c re-smoke after Phase 23 Identity wiring  -  see table). **T100** records this log; **T148** / **T153** cite `HostedIdentityFunctionalTests`; **Scenario 8c** first closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
-| 1 — Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
-| 2 — Recurring confirmation | Partial | Review and summary pages added; confirm/split flows rely on existing pattern services |
-| 3 — Preset and period | Partial | Plan settings UI and suggestion service implemented |
-| 4 — Category health | Partial | Report UI with textual summary; one-off service available |
-| 5 — Budget balance | Partial | Report UI with separated income measures |
-| 6 — Export and delete | Partial | Export/delete UI and contract tests pass in CI |
-| 7 — Determinism | Pass | `DeterminismTests` in Release |
-| 8 — Unit/core CI | Pass | Budgeting and Statements golden tests |
-| 8b — Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c — EF migration ordering | Partial | **T115** Pass 2026-11-03; **T154**/**T157** 2026-11-04 `aspire run` — `ef-tool-*` cannot substitute `ASPNETCORE_URLS` (`portForServing "web"` — service `/web` not produced by migration executable); AppHost switched to `AddProject<Projects.Potsure_Web>` (**T157** fix attempt) — re-smoke still blocked until Aspire EF tool wiring resolves |
-| 9 — Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
+| 1  -  Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
+| 2  -  Recurring confirmation | Partial | Review and summary pages added; confirm/split flows rely on existing pattern services |
+| 3  -  Preset and period | Partial | Plan settings UI and suggestion service implemented |
+| 4  -  Category health | Partial | Report UI with textual summary; one-off service available |
+| 5  -  Budget balance | Partial | Report UI with separated income measures |
+| 6  -  Export and delete | Partial | Export/delete UI and contract tests pass in CI |
+| 7  -  Determinism | Pass | `DeterminismTests` in Release |
+| 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
+| 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
+| 8c  -  EF migration ordering | Partial | **T115** Pass 2026-11-03; **T154**/**T157** 2026-11-04 `aspire run`  -  `ef-tool-*` cannot substitute `ASPNETCORE_URLS` (`portForServing "web"`  -  service `/web` not produced by migration executable); AppHost switched to `AddProject<Projects.Potsure_Web>` (**T157** fix attempt)  -  re-smoke still blocked until Aspire EF tool wiring resolves |
+| 9  -  Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
 | Hosted Identity (Aspire local) | Pass | **T153** 2026-11-04: `HostedIdentityFunctionalTests` + manual path in bootstrap section (**SC-005** / **T148**) |
 | Hosted stage smoke | Not run | Requires deployed ACA; hosted Register/sign-in validation |
 
-Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test` — see Phase 15 task T101.
+Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test`  -  see Phase 15 task T101.
 
 ## Failure cases to spot-check
 

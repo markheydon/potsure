@@ -125,7 +125,7 @@ public partial class PrivacyDataPanel
             if (result is null)
             {
                 ReauthenticationService.RevokeReauthentication();
-                _exportMessage = "Export cancelled — reauthentication required.";
+                _exportMessage = "Export cancelled  -  reauthentication required.";
                 return;
             }
 
@@ -158,7 +158,7 @@ public partial class PrivacyDataPanel
 
             _deleteMessage = deleted
                 ? "All financial data has been deleted."
-                : "Deletion cancelled — reauthentication required.";
+                : "Deletion cancelled  -  reauthentication required.";
         }
         catch (Exception)
         {

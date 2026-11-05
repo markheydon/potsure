@@ -4,13 +4,13 @@
 
 **Created**: 2026-11-02
 
-**Status**: Implementation in progress — **Phase 23** (hosted Identity pivot, tasks **T143**–**T148**) open before v1.0.0 hosted acceptance
+**Status**: Implementation in progress  -  **Phase 23** (hosted Identity pivot, tasks **T143**–**T148**) open before v1.0.0 hosted acceptance
 
 **Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.2.0](../../.specify/memory/constitution.md).
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 
-**Last reviewed**: 2026-11-04 — hosted authentication aligned to ASP.NET Core Identity (email/password); passkeys optional and deferred for v1.0.0 acceptance.
+**Last reviewed**: 2026-11-04  -  hosted authentication aligned to ASP.NET Core Identity (email/password); passkeys optional and deferred for v1.0.0 acceptance.
 
 ## Clarifications
 
@@ -28,27 +28,27 @@
 - Q: If an uploaded statement contains transactions in a currency other than GBP, what should v1 do by default? → A: Reject the upload (or non-GBP rows) with a clear error; no user override to import non-GBP amounts in v1.
 - Q: When mapped pot amounts plus unassigned amounts within a category would exceed that category’s budget allocation, how should the system respond? → A: Allow saving but show a persistent visible over-allocation warning on category health until corrected.
 - Q: For Monzo CSV import, how much field mapping should v1 require from the user? → A: Auto-detect Monzo columns when possible; user confirms or adjusts mapping before import; remembered when layout unchanged.
-- Q: When a user cannot use a passkey on their current device on a hosted instance, what should v1 offer? → A: *(Superseded by Session 2026-11-04 — hosted v1 uses Identity email/password; passkeys optional and not required for acceptance.)* Former answer: passkey-only guidance with no non-passkey login.
-- Q: For imported spending that does not match any confirmed recurring expense pattern—and is not manually categorised as a one-off—how should it affect category “actual activity” on category health? → A: Only debits matched to confirmed recurring or one-off categorisation count in category actuals; unmatched debits are excluded from categories but shown as uncategorised spend with a persistent visible warning until assigned.
+- Q: When a user cannot use a passkey on their current device on a hosted instance, what should v1 offer? → A: *(Superseded by Session 2026-11-04  -  hosted v1 uses Identity email/password; passkeys optional and not required for acceptance.)* Former answer: passkey-only guidance with no non-passkey login.
+- Q: For imported spending that does not match any confirmed recurring expense pattern - and is not manually categorised as a one-off - how should it affect category “actual activity” on category health? → A: Only debits matched to confirmed recurring or one-off categorisation count in category actuals; unmatched debits are excluded from categories but shown as uncategorised spend with a persistent visible warning until assigned.
 - Q: When the same Monzo transaction appears twice within one file or across overlapping uploads, which rule should v1 use to treat two rows as the same transaction for de-duplication? → A: Prefer Monzo Transaction ID when available in the mapped CSV; otherwise duplicate = same date + amount + normalised description.
 - Q: When an imported expense debit clearly matches a user’s confirmed recurring expense pattern, should v1 automatically count it toward that pattern’s category (and optional pot) in category actual activity without asking again on each import? → A: Auto-attribute matching debits to the confirmed pattern’s category and optional pot; user may reassign individual transactions; corrections persist on re-upload.
 - Q: For a user-selected budget period with a start date and an end date, should imported transactions and period-scoped totals include activity on both the first and last day of that range? → A: Both start and end dates inclusive (full calendar days) for imports, actual activity, and period reports.
 - Q: If the user switches allocation preset (50/30/20 ↔ 75/15/10) while the same budget period is still selected, should category allocation amounts update straight away from the current budgeted income using the new preset? → A: Immediate recalculation of category allocations for the selected period from budgeted income; recorded funding, actual activity, and commitments unchanged until the user edits them.
 - Q: For the budget balance and required-income report (FR-M018), what should count as a period commitment when comparing planned income to the chosen preset? → A: Confirmed recurring expense patterns only, each projected into the selected period (cadence-aware); used with planned income and preset percentages for required income, limiting category, and yes/no balance.
-- Q: Must genuine one-off transaction categorisation (**FR-M037**) ship in v1.0.0, or can that release rely on recurring match plus uncategorised-spend warnings until one-offs are added? → A: Required for v1.0.0 — one-off categorisation is part of the first release (release gate for v1.0.0).
+- Q: Must genuine one-off transaction categorisation (**FR-M037**) ship in v1.0.0, or can that release rely on recurring match plus uncategorised-spend warnings until one-offs are added? → A: Required for v1.0.0  -  one-off categorisation is part of the first release (release gate for v1.0.0).
 - Q: When a user adds an optional tag to a confirmed recurring expense (FR-M009), what should that tag represent in v1? → A: Optional free-text label for display and user reference in the recurring summary (and related lists); no effect on allocations, actuals, commitments, or budget balance calculations.
 - Q: When a user defines allocation splits for a confirmed recurring income pattern across Needs, Wants, and Savings & Debt, what rule should v1 enforce on those split percentages? → A: Must sum to 100% across the three categories for each confirmed income pattern (validation blocks save otherwise).
-- Q: In v1, should users be able to keep multiple saved budget periods (each with its own dates and budgeted income), or only one working period whose date range and income they change in place? → A: Single working period — one active date range and budgeted income; adjusting dates or income updates that same period (no saved period library).
+- Q: In v1, should users be able to keep multiple saved budget periods (each with its own dates and budgeted income), or only one working period whose date range and income they change in place? → A: Single working period  -  one active date range and budgeted income; adjusting dates or income updates that same period (no saved period library).
 - Q: For each category on category health, should under/over be computed as the category allocation minus actual activity only (recorded funding stays a separate line and does not change the under/over figure)? → A: Under/over = allocation − actual activity; recorded funding remains a separate measure and MUST NOT be subtracted in the under/over calculation.
 - Q: When de-duplicating rows without a Monzo Transaction ID, how should the system normalise the description before comparing two rows (same date and amount)? → A: Trim; collapse internal whitespace to one space; strip non-alphanumeric characters; compare case-insensitively.
-- Q: For category runway warnings (FR-M020), should recorded funding count toward covering projected remaining spend, so a warning appears only when projected remaining spend exceeds allocation minus actual activity plus recorded funding for that category? → A: Yes — warn when projected remaining category spend in the window exceeds (allocation − actual activity + recorded funding); optional mapped pot detail in the warning.
+- Q: For category runway warnings (FR-M020), should recorded funding count toward covering projected remaining spend, so a warning appears only when projected remaining spend exceeds allocation minus actual activity plus recorded funding for that category? → A: Yes  -  warn when projected remaining category spend in the window exceeds (allocation − actual activity + recorded funding); optional mapped pot detail in the warning.
 - Q: When a user merges two confirmed recurring expense patterns that disagree on category, pot, or tag, how should v1 resolve those assignments for the single merged pattern? → A: User must choose one category, optional pot, and optional tag for the merged pattern before save; future matches and stored attributions use the merged pattern and chosen assignments.
 - Q: When a user splits one confirmed recurring expense pattern into two or more patterns, what must v1 require for category, pot, and tag before the split can be saved? → A: User must assign a category and optional pot/tag to each resulting pattern before save; save blocked until every split child is fully assigned.
-- Q: For confirmed recurring income patterns with Needs/Wants/Savings & Debt splits totalling 100%, should those splits change any v1 calculations (category allocations, budget balance, or actual receipt breakdown), or stay display-only on the recurring summary? → A: Display-only — category allocations and FR-M018 use budgeted income and the chosen preset only; income splits appear on the recurring summary and related lists with no effect on allocations, commitments, actuals, or budget balance.
-- Q: When an imported refund or merchant credit is attributed to a budget category (via recurring match or one-off categorisation), should it reduce that category’s actual activity for the period? → A: Yes — category actual activity is net attributed spend: attributed expense debits minus attributed refunds/credits in that category (same attribution rules as debits).
+- Q: For confirmed recurring income patterns with Needs/Wants/Savings & Debt splits totalling 100%, should those splits change any v1 calculations (category allocations, budget balance, or actual receipt breakdown), or stay display-only on the recurring summary? → A: Display-only  -  category allocations and FR-M018 use budgeted income and the chosen preset only; income splits appear on the recurring summary and related lists with no effect on allocations, commitments, actuals, or budget balance.
+- Q: When an imported refund or merchant credit is attributed to a budget category (via recurring match or one-off categorisation), should it reduce that category’s actual activity for the period? → A: Yes  -  category actual activity is net attributed spend: attributed expense debits minus attributed refunds/credits in that category (same attribution rules as debits).
 - Q: How should v1 treat imported Monzo rows that are internal transfers (for example pot moves or paying yourself) rather than spending at a merchant? → A: Exclude from category actual activity and uncategorised spend by default when identifiable as non-spend transfers from statement data; user may one-off categorise to count as category spend if needed.
-- Q: Should transactions classified as internal transfers or pot movements be excluded from recurring income and expense pattern detection? → A: Yes — exclude classified transfers from detection input entirely; they do not generate or feed suggested patterns.
-- Q: When the user sets budgeted income for the working period, may v1 suggest a figure from confirmed income patterns projected into that period, as long as the user explicitly confirms or edits it before category allocations update? → A: Yes — optional suggestion from confirmed income patterns; category allocations update only after the user confirms or edits budgeted income (no auto-apply on import or pattern change).
+- Q: Should transactions classified as internal transfers or pot movements be excluded from recurring income and expense pattern detection? → A: Yes  -  exclude classified transfers from detection input entirely; they do not generate or feed suggested patterns.
+- Q: When the user sets budgeted income for the working period, may v1 suggest a figure from confirmed income patterns projected into that period, as long as the user explicitly confirms or edits it before category allocations update? → A: Yes  -  optional suggestion from confirmed income patterns; category allocations update only after the user confirms or edits budgeted income (no auto-apply on import or pattern change).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -160,7 +160,7 @@ As a primary “lazy believer” audience member, I see allocation, recorded fun
 
 ### User Story 7 - Required income, limiting category, and budget balance (Priority: P1)
 
-As a user checking whether my plan fits the chosen ratio, I see required income per category, overall requirement, shortfall, the limiting category driving ratio-related shortfall, and a clear yes/no with monetary gap—using the same period for planned income and commitments while keeping actual receipts separate.
+As a user checking whether my plan fits the chosen ratio, I see required income per category, overall requirement, shortfall, the limiting category driving ratio-related shortfall, and a clear yes/no with monetary gap - using the same period for planned income and commitments while keeping actual receipts separate.
 
 **Why this priority**: Delivers the core “does my plan fit 50/30/20 (or 75/15/10)?” answer with honest separation of plan vs reality.
 
@@ -194,7 +194,7 @@ As a user who may review occasionally or daily, I receive warnings when a catego
 
 ### User Story 9 - Confirmed recurring summary (Priority: P2)
 
-As a user maintaining my plan, I view the complete confirmed recurring income and expense summary—including cadence, fixed or variable amounts, expense assignments, and income splits—with unconfirmed suggestions kept separate.
+As a user maintaining my plan, I view the complete confirmed recurring income and expense summary - including cadence, fixed or variable amounts, expense assignments, and income splits - with unconfirmed suggestions kept separate.
 
 **Why this priority**: Single place to audit what drives the plan after confirmation workflows.
 
@@ -225,7 +225,7 @@ As a privacy-conscious user or self-hoster, I export my current plan and stored 
 
 ### User Story 11 - Local-only and hosted access modes (Priority: P1)
 
-As a self-hoster or local user, I run Potsure in account-free local-only mode on my device, or I use a hosted instance where every user—including a sole user—signs in with a hosted account (Identity email/password) and has isolated data.
+As a self-hoster or local user, I run Potsure in account-free local-only mode on my device, or I use a hosted instance where every user - including a sole user - signs in with a hosted account (Identity email/password) and has isolated data.
 
 **Why this priority**: Constitution-mandated deployment paths; wrong exposure of local mode or weak hosted auth would violate product trust.
 
@@ -260,8 +260,8 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - Budget balance and required income (FR-M018) use period commitments from confirmed recurring **expense** patterns only (cadence-projected into the selected period); income patterns, one-offs, recorded funding, and imports are excluded from commitment totals.
 - Upload contains duplicate rows within the same file versus duplicates across files; both must de-duplicate with reported counts using Monzo Transaction ID when mapped and present, otherwise same date, amount, and normalised description (trim, collapse internal whitespace, strip non-alphanumeric characters, case-insensitive compare).
 - Upload spans gaps in calendar coverage; reports and forecasts disclose missing history.
-- Only one month of history on first use; detection may be incomplete—user-led confirmation remains available without blocking onboarding.
-- Annual or rare payments with multi-year history; detection may miss some—limits are disclosed, not guaranteed complete.
+- Only one month of history on first use; detection may be incomplete - user-led confirmation remains available without blocking onboarding.
+- Annual or rare payments with multi-year history; detection may miss some - limits are disclosed, not guaranteed complete.
 - Variable recurring amounts with fewer than three months of history; forecasts use available data with labelled coverage.
 - Income arrives on irregular dates (self-employed, multiple sources); budget period does not require aligning to a payday.
 - User maps multiple expense pots to the same category; totals still aggregate once at category level.
@@ -270,7 +270,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - Re-import after partial deletion or export; behaviour remains consistent with de-duplication and remembered assignments.
 - Same stored inputs and settings viewed twice; category health and budget balance totals match on both views.
 - Budget period boundaries are inclusive of both start and end calendar dates for transaction inclusion and period-scoped report totals.
-- v1 exposes one working budget period only; users adjust dates and budgeted income in place—no multi-period save/switch library.
+- v1 exposes one working budget period only; users adjust dates and budgeted income in place - no multi-period save/switch library.
 - User changes allocation preset mid-period; category allocations recalculate immediately from budgeted income; recorded funding, actual activity, and commitments remain until user updates them (may trigger over- or under-allocation warnings); under/over recalculates from updated allocation minus unchanged actual activity.
 - Forecast horizon shorter than recurring cadence (e.g. weekly bill, one-week horizon); warnings remain mathematically consistent and labelled.
 - Category runway warning triggers when projected remaining spend in the window exceeds allocation minus actual activity plus recorded funding (pot funding rolled up at category level); optional pot detail in messaging.
@@ -289,12 +289,12 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 
 ## Requirements *(mandatory)*
 
-### Functional Requirements — Must
+### Functional Requirements  -  Must
 
 - **FR-M001**: The system MUST accept upload of one or more Monzo-format CSV statement files per user for a single Monzo account only.
 - **FR-M002**: The system MUST auto-detect Monzo CSV column mapping when the layout matches a known Monzo export; the user MUST confirm or adjust mapping before import proceeds; unchanged layouts MUST reuse the remembered mapping. The system MUST reject unsupported formats with clear errors.
 - **FR-M003**: The system MUST NOT silently drop transactions; every skipped or failed row MUST be reported with a reason. Rows classified as internal transfers or pot movements MUST be reported in the import summary (counts and reasons) and MUST NOT contribute to uncategorised spend or category actual activity unless the user later one-off categorises them as spend.
-- **FR-M004**: The system MUST de-duplicate imported transactions within a file and across overlapping uploads and report de-duplication counts. Two rows represent the same transaction when they share the same Monzo Transaction ID from the mapped CSV, or—when that ID is absent for either row—when they share the same transaction date, amount, and **normalised description**. Normalisation for comparison MUST: trim leading and trailing whitespace; collapse runs of internal whitespace to a single space; remove all non-alphanumeric characters from the description; compare the result case-insensitively.
+- **FR-M004**: The system MUST de-duplicate imported transactions within a file and across overlapping uploads and report de-duplication counts. Two rows represent the same transaction when they share the same Monzo Transaction ID from the mapped CSV, or - when that ID is absent for either row - when they share the same transaction date, amount, and **normalised description**. Normalisation for comparison MUST: trim leading and trailing whitespace; collapse runs of internal whitespace to a single space; remove all non-alphanumeric characters from the description; compare the result case-insensitively.
 - **FR-M005**: The system MUST reject other banks’ CSV layouts and files identifiable as a different account without importing their transactions.
 - **FR-M006**: When account identity is absent or ambiguous, the system MUST require explicit user confirmation before persisting transactions.
 - **FR-M007**: The system MUST detect recurring income and expenses with cadences including weekly, fortnightly, and monthly where evidence exists. Transactions classified as internal transfers or pot movements (per FR-M017) MUST be excluded from detection input and MUST NOT generate suggested recurring patterns.
@@ -332,17 +332,17 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-M036**: For the same stored transactions, confirmed recurring items, period selection, preset, and user-recorded funding, report totals MUST be identical on repeat viewing (no non-deterministic drift for unchanged inputs).
 - **FR-M037**: The system MUST support genuine one-off transaction categorisation at transaction level in v1.0.0. One-off categorisation MUST apply to expense debits, refunds, and merchant credits; it MUST affect category actual activity only (debits increase net spend, refunds/credits decrease it) and MUST NOT create forecast or guessed future recurring purchases.
 
-### Functional Requirements — Should
+### Functional Requirements  -  Should
 
-- **FR-S002**: The system SHOULD provide transaction-level actual-spend breakdown with optional mapped pot detail. **Deferred for v1.0.0** unless explicitly pulled into scope — aggregate category actuals on category health (FR-M017) are in scope; see [tasks.md](./tasks.md) Notes.
+- **FR-S002**: The system SHOULD provide transaction-level actual-spend breakdown with optional mapped pot detail. **Deferred for v1.0.0** unless explicitly pulled into scope  -  aggregate category actuals on category health (FR-M017) are in scope; see [tasks.md](./tasks.md) Notes.
 - **FR-S003**: One-off categorisation (FR-M037) MUST NOT create forecast or guessed future purchases (Must-level constraint on one-off behaviour).
 - **FR-S004**: Users SHOULD be informed that three months of statement history is recommended for normal automatic recurring detection without blocking one-month onboarding (see **FR-M007**; task **T117**).
 
-### Functional Requirements — Could
+### Functional Requirements  -  Could
 
 - **FR-C001**: The system COULD provide period-to-period trend reporting; this remains out of Must scope for v1.
 
-### Functional Requirements — Out of scope (v1)
+### Functional Requirements  -  Out of scope (v1)
 
 - **FR-X001**: Multi-account and multi-provider statement consolidation MUST NOT be required or implied as supported in v1.
 - **FR-X002**: Live bank feeds or promises of continuous sync MUST NOT be offered in v1.
@@ -354,7 +354,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 ### Key Entities *(include if feature involves data)*
 
 - **User**: Person using Potsure; in hosted mode has an authenticated Identity account (email/password) with isolated data; in local-only mode operates without remote account.
-- **Budget period**: The single working user-editable date range for planning and reports, independent of pay schedule; both start and end dates are inclusive for period-scoped calculations. v1 does not maintain a library of alternate saved periods—changing dates updates this same period.
+- **Budget period**: The single working user-editable date range for planning and reports, independent of pay schedule; both start and end dates are inclusive for period-scoped calculations. v1 does not maintain a library of alternate saved periods - changing dates updates this same period.
 - **Budget category**: One of Needs, Wants, Savings & Debt; fixed for v1; receives allocation from preset percentages of budgeted income.
 - **Allocation preset**: Either 50/30/20 (default) or 75/15/10 (alternative); applies only at category level.
 - **Bank pot (optional)**: User-defined label mapped to exactly one category; no hierarchy; no own ratio.
@@ -362,7 +362,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **Transaction**: Dated monetary movement from imports; basis for actual activity and detection input; may be classified as merchant spend, income, refund/credit, or internal transfer/pot movement when identifiable from statement data. Uniqueness for storage uses Monzo Transaction ID when imported, else date + amount + normalised description (per FR-M004 normalisation rules) for de-duplication.
 - **Detected pattern**: Suggested recurring income or expense with cadence and amount behaviour; not active until confirmed; MUST NOT be generated from transactions classified as internal transfers or pot movements.
 - **Confirmed recurring item**: User-approved pattern with assignments (category, optional pot, optional free-text tag for expenses; splits for income). Expense items contribute to period **commitments** when projected into the selected budget period; income items do not. Tags and income category splits are display-only labels and MUST NOT affect allocations, actuals, commitments, or budget balance. Confirmed **income** patterns MUST have category splits totalling 100%.
-- **Income allocation splits**: Per confirmed income pattern, percentages assigned to Needs, Wants, and Savings & Debt; MUST sum to 100% (validated on save); display-only—MUST NOT drive category allocations, actual receipt attribution, or FR-M018 maths.
+- **Income allocation splits**: Per confirmed income pattern, percentages assigned to Needs, Wants, and Savings & Debt; MUST sum to 100% (validated on save); display-only - MUST NOT drive category allocations, actual receipt attribution, or FR-M018 maths.
 - **Expense tag (optional)**: User-entered free-text label on a confirmed recurring expense; shown in the recurring summary and related lists; no effect on allocations, actuals, commitments, or budget balance.
 - **Period commitment (budget balance)**: Cadence-aware projection of a confirmed recurring **expense** pattern’s expected cost into the selected budget period; sole input class for FR-M018 commitment totals (excluding income patterns, one-offs, funding, and imports).
 - **Planned income**: User-confirmed expected or estimated income for a period (budgeted income); distinct from actual receipts. The system MAY suggest a figure from confirmed income patterns but MUST apply allocations only after user confirmation or edit.

@@ -1,5 +1,5 @@
 ---
-title: "ADR-0001: Hosted identity — password primary with optional passkeys"
+title: "ADR-0001: Hosted identity  -  password primary with optional passkeys"
 status: "Accepted"
 date: "2026-11-04"
 authors: "Potsure maintainers"
@@ -8,7 +8,7 @@ supersedes: ""
 superseded_by: ""
 ---
 
-# ADR-0001: Hosted identity — password primary with optional passkeys
+# ADR-0001: Hosted identity  -  password primary with optional passkeys
 
 ## Status
 
@@ -23,7 +23,7 @@ Export and permanent deletion require step-up reauthentication (FR-M022, FR-M023
 ## Decision
 
 - Register hosted auth via **`AddHostedIdentity`**: ASP.NET Core Identity with **email/password** as the primary path, cookie authentication, and SQL persistence on `PotsureDbContext`.
-- Adopt the **.NET 10 Blazor Identity account template** under `/Account/*` (login, register, manage) including **optional** passkey create/sign-in via template endpoints — not required for acceptance.
+- Adopt the **.NET 10 Blazor Identity account template** under `/Account/*` (login, register, manage) including **optional** passkey create/sign-in via template endpoints  -  not required for acceptance.
 - Enforce hosted financial pages with a **fallback authorization policy** requiring an authenticated user; remove bespoke passkey-only middleware and custom passkey-only registration endpoints.
 - Use **current-password reauthentication** on hosted for export/delete (via `PasswordReauthenticationService` / `IExportReauthenticationGate`); local-only keeps the existing lightweight challenge.
 
@@ -55,6 +55,6 @@ Export and permanent deletion require step-up reauthentication (FR-M022, FR-M023
 
 ## References
 
-- Constitution 1.2.0 — hosted Identity and reauthentication
-- `specs/001-potsure-v1/plan.md` — Phase 23 (T143–T148)
+- Constitution 1.2.0  -  hosted Identity and reauthentication
+- `specs/001-potsure-v1/plan.md`  -  Phase 23 (T143–T148)
 - `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs`

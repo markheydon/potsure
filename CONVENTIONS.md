@@ -20,8 +20,8 @@ src/
 ├── Potsure.Recurrence/       # Recurring pattern detection (I/O-free)
 ├── Potsure.Reporting/        # Period summaries and report DTO assembly (uses Budgeting)
 ├── Potsure.Data/             # EF Core DbContexts, entities, migrations
-├── Potsure.Infrastructure/   # DI, feature orchestration, persistence helpers — see profile below
-├── Potsure.Web/              # Blazor host — see profile below
+├── Potsure.Infrastructure/   # DI, feature orchestration, persistence helpers - see profile below
+├── Potsure.Web/              # Blazor host - see profile below
 └── …
 tests/
 └── …
@@ -35,11 +35,11 @@ The four `Potsure.{Budgeting,Statements,Recurrence,Reporting}` projects are **bo
 
 Orchestration aligned with Web feature names:
 
-- **`Features/Import/`** — statement upload pipeline (wraps `Potsure.Statements`).
-- **`Features/Plan/`** — budget period, presets, pots, funding, plan queries.
-- **`Features/Recurrence/`** — income/expense patterns, review, recurring summary read model.
-- **`Features/Reports/`** — report services, attribution, one-off categorisation, report queries (wraps `Potsure.Reporting` builders).
-- **`Features/Export/`** — export snapshot and file formats.
+- **`Features/Import/`**  -  statement upload pipeline (wraps `Potsure.Statements`).
+- **`Features/Plan/`**  -  budget period, presets, pots, funding, plan queries.
+- **`Features/Recurrence/`**  -  income/expense patterns, review, recurring summary read model.
+- **`Features/Reports/`**  -  report services, attribution, one-off categorisation, report queries (wraps `Potsure.Reporting` builders).
+- **`Features/Export/`**  -  export snapshot and file formats.
 
 Cross-cutting (not under `Features/`): **`Persistence/`**, **`Tenancy/`**, **`Deletion/`**, root **`DependencyInjection.cs`**.
 
@@ -49,16 +49,16 @@ Namespaces: `Potsure.Infrastructure.Features.{FeatureName}` for feature code.
 
 Product capability folders (orchestration lives in Infrastructure under the same names where 1:1):
 
-- **`Features/Import/`** — statement import wizard UI.
-- **`Features/Plan/`** — budget period, presets, pots, funding settings.
-- **`Features/Recurrence/`** — pattern review and recurring summary UI.
-- **`Features/Reports/`** — reports, attribution, one-off categorisation UI.
-- **`Features/Privacy/`** — export and permanent deletion UI (`/privacy`). Maps to Infrastructure **`Features/Export/`** and **`Deletion/`** (not a separate Infrastructure `Privacy/` folder).
+- **`Features/Import/`**  -  statement import wizard UI.
+- **`Features/Plan/`**  -  budget period, presets, pots, funding settings.
+- **`Features/Recurrence/`**  -  pattern review and recurring summary UI.
+- **`Features/Reports/`**  -  reports, attribution, one-off categorisation UI.
+- **`Features/Privacy/`**  -  export and permanent deletion UI (`/privacy`). Maps to Infrastructure **`Features/Export/`** and **`Deletion/`** (not a separate Infrastructure `Privacy/` folder).
 
-- **`Features/{Name}/Pages/`** — routable product UI (`@page`).
-- **`Features/{Name}/Components/`** — non-route UI used only within that feature.
-- **`Components/`** — app shell only: `App.razor`, `Routes.razor`, `Layout/`, `Shared/`, shell `Pages/` (home, error), Identity **`Account/`** (template-shaped).
-- **`Configuration/`**, **`Services/`**, **`Security/`**, **`Tenancy/`**, **`Telemetry/`**, **`Resources/`** — cross-cutting web host code (not feature domains). Privacy-specific adapters (e.g. export reauthentication bridge) may live under **`Features/Privacy/`** when they change with that UI.
+- **`Features/{Name}/Pages/`**  -  routable product UI (`@page`).
+- **`Features/{Name}/Components/`**  -  non-route UI used only within that feature.
+- **`Components/`**  -  app shell only: `App.razor`, `Routes.razor`, `Layout/`, `Shared/`, shell `Pages/` (home, error), Identity **`Account/`** (template-shaped).
+- **`Configuration/`**, **`Services/`**, **`Security/`**, **`Tenancy/`**, **`Telemetry/`**, **`Resources/`**  -  cross-cutting web host code (not feature domains). Privacy-specific adapters (e.g. export reauthentication bridge) may live under **`Features/Privacy/`** when they change with that UI.
 
 Namespaces for feature code: `Potsure.Web.Features.{Name}.Pages`, `.Components`, or feature root (e.g. `Potsure.Web.Features.Privacy` for co-located helpers).
 
@@ -82,7 +82,7 @@ Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update th
 
 - **xUnit v3** with Microsoft.Testing.Platform.
 - **NSubstitute** when mocks are required.
-- **Built-in `Assert` only** — no FluentAssertions, Shouldly, Moq, NUnit, or MSTest.
+- **Built-in `Assert` only**  -  no FluentAssertions, Shouldly, Moq, NUnit, or MSTest.
 - Test classes: `[ClassName]Tests`. Test methods: `Method_State_Expected`.
 
 ---
@@ -90,4 +90,5 @@ Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update th
 ## Documentation
 
 - UK English in docs and comments.
+- Do not use the em dash (Unicode U+2014) in user-facing text, code comments, or documentation in product scope (`src/`, `tests/`, `docs/`, `adr/`, `specs/`, and related root markdown). Use spaced ASCII hyphen ` - ` for prose breaks; use a single `-` for empty or missing UI values (for example table placeholders).
 - User-facing docs in `docs/` when the README is not enough; see `.agents/skills/project-documentation/`.

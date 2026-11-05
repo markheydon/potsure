@@ -34,6 +34,9 @@ jobs:
       - name: Restore
         run: dotnet restore Potsure.slnx
 
+      - name: Verify no em dash in product sources
+        run: bash scripts/verify-no-em-dash.sh
+
       - name: Verify formatting
         run: dotnet format Potsure.slnx --no-restore --verify-no-changes --verbosity minimal
 

@@ -21,13 +21,13 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 - BlazorBlueprint.Components v4 (+ matching Primitives, Lucide icons)
 - .NET Aspire AppHost (Azure Container Apps, Azure SQL integrations)
 - EF Core 10 + SQL Server provider
-- CsvHelper (Monzo CSV — versions in `Directory.Packages.props` only; constitution 1.2.0 + AGENTS.md)
+- CsvHelper (Monzo CSV  -  versions in `Directory.Packages.props` only; constitution 1.2.0 + AGENTS.md)
 - ASP.NET Core Identity + EF Core stores on SQL Server (`ApplicationUser`, existing `PotsureDbContext`; cookie authentication)
 - Microsoft.Extensions.Http.Resilience (typed HTTP clients if needed)
 
 **Future (post–v1.0.0 acceptance, optional)**: WebAuthn passkeys on login/register/manage (template-style optional submit), not a v1 primary dependency.
 
-**Storage**: Azure SQL Database (hosted); SQL Server container locally (`RunAsContainer`). EF model and migrations in `Potsure.Infrastructure` (single `PotsureDbContext` — no separate migrations-only project unless structure later justifies it). Schema apply is an **explicit orchestration step** (Aspire `AddEFMigrations` locally; controlled CI/job or publish migration script/bundle for hosted — not `Database.MigrateAsync()` on web startup). Application data seeding (`BudgetProfileSeeder`, etc.) stays separate from migration execution. UserId on owned tables, query filters, explicit ownership checks. Data Protection key ring in SQL.
+**Storage**: Azure SQL Database (hosted); SQL Server container locally (`RunAsContainer`). EF model and migrations in `Potsure.Infrastructure` (single `PotsureDbContext`  -  no separate migrations-only project unless structure later justifies it). Schema apply is an **explicit orchestration step** (Aspire `AddEFMigrations` locally; controlled CI/job or publish migration script/bundle for hosted  -  not `Database.MigrateAsync()` on web startup). Application data seeding (`BudgetProfileSeeder`, etc.) stays separate from migration execution. UserId on owned tables, query filters, explicit ownership checks. Data Protection key ring in SQL.
 
 **Testing**: xUnit v3, NSubstitute, built-in Assert; golden files for Monzo parsing; independent expected results for budgeting core; Playwright C# for key journeys; AppHost not unit-tested.
 
@@ -57,12 +57,12 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 | I Code Quality | DI, async + CancellationToken, nullable, records for DTOs, IHttpClientFactory pattern documented in CONVENTIONS |
 | II Testing | Golden Monzo tests, pure core golden maths, Playwright journeys planned |
 | III Maintainability | Parsing / detection / budgeting / reporting separation; core pure |
-| IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (`ICurrentOwnerAccessor`, EF query filters, fallback authorization policy); local-only unchanged; validation, encryption, structured logging; optional passkeys on template — aligned with constitution 1.2.0 |
+| IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (`ICurrentOwnerAccessor`, EF query filters, fallback authorization policy); local-only unchanged; validation, encryption, structured logging; optional passkeys on template  -  aligned with constitution 1.2.0 |
 | V Documentation | plan, research, data-model, contracts, quickstart; implement adds XML + self-host docs |
 | VI Transparency | Decisions traceable to spec and research.md |
-| Budget model (constitution) | Three categories, two presets, optional pots, single Monzo CSV — aligned |
+| Budget model (constitution) | Three categories, two presets, optional pots, single Monzo CSV  -  aligned |
 | Deployment governance | Self-host + local-only + hosted auth paths in Aspire staging model |
-| Aspire resource consumption (constitution 1.2.0) | AppHost `WithReference` to SQL; web uses `AddSqlServerDbContext<PotsureDbContext>("potsure")`; EF design-time factory reads config for migrations only — not runtime bypass |
+| Aspire resource consumption (constitution 1.2.0) | AppHost `WithReference` to SQL; web uses `AddSqlServerDbContext<PotsureDbContext>("potsure")`; EF design-time factory reads config for migrations only  -  not runtime bypass |
 | Central package versioning (constitution 1.2.0) | Dependencies listed for central management; implement/tasks gate on latest-stable pins and outdated-package sweep before dependency work is “done” |
 | EF migration execution (review prompt + constitution II) | No startup `MigrateAsync` on web; AppHost models explicit migration resource; schema seeding not bundled into migration job; AppHost not unit-tested |
 
@@ -84,7 +84,7 @@ specs/001-potsure-v1/
 │   └── budgeting-core.md
 ├── spec.md
 ├── checklists/
-└── tasks.md             # Phase 2 (/speckit-tasks — complete)
+└── tasks.md             # Phase 2 (/speckit-tasks  -  complete)
 ```
 
 ### Source Code (repository root)
@@ -135,13 +135,13 @@ Statements    Recurrence          Reporting
                       Potsure.Budgeting (pure)
 ```
 
-## Phase 0 — Research
+## Phase 0  -  Research
 
 Completed in [research.md](./research.md): Monzo/CsvHelper, de-dupe, variable expense averaging with partial-month normalisation, one-off vs commitment rules, EF/Aspire/Identity/OTel, BlazorBlueprint v4, staged ACA/SQL policy, upload/export streaming, **EF migration ownership and Aspire `AddEFMigrations` orchestration** (2026-11-03), **hosted Identity template + password-primary auth** (2026-11-04).
 
 All Technical Context items resolved; no remaining **NEEDS CLARIFICATION**.
 
-## Phase 1 — Design & Contracts
+## Phase 1  -  Design & Contracts
 
 | Artifact | Path |
 |----------|------|
@@ -169,18 +169,18 @@ All Technical Context items resolved; no remaining **NEEDS CLARIFICATION**.
 - Managed identity to SQL; no password in image; reconcile Data Protection with SQL key ring.
 - **Constitution 1.2.0 / AGENTS.md**: AppHost is the source of truth for connection configuration. Application projects register SQL via the Aspire SQL Server client integration (`AddSqlServerDbContext` with the same reference name as AppHost). Do not construct runtime SQL access from guessed or hard-coded connection strings. Use `aspire` / `aspireify` skills when changing AppHost wiring. EF `IDesignTimeDbContextFactory` may read local config for migration tooling only.
 
-**Dependency order (database → migrations → web)** — adapt to actual project names; do not copy blindly:
+**Dependency order (database → migrations → web)**  -  adapt to actual project names; do not copy blindly:
 
 ```text
 sql (Azure SQL resource)
   └── database "potsure"
-        └── ef-migrations (AddEFMigrations — WaitFor database, finite apply, exit success)
+        └── ef-migrations (AddEFMigrations  -  WaitFor database, finite apply, exit success)
               └── web (WithReference database; WaitForCompletion migrations)
 ```
 
 - Prefer **Aspire 13.6 `AddEFMigrations`** on the `Potsure.Web` project resource (startup project for EF CLI) with `WithMigrationsProject` pointing at **`Potsure.Data`**, explicit `DbContext` type names `Potsure.Data.PotsureDbContext` and `Potsure.Data.PotsureDataProtectionDbContext`, `WithReference(database)`, `WaitFor(database)`, and `RunDatabaseUpdateOnStart()` for local `aspire run` / AppHost dev only.
 - Web resource: keep `WithReference(database)`; replace “web starts when database is healthy only” with **`WaitForCompletion(migrations)`** so schema exists before Blazor/Identity touch SQL.
-- AppHost references **`Potsure.Data`** for `WithMigrationsProject` — not a runtime dependency inversion (Data must not reference AppHost).
+- AppHost references **`Potsure.Data`** for `WithMigrationsProject`  -  not a runtime dependency inversion (Data must not reference AppHost).
 - **Hosted publish**: `RunDatabaseUpdateOnStart` does not deploy; use `PublishAsMigrationScript()` / migration bundle and/or the controlled job documented in `docs/deployment-database.md` (single runner, no migrate-all-replicas).
 - Do **not** add a dedicated migration worker project unless `AddEFMigrations` proves incompatible with this layout after inspection.
 - Do **not** call `Database.MigrateAsync()` (or equivalent) from `Potsure.Web` startup; do **not** combine `BudgetProfileSeeder` or other app-data init into the migration resource.
@@ -225,13 +225,13 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 ### Identity (hosted)
 
 - **Stack**: ASP.NET Core Identity on SQL Server via existing `PotsureDbContext` / `ApplicationUser`; cookie authentication; per-user isolation via `ICurrentOwnerAccessor`, EF global query filters, and hosted **fallback authorization policy** (authenticated user required).
-- **UX / structure**: Adopt the standard .NET 10 Blazor Server Identity account template layout under `Components/Account/Pages` (Login, Register, ForgotPassword, Manage, etc.), `MapAdditionalIdentityEndpoints`, `IdentityRedirectManager`, and `IdentityRevalidatingAuthenticationStateProvider`. Behavioural reference: [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) (adapt routes, copy, and Potsure deployment modes — not a fork).
+- **UX / structure**: Adopt the standard .NET 10 Blazor Server Identity account template layout under `Components/Account/Pages` (Login, Register, ForgotPassword, Manage, etc.), `MapAdditionalIdentityEndpoints`, `IdentityRedirectManager`, and `IdentityRevalidatingAuthenticationStateProvider`. Behavioural reference: [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) (adapt routes, copy, and Potsure deployment modes  -  not a fork).
 - **Presentation**: Convert template markup to BlazorBlueprint v4 (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide via house patterns); UK English copy (`blazor-blueprint` skill).
 - **Primary sign-in (v1)**: Email + password via `PasswordSignInAsync`; first hosted user created through **Register**, not passkey enrolment.
 - **Remove from v1 path**: Hosted passkey-only UI, custom passkey-only minimal API routes (e.g. dedicated passkey sign-in/register endpoints), and passkey step-up for export/delete. Passkeys deferred post–v1.0.0 acceptance; when added, optional on login (template-style passkey submit), not mandatory.
-- **Email**: Register `IEmailSender<ApplicationUser>` — no-op / logging sender acceptable for v1 self-host (Penny-style dev experience); production uses operator-configured SMTP or provider later (not blocking v1 plan).
+- **Email**: Register `IEmailSender<ApplicationUser>`  -  no-op / logging sender acceptable for v1 self-host (Penny-style dev experience); production uses operator-configured SMTP or provider later (not blocking v1 plan).
 - **Reauthentication**: Export and permanent deletion require password confirmation (preferred) or typed-phrase pattern aligned with amended spec; no passkey step-up for v1 acceptance.
-- **LocalOnly**: Unchanged — no Identity account pages required; not network-exposed.
+- **LocalOnly**: Unchanged  -  no Identity account pages required; not network-exposed.
 
 ## Complexity Tracking
 
@@ -239,7 +239,7 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| — | — | — |
+|  -  |  -  |  -  |
 
 ## Next steps
 

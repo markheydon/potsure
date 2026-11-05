@@ -76,7 +76,7 @@ aspire describe --include-hidden
 
 ## Hosted deployment (controlled apply)
 
-Use a **single runner** per environment — not concurrent migrate on every web replica:
+Use a **single runner** per environment  -  not concurrent migrate on every web replica:
 
 1. Backup or confirm restore point (Azure SQL point-in-time restore).
 2. Apply schema using one of:

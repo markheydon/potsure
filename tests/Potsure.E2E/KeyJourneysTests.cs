@@ -4,7 +4,7 @@ namespace Potsure.E2E;
 
 /// <summary>
 /// Playwright journeys: import → recurring → category health → export (constitution II).
-/// Set <c>POTSURE_E2E_BASE_URL</c> — see <c>docs/e2e-testing.md</c>.
+/// Set <c>POTSURE_E2E_BASE_URL</c>  -  see <c>docs/e2e-testing.md</c>.
 /// </summary>
 public sealed class KeyJourneysTests
 {

@@ -62,4 +62,4 @@ Dependabot PRs: `type/chore`, `priority/medium`, `status/todo` (see [dependabot.
 2. Title matches policy.
 3. Template completed.
 4. Labels applied (`type/*`, `priority/*`, `status/in-review`).
-5. `dotnet format` / build / test pass for `Potsure.slnx` (Release).
+5. `bash scripts/verify-no-em-dash.sh`, `dotnet format` / build / test pass for `Potsure.slnx` (Release).

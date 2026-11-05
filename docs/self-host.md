@@ -27,7 +27,7 @@ For hosted mode on your own infrastructure:
 
 1. Provide HTTPS termination at the ingress (TLS 1.2 or later).
 2. Configure a SQL Server connection string for `ConnectionStrings:potsure`.
-3. Run database migrations idempotently using a single job or published script (see `docs/deployment-database.md` — not automatic migrate on every web replica).
+3. Run database migrations idempotently using a single job or published script (see `docs/deployment-database.md`  -  not automatic migrate on every web replica).
 4. Enable passkey registration and sign-in; do not enable password fallback in v1.
 5. Complete the encryption verification checklist in `docs/encryption.md`.
 

@@ -100,8 +100,8 @@ public static class VariableExpenseEstimator
                 $"{m.Month.ToString("yyyy-MM", CultureInfo.InvariantCulture)}: £{m.MonthTotal.ToString("F2", CultureInfo.InvariantCulture)} ({m.CoveredDays}/{m.DaysInMonth} days covered)"));
 
         return incomplete
-            ? $"Average of {months.Count} month(s) with partial coverage — {monthParts}. Missing days are not treated as £0 spend."
-            : $"Average of {months.Count} month(s) — {monthParts}.";
+            ? $"Average of {months.Count} month(s) with partial coverage  -  {monthParts}. Missing days are not treated as £0 spend."
+            : $"Average of {months.Count} month(s)  -  {monthParts}.";
     }
 
     private readonly record struct MonthAggregate(
