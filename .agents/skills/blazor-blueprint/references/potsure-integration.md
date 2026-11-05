@@ -2,7 +2,7 @@
 
 Ground truth in the repo; prefer reading these files over memory.
 
-**Baseline:** BlazorBlueprint **Scenario B** (no app Tailwind build): Sunset theme CSS, package `blazorblueprint.css`, optional `themes.css`, and `theme-init.js`. App shell layout uses **`Bb*`** components plus **`bb:`** prefixed utilities from the package stylesheet (see [setup.txt](https://blazorblueprintui.com/llms/setup.txt)). No `.potsure-*` custom CSS and no `wwwroot/css/app.css`.
+**Baseline:** BlazorBlueprint **Scenario B** (no app Tailwind build): Sunset theme CSS, package `blazorblueprint.css`, and `theme-init.js`. Do **not** load `themes.css` (that file is for `BbThemeSwitcher` base/primary presets and overrides `default.css`). App shell layout uses **`Bb*`** plus **`bb:`** utilities from `blazorblueprint.css`.
 
 ## Packages (central versions)
 
@@ -28,8 +28,9 @@ Order:
 1. `wwwroot/favicon.svg`
 2. `wwwroot/styles/themes/default.css` (official [Sunset preset](https://blazorblueprintui.com/docs/theming) OKLCH tokens on `:root` + `.dark`, including `--sidebar` and alert variables)
 3. `_content/BlazorBlueprint.Components/blazorblueprint.css`
-4. `_content/BlazorBlueprint.Components/css/themes.css`
-5. Blocking `_content/BlazorBlueprint.Components/js/theme-init.js` in `<head>` after stylesheets
+4. Blocking `_content/BlazorBlueprint.Components/js/theme-init.js` in `<head>` after the stylesheets
+
+Do **not** link `_content/BlazorBlueprint.Components/css/themes.css` unless you add `BbThemeSwitcher`. `ThemeService` still sets `data-base-color` (default zinc) for dark mode; with `themes.css` present that attribute replaces Sunset `--primary` with a grey scale primary (black-looking buttons).
 
 Root `<Routes @rendermode="InteractiveServer" />` matches the template interactive host.
 
