@@ -43,7 +43,7 @@ Exact step labels, order (2 vs 3 relative to spec scenarios), and "complete" rul
 
 | ID | Theme | Observation | Possible direction |
 |----|--------|-------------|-------------------|
-| **BL-006** | Ephemeral local SQL | Stopping Aspire (or waiting between sessions) resets the SQL container; users re-register and re-import. Expected for default `RunAsContainer` without a data volume. | Optional AppHost data volume for dev persistence; document trade-offs in quickstart (do not block v1.0.0). |
+| **BL-006** | Ephemeral local SQL | Stopping Aspire (or waiting between sessions) resets the SQL container; users re-register and re-import. Expected for default `RunAsContainer` without a data volume. | **Fixed** Nov 2025: AppHost `RunAsContainer` uses `WithDataVolume("potsure-sql-data")` and `ContainerLifetime.Persistent`; trade-offs in [`quickstart.md`](../specs/001-potsure-v1/quickstart.md). |
 
 ## Technical debt surfaced in testing
 

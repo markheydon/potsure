@@ -3,7 +3,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 var aca = builder.AddAzureContainerAppEnvironment("aca");
 
 var sql = builder.AddAzureSqlServer("sql")
-    .RunAsContainer();
+    .RunAsContainer(container => container
+        .WithDataVolume("potsure-sql-data")
+        .WithLifetime(ContainerLifetime.Persistent));
 
 var database = sql.AddDatabase("potsure");
 
