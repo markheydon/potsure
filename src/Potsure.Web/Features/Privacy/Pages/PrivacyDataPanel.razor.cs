@@ -2,7 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Potsure.Infrastructure.Deletion;
-using Potsure.Infrastructure.Export;
+using Potsure.Infrastructure.Features.Export;
 using Potsure.Web.Configuration;
 using Potsure.Web.Services;
 

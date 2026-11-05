@@ -15,13 +15,35 @@ Source layout follows **[ADR-0002: Feature-folder source layout](adr/adr-0002-fe
 
 ```
 src/
+├── Potsure.Budgeting/        # Pure budget kernel (money, presets, shared domain enums)
+├── Potsure.Statements/       # Monzo CSV parse, validate, classify, dedupe
+├── Potsure.Recurrence/       # Recurring pattern detection (I/O-free)
+├── Potsure.Reporting/        # Period summaries and report DTO assembly (uses Budgeting)
 ├── Potsure.Data/             # EF Core DbContexts, entities, migrations
-├── Potsure.Infrastructure/   # Services, repositories, runtime seeding
-├── Potsure.Web/                # Blazor host — see profile below
+├── Potsure.Infrastructure/   # DI, feature orchestration, persistence helpers — see profile below
+├── Potsure.Web/              # Blazor host — see profile below
 └── …
 tests/
 └── …
 ```
+
+### Domain logic assemblies
+
+The four `Potsure.{Budgeting,Statements,Recurrence,Reporting}` projects are **bounded contexts**: each assembly is the feature boundary (internal `Features/` subfolders only if a context grows large). They stay free of EF and host I/O.
+
+### `Potsure.Infrastructure` (application library profile)
+
+Orchestration aligned with Web feature names:
+
+- **`Features/Import/`** — statement upload pipeline (wraps `Potsure.Statements`).
+- **`Features/Plan/`** — budget period, presets, pots, funding, plan queries.
+- **`Features/Recurrence/`** — income/expense patterns, review, recurring summary read model.
+- **`Features/Reports/`** — report services, attribution, one-off categorisation, report queries (wraps `Potsure.Reporting` builders).
+- **`Features/Export/`** — export snapshot and file formats.
+
+Cross-cutting (not under `Features/`): **`Persistence/`**, **`Tenancy/`**, **`Deletion/`**, root **`DependencyInjection.cs`**.
+
+Namespaces: `Potsure.Infrastructure.Features.{FeatureName}` for feature code.
 
 ### `Potsure.Web` (Blazor profile)
 

@@ -46,7 +46,7 @@ else if (deployment.Mode == DeploymentMode.Hosted)
 
 builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<PasswordReauthenticationService>();
-builder.Services.AddScoped<Potsure.Infrastructure.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
+builder.Services.AddScoped<Potsure.Infrastructure.Features.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
 builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
 builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>(

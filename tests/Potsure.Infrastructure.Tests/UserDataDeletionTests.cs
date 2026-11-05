@@ -7,7 +7,7 @@ using Potsure.Data.Entities;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Deletion;
-using Potsure.Infrastructure.Export;
+using Potsure.Infrastructure.Features.Export;
 
 namespace Potsure.Infrastructure.Tests;
 

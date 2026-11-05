@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using Potsure.Infrastructure.Queries;
+using Potsure.Infrastructure.Features.Recurrence;
 
 namespace Potsure.Web.Features.Recurrence.Pages;
 

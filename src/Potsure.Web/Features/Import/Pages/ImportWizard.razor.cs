@@ -1,7 +1,7 @@
 using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Potsure.Infrastructure.StatementImport;
+using Potsure.Infrastructure.Features.Import;
 using Potsure.Statements;
 using Potsure.Web.Security;
 

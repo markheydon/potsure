@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Services;
+using Potsure.Infrastructure.Features.Plan;
 
 namespace Potsure.Web.Features.Plan.Pages;
 

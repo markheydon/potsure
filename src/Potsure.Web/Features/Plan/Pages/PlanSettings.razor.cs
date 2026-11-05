@@ -2,8 +2,8 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Data;
-using Potsure.Infrastructure.Reporting;
-using Potsure.Infrastructure.Services;
+using Potsure.Infrastructure.Features.Plan;
+using Potsure.Infrastructure.Features.Reports;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
 

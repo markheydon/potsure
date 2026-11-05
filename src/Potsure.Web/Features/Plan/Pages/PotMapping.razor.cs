@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
-using Potsure.Infrastructure.Services;
+using Potsure.Infrastructure.Features.Plan;
 
 namespace Potsure.Web.Features.Plan.Pages;
 

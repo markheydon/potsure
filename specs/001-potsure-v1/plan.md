@@ -114,7 +114,7 @@ samples/
 docs/                             # Self-host, encryption, deployment stages (implement)
 ```
 
-**Structure Decision**: Expand from current placeholder `src/Potsure/` into layered projects matching constitution module boundaries. Web references Infrastructure + Reporting; Infrastructure references EF + statement/recurrence adapters; Reporting and Recurrence reference Budgeting; Statements standalone library consumed by Infrastructure.
+**Structure Decision**: Expand from current placeholder `src/Potsure/` into layered projects matching constitution module boundaries. Web references Infrastructure + Reporting; Infrastructure references Data + statement/recurrence adapters; Reporting, Recurrence, and Statements reference Budgeting for shared domain types and calculators (`TransactionKind`, etc.).
 
 ## Architecture overview
 

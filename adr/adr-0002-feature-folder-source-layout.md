@@ -77,9 +77,10 @@ Adopt **feature-folder organisation** as the default way to group product capabi
 
 ## Implementation Notes
 
-- **IMP-001**: First migration: `src/Potsure.Web` → `Features/{Import,Plan,Reports,Recurrence,Privacy}/` plus `Security/`.
-- **IMP-002**: Follow-up PRs may map `Potsure.Infrastructure/Imports/` → `Features/Import/` and similar under the same profiles table.
+- **IMP-001**: Done — `src/Potsure.Web` → `Features/{Import,Plan,Reports,Recurrence,Privacy}/` plus `Security/`.
+- **IMP-002**: Done — `src/Potsure.Infrastructure` → `Features/{Import,Plan,Recurrence,Reports,Export}/` with cross-cutting `Persistence/`, `Tenancy/`, `Deletion/`. Namespaces: `Potsure.Infrastructure.Features.{Name}`.
 - **IMP-003**: Success = build and tests green; no route or public API breakage from moves alone.
+- **IMP-004**: Domain bounded-context projects (`Potsure.Budgeting`, `Potsure.Statements`, `Potsure.Recurrence`, `Potsure.Reporting`) remain separate assemblies for v1; `Potsure.Budgeting` stays a zero-dependency pure kernel. Optional consolidation of thin libraries is a product decision, not required for layout adoption.
 
 ## References
 

@@ -2,8 +2,8 @@ using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Data;
-using Potsure.Infrastructure.Queries;
-using Potsure.Infrastructure.Reporting;
+using Potsure.Infrastructure.Features.Plan;
+using Potsure.Infrastructure.Features.Reports;
 using Potsure.Reporting;
 
 namespace Potsure.Web.Features.Reports.Pages;

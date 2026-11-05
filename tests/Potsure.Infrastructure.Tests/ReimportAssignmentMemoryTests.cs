@@ -7,8 +7,8 @@ using Potsure.Data;
 using Potsure.Data.Entities;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
-using Potsure.Infrastructure.Services;
-using Potsure.Infrastructure.StatementImport;
+using Potsure.Infrastructure.Features.Import;
+using Potsure.Infrastructure.Features.Reports;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Tests;

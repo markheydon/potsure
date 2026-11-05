@@ -2,7 +2,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text.Json;
 using Potsure.Budgeting;
-using Potsure.Infrastructure.Export;
+using Potsure.Infrastructure.Features.Export;
 
 namespace Potsure.Infrastructure.Tests;
 
