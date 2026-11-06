@@ -83,7 +83,7 @@ else
                         <BbDataTableColumn TData="BankPotReadModel" TValue="decimal"
                                            Header="Recorded funding">
                             <CellTemplate Context="pot">
-                                £@pot.RecordedFundingAmount.ToString("F2")
+                                @UkCurrencyDisplay.Format(pot.RecordedFundingAmount)
                             </CellTemplate>
                         </BbDataTableColumn>
                     </Columns>

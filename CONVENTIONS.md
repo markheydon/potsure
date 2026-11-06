@@ -76,6 +76,10 @@ Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update th
 - **XML documentation** on public API members.
 - **HTTP outbound calls** (if any): use `IHttpClientFactory` and typed clients; record significant HTTP client choices in an ADR.
 
+### Web UI (Potsure.Web)
+
+- **Money in Razor**: use `Potsure.Web.Resources.UkCurrencyDisplay.Format` / `FormatAbs` for displayed sterling (UK grouping and symbol). Avoid manual `£` plus `ToString("F2")` for amounts.
+
 ---
 
 ## Testing

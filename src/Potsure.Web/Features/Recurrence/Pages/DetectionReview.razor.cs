@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
@@ -58,6 +60,17 @@ public partial class DetectionReview
     private string? _mergeTag;
     private bool _mergeRequiresExplicitResolution;
     private string? _splitSourceLabel;
+
+    /// <summary>
+    /// Confirmed expense row selected in Split expense pattern (if any).
+    /// </summary>
+    private RecurrenceReviewItem? SplitSourceReviewItem =>
+        string.IsNullOrEmpty(_splitSourceLabel)
+            ? null
+            : _confirmedOrRejected.FirstOrDefault(i =>
+                !i.IsIncome
+                && i.State == PatternConfirmationState.Confirmed
+                && i.Label == _splitSourceLabel);
     private string _splitPartOneLabel = string.Empty;
     private string _splitPartTwoLabel = string.Empty;
     private Guid _splitPartOneCategoryId;
@@ -458,6 +471,21 @@ public partial class DetectionReview
     {
         get => _splitPartTwoPotId ?? Guid.Empty;
         set => _splitPartTwoPotId = value == Guid.Empty ? null : value;
+    }
+
+    /// <summary>
+    /// Stable, HTML-safe id for the merge checkbox (label text can include punctuation; avoid raw labels in ids).
+    /// </summary>
+    private static string MergeCheckboxDomId(RecurrenceReviewItem item)
+    {
+        if (item.PersistedId is Guid id)
+        {
+            return $"merge-confirmed-expense-{id:N}";
+        }
+
+        string key = $"{item.Label}\u001f{item.IsIncome}\u001f{item.State}";
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return $"merge-confirmed-expense-{Convert.ToHexString(hash, 0, 8).ToLowerInvariant()}";
     }
 
     private static string FormatDecimal(decimal value) =>

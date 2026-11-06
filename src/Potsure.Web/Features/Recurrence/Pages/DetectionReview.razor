@@ -21,6 +21,8 @@ else
     <BbTypographyMuted>
         Suggested patterns are inferred from imports. Confirm income and expenses separately before they affect commitments.
         For reliable automatic detection, we recommend at least three months of statement history; you can still review patterns with less history, but suggestions may be fewer or less certain.
+        Income is only suggested when several credits share the **same counterparty name** and land on a **regular weekly, fortnightly, or monthly rhythm** (for example same gap between pay dates). If your pay moves on the calendar (last Friday of the month, public holidays, or different descriptors each time), Potsure may not infer it yet. Transfers between your own accounts are not included.
+        You can still set **budgeted income** for your plan on **Plan settings** as soon as you start a new job or loan; you do not need a suggested income line first. Detection is for optional confirmation and summaries, not the only way to fund your plan.
     </BbTypographyMuted>
 
     @if (!string.IsNullOrEmpty(_statusMessage))
@@ -46,7 +48,7 @@ else
                             <BbCardDescription>
                                 @(item.IsIncome ? "Income" : "Expense")
                                 · @FormatCadence(item)
-                                · typical £@item.TypicalAmount.ToString("F2")
+                                · typical @UkCurrencyDisplay.Format(item.TypicalAmount)
                             </BbCardDescription>
                         </BbCardHeader>
                         <BbCardContent>
@@ -137,24 +139,36 @@ else
         }
     </PotsureSection>
 
-    <PotsureSection Title="Confirmed or rejected">
+    <PotsureSection Title="Confirmed or rejected"
+                    Description="For confirmed expenses, tick Select for merge on two or more rows if you want to combine them in Merge expense patterns below (for example duplicate labels for the same merchant).">
         <div class="bb:flex bb:flex-col bb:gap-4">
             @foreach (RecurrenceReviewItem item in _confirmedOrRejected)
             {
                 <BbCard>
                     <BbCardContent>
-                    <strong>@item.Label</strong>
-                     -  @item.State
-                    (@FormatCadence(item))
-                    @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
-                    {
-                        <div class="bb:flex bb:items-center bb:gap-2">
-                            <BbCheckbox Id="@($"merge-{item.Label}")"
-                                        Checked="@_mergeSelection.Contains(item.Label)"
-                                        CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))" />
-                            <BbLabel For="@($"merge-{item.Label}")" Class="bb:font-normal">Include in merge</BbLabel>
+                    <div class="bb:flex bb:flex-col bb:gap-3">
+                        <div class="bb:flex bb:flex-wrap bb:items-baseline bb:gap-x-1.5 bb:gap-y-1">
+                            <strong class="bb:font-semibold">@item.Label</strong>
+                            <span class="bb:text-muted-foreground">· @item.State · @FormatCadence(item)</span>
                         </div>
-                    }
+                        @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
+                        {
+                            <div class="bb:flex bb:items-start bb:gap-3 bb:border-t bb:border-border bb:pt-3">
+                                <BbCheckbox Id="@MergeCheckboxDomId(item)"
+                                            Class="bb:shrink-0 bb:mt-0.5"
+                                            Checked="@_mergeSelection.Contains(item.Label)"
+                                            CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))" />
+                                <div class="bb:flex bb:min-w-0 bb:flex-1 bb:flex-col bb:gap-1">
+                                    <BbLabel For="@MergeCheckboxDomId(item)" Class="bb:mb-0 bb:font-normal bb:leading-snug">
+                                        Select for merge
+                                    </BbLabel>
+                                    <BbTypographyMuted Class="bb:text-sm bb:leading-snug">
+                                        Adds this row to the selection for <strong>Merge expense patterns</strong> below. Pick at least two similar expense lines to merge into one recurring pattern.
+                                    </BbTypographyMuted>
+                                </div>
+                            </div>
+                        }
+                    </div>
                     </BbCardContent>
                 </BbCard>
             }
@@ -210,7 +224,8 @@ else
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
     </PotsureSection>
 
-    <PotsureSection Title="Split expense pattern">
+    <PotsureSection Title="Split expense pattern"
+                    Description="Turn one confirmed recurring expense into two separate recurring lines (for example when the same merchant name mixes two kinds of spend). This does not split a single bank payment across categories; it replaces the source pattern with two new ones. Each part keeps the same cadence as the source and uses half of the source typical fixed amount until we add custom splits.">
         <BbLabel>Source pattern</BbLabel>
         <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
             <BbSelectTrigger>
@@ -227,6 +242,24 @@ else
                 }
             </BbSelectContent>
         </BbSelect>
+        @if (SplitSourceReviewItem is { } splitSource)
+        {
+            <BbTypographyMuted Class="bb:text-sm bb:leading-snug">
+                Typical recurring amount for this pattern: <strong>@UkCurrencyDisplay.Format(splitSource.TypicalAmount)</strong>
+                @if (splitSource.TypicalAmount > 0m)
+                {
+                    <span>
+                        Each of the two new patterns is saved with a <strong>fixed</strong> amount of <strong>@UkCurrencyDisplay.Format(splitSource.TypicalAmount / 2m)</strong> per payment (half of the source).
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        The source typical amount is zero, so each new pattern is saved with <strong>@UkCurrencyDisplay.Format(0m)</strong> fixed; adjust amounts later if we add editing on recurring patterns.
+                    </span>
+                }
+            </BbTypographyMuted>
+        }
         <BbInput @bind-Value="_splitPartOneLabel" Placeholder="First part label" />
         <BbSelect TValue="Guid" @bind-Value="_splitPartOneCategoryId">
             <BbSelectTrigger>

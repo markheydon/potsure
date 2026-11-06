@@ -40,13 +40,13 @@ else if (_report is not null)
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
-                    <BbItemDescription>£@_report.Value.BudgetedIncome.Amount.ToString("F2")</BbItemDescription>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount)</BbItemDescription>
                 </BbItemContent>
             </BbItem>
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
-                    <BbItemDescription>£@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2")</BbItemDescription>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_report.Value.ActualReceiptsInPeriod.Amount)</BbItemDescription>
                 </BbItemContent>
             </BbItem>
         </BbItemGroup>
@@ -57,7 +57,7 @@ else if (_report is not null)
             @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
             {
                 <BbItem>
-                    <BbItemTitle>@FormatKind(commitment.Category): £@commitment.AmountInPeriod.Amount.ToString("F2")</BbItemTitle>
+                    <BbItemTitle>@FormatKind(commitment.Category): @UkCurrencyDisplay.Format(commitment.AmountInPeriod.Amount)</BbItemTitle>
                 </BbItem>
             }
         </BbItemGroup>
@@ -66,7 +66,7 @@ else if (_report is not null)
     <PotsureSection Title="Required income">
         <BbTypographyP>
             Overall required:
-            £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2")
+            @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.RequiredTotal.Amount)
             (limiting category: @FormatKind(_report.Value.RequiredIncome.LimitingCategory))
         </BbTypographyP>
         @if (_potBreakdown.Count > 0)
@@ -82,7 +82,7 @@ else if (_report is not null)
                         @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
                         {
                             <BbItem>
-                                <BbItemTitle>@pot.PotName  -  recorded funding £@pot.RecordedFunding.ToString("F2")</BbItemTitle>
+                                <BbItemTitle>@pot.PotName  -  recorded funding @UkCurrencyDisplay.Format(pot.RecordedFunding)</BbItemTitle>
                             </BbItem>
                         }
                     </BbItemGroup>
@@ -94,7 +94,7 @@ else if (_report is not null)
             <BbAlert Variant="AlertVariant.Warning">
                 <BbAlertTitle>Shortfall</BbAlertTitle>
                 <BbAlertDescription>
-                    Planned income is £@_report.Value.RequiredIncome.Shortfall.Amount.ToString("F2") below the required amount.
+                    Planned income is @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.Shortfall.Amount) below the required amount.
                     Balance conclusion: No.
                 </BbAlertDescription>
             </BbAlert>
@@ -124,9 +124,9 @@ else if (_report is not null)
 
     <BbTypographyMuted Class="bb:mt-4"
                        AdditionalAttributes="@(new Dictionary<string, object> { ["id"] = "balance-text-summary" })">
-        Textual summary: planned income £@_report.Value.BudgetedIncome.Amount.ToString("F2");
-        actual receipts £@_report.Value.ActualReceiptsInPeriod.Amount.ToString("F2");
-        required total £@_report.Value.RequiredIncome.RequiredTotal.Amount.ToString("F2").
+        Textual summary: planned income @UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount);
+        actual receipts @UkCurrencyDisplay.Format(_report.Value.ActualReceiptsInPeriod.Amount);
+        required total @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.RequiredTotal.Amount).
     </BbTypographyMuted>
 
     @if (_report.Value.ExpectedIncomePayments.Count > 0)
@@ -136,7 +136,7 @@ else if (_report is not null)
                 @foreach (ExpectedIncomePayment payment in _report.Value.ExpectedIncomePayments)
                 {
                     <BbItem>
-                        <BbItemTitle>@payment.ExpectedDate: £@payment.Amount.Amount.ToString("F2")</BbItemTitle>
+                        <BbItemTitle>@payment.ExpectedDate: @UkCurrencyDisplay.Format(payment.Amount.Amount)</BbItemTitle>
                     </BbItem>
                 }
             </BbItemGroup>

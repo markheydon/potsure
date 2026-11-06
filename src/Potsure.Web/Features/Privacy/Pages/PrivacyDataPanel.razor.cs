@@ -43,13 +43,13 @@ public partial class PrivacyDataPanel
     private const string ExportPhrase = "EXPORT";
     private const string DeletePhrase = "DELETE";
 
-    private void BeginExport()
+    private async Task BeginExportAsync()
     {
         _exportMessage = null;
         _downloadBase64 = null;
         if (ReauthenticationService.IsReauthenticationValid)
         {
-            _ = ExportAsync();
+            await ExportAsync();
             return;
         }
 
@@ -58,12 +58,12 @@ public partial class PrivacyDataPanel
         _showExportReauth = true;
     }
 
-    private void BeginDelete()
+    private async Task BeginDeleteAsync()
     {
         _deleteMessage = null;
         if (ReauthenticationService.IsReauthenticationValid)
         {
-            _ = DeleteAsync();
+            await DeleteAsync();
             return;
         }
 
@@ -71,6 +71,14 @@ public partial class PrivacyDataPanel
         _hostedPassword = string.Empty;
         _showDeleteReauth = true;
     }
+
+    private static string FormatExportFormat(ExportFormat format) =>
+        format switch
+        {
+            ExportFormat.JsonBundle => "JSON bundle",
+            ExportFormat.CsvZip => "CSV ZIP",
+            _ => format.ToString(),
+        };
 
     private async Task ConfirmExportReauthAsync()
     {

@@ -14,7 +14,11 @@
             <BbLabel>Format</BbLabel>
             <BbSelect TValue="ExportFormat" @bind-Value="_exportFormat">
                 <BbSelectTrigger>
-                    <BbSelectValue Placeholder="Select format" />
+                    <BbSelectValue Placeholder="Select format">
+                        <ChildContent Context="ignored">
+                            @FormatExportFormat(_exportFormat)
+                        </ChildContent>
+                    </BbSelectValue>
                 </BbSelectTrigger>
                 <BbSelectContent>
                     <BbSelectItem TValue="ExportFormat" Value="@ExportFormat.JsonBundle" Text="JSON bundle" />
@@ -23,7 +27,7 @@
             </BbSelect>
         </div>
     </div>
-    <BbButton Disabled="_busy" OnClick="BeginExport">Export data</BbButton>
+    <BbButton Disabled="_busy" OnClick="BeginExportAsync">Export data</BbButton>
     @if (_showExportReauth)
     {
         <div class="bb:rounded-lg bb:border bb:p-4 bb:space-y-4" aria-label="Confirm export">
@@ -70,7 +74,7 @@
         <BbCheckbox @bind-Checked="_confirmDelete" Id="confirm-delete" />
         <BbLabel For="confirm-delete" Class="bb:font-normal">I understand this will permanently delete my financial data</BbLabel>
     </div>
-    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="BeginDelete">
+    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="BeginDeleteAsync">
         Delete all financial data
     </BbButton>
     @if (_showDeleteReauth)

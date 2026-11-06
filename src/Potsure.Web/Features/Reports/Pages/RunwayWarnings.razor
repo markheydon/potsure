@@ -65,13 +65,13 @@ else
             <BbDataTableColumn TData="RunwayTableRow" TValue="decimal"
                                Header="Projected spend">
                 <CellTemplate Context="row">
-                    £@row.Line.ProjectedRemainingSpend.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Line.ProjectedRemainingSpend.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="RunwayTableRow" TValue="decimal"
                                Header="Threshold">
                 <CellTemplate Context="row">
-                    £@row.Line.Threshold.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Line.Threshold.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="RunwayTableRow" TValue="bool"
@@ -104,7 +104,7 @@ else
                 @foreach (CategoryPotBreakdownLine pot in _potBreakdown)
                 {
                     <BbItem>
-                        <BbItemTitle>@pot.Category  -  @pot.PotName: £@pot.RecordedFunding.ToString("F2") recorded</BbItemTitle>
+                        <BbItemTitle>@FormatKind(pot.Category)  -  @pot.PotName: @UkCurrencyDisplay.Format(pot.RecordedFunding) recorded</BbItemTitle>
                     </BbItem>
                 }
             </BbItemGroup>
@@ -117,7 +117,7 @@ else
             @foreach (RunwayProjectionLine line in _lines)
             {
                 <BbItem>
-                    <BbItemTitle>@line.Category projected £@line.ProjectedRemainingSpend.Amount.ToString("F2") against threshold £@line.Threshold.Amount.ToString("F2").</BbItemTitle>
+                    <BbItemTitle>@FormatKind(line.Category) projected @UkCurrencyDisplay.Format(line.ProjectedRemainingSpend.Amount) against threshold @UkCurrencyDisplay.Format(line.Threshold.Amount).</BbItemTitle>
                 </BbItem>
             }
         </BbItemGroup>

@@ -23,13 +23,13 @@ else if (_summary is not null)
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
-                    <BbItemDescription>£@_summary.Value.BudgetedIncome.Amount.ToString("F2")</BbItemDescription>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_summary.Value.BudgetedIncome.Amount)</BbItemDescription>
                 </BbItemContent>
             </BbItem>
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
-                    <BbItemDescription>£@_summary.Value.ActualIncomeInPeriod.Amount.ToString("F2")</BbItemDescription>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_summary.Value.ActualIncomeInPeriod.Amount)</BbItemDescription>
                 </BbItemContent>
             </BbItem>
         </BbItemGroup>
@@ -73,25 +73,25 @@ else if (_summary is not null)
             <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
                                Header="Allocation">
                 <CellTemplate Context="row">
-                    £@row.Summary.Allocation.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Summary.Allocation.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
                                Header="Recorded funding">
                 <CellTemplate Context="row">
-                    £@row.Summary.RecordedFunding.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Summary.RecordedFunding.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
                                Header="Actual activity">
                 <CellTemplate Context="row">
-                    £@row.Summary.ActualActivity.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Summary.ActualActivity.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
                                Header="Under / over">
                 <CellTemplate Context="row">
-                    £@row.Summary.UnderOver.Amount.ToString("F2")
+                    @UkCurrencyDisplay.Format(row.Summary.UnderOver.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
         </Columns>
@@ -128,13 +128,13 @@ else if (_summary is not null)
                     <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
                                        Header="Allocation to pot">
                         <CellTemplate Context="pot">
-                            @(pot.AllocationToPot is decimal allocation ? $"£{allocation:F2}" : "-")
+                            @(pot.AllocationToPot is decimal allocation ? UkCurrencyDisplay.Format(allocation) : "-")
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="decimal"
                                        Header="Recorded funding">
                         <CellTemplate Context="pot">
-                            £@pot.RecordedFunding.ToString("F2")
+                            @UkCurrencyDisplay.Format(pot.RecordedFunding)
                         </CellTemplate>
                     </BbDataTableColumn>
                 </Columns>
@@ -148,7 +148,7 @@ else if (_summary is not null)
             @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
             {
                 <BbItem>
-                    <BbItemTitle>@FormatKind(row.Kind): allocation £@row.Allocation.Amount.ToString("F2"), recorded funding £@row.RecordedFunding.Amount.ToString("F2"), actual £@row.ActualActivity.Amount.ToString("F2"), under/over £@row.UnderOver.Amount.ToString("F2").</BbItemTitle>
+                    <BbItemTitle>@FormatKind(row.Kind): allocation @UkCurrencyDisplay.Format(row.Allocation.Amount), recorded funding @UkCurrencyDisplay.Format(row.RecordedFunding.Amount), actual @UkCurrencyDisplay.Format(row.ActualActivity.Amount), under/over @UkCurrencyDisplay.Format(row.UnderOver.Amount).</BbItemTitle>
                 </BbItem>
             }
         </BbItemGroup>
@@ -159,7 +159,7 @@ else if (_summary is not null)
         <BbAlert Variant="AlertVariant.Warning">
             <BbAlertTitle>Uncategorised spend</BbAlertTitle>
             <BbAlertDescription>
-                £@_summary.Value.UncategorisedSpend.Amount.ToString("F2") of spend is not attributed to a category.
+                @UkCurrencyDisplay.Format(_summary.Value.UncategorisedSpend.Amount) of spend is not attributed to a category.
                 <BbLink Href="/reports/categorise">Assign transactions</BbLink>
                 ·
                 <BbLink Href="/reports/attribution">Reassign attributed debits</BbLink>

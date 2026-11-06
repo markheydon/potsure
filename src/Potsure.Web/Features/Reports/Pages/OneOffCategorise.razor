@@ -62,7 +62,7 @@ else
             <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="decimal"
                                Header="Amount">
                 <CellTemplate Context="row">
-                    £@Math.Abs(row.Amount).ToString("F2")
+                    @UkCurrencyDisplay.FormatAbs(row.Amount)
                 </CellTemplate>
             </BbDataTableColumn>
             <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="Guid"

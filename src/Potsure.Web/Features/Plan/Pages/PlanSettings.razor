@@ -102,7 +102,7 @@ else
                     <ChildContent>
                         <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
                         <BbAlertDescription>
-                            £@_incomeSuggestion.SuggestedAmount.ToString("F2")  -  @_incomeSuggestion.Rationale
+                            @UkCurrencyDisplay.Format(_incomeSuggestion.SuggestedAmount)  -  @_incomeSuggestion.Rationale
                         </BbAlertDescription>
                     </ChildContent>
                 </BbAlert>
@@ -112,7 +112,7 @@ else
             {
                 <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
                     @ReportCopy.ActualReceiptsHeading:
-                    £@_actualReceiptsInPeriod.Value.ToString("F2")
+                    @UkCurrencyDisplay.Format(_actualReceiptsInPeriod.Value)
                 </BbTypographyMuted>
             }
 </ChildContent>

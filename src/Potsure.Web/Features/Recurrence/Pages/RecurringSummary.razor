@@ -43,7 +43,7 @@ else if (_model is not null)
                     <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="decimal"
                                        Header="Amount">
                         <CellTemplate Context="row">
-                            £@((row.FixedAmount ?? row.EstimateAmount ?? 0m).ToString("F2"))
+                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.EstimateAmount ?? 0m)
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
@@ -76,7 +76,7 @@ else if (_model is not null)
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
                                        Header="Category">
                         <CellTemplate Context="row">
-                            @row.CategoryKind
+                            @BudgetCategoryDisplay.Format(row.CategoryKind)
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
@@ -88,7 +88,7 @@ else if (_model is not null)
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="decimal"
                                        Header="Amount">
                         <CellTemplate Context="row">
-                            £@((row.FixedAmount ?? row.MonthlyEstimate ?? 0m).ToString("F2"))
+                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.MonthlyEstimate ?? 0m)
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
@@ -113,7 +113,7 @@ else if (_model is not null)
                 @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
                 {
                     <BbItem>
-                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~£@row.TypicalAmount.ToString("F2")</BbItemTitle>
+                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~@UkCurrencyDisplay.Format(row.TypicalAmount)</BbItemTitle>
                     </BbItem>
                 }
             </BbItemGroup>

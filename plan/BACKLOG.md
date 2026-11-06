@@ -2,7 +2,29 @@
 
 **Purpose:** Capture UX and quality improvements discovered during manual testing and dogfooding. Items here are **not** in scope for the current v1.0.0 release gate unless explicitly promoted into `specs/001-potsure-v1/tasks.md`.
 
-**Last updated:** 2026-11-05 (import mapping UI feedback)
+**Last updated:** 2026-11-06 (spec tension: recurrence vs budget income)
+
+---
+
+## Multi-account and split categorisation (future)
+
+| ID | Theme | Observation | Possible direction |
+|----|--------|-------------|-------------------|
+| **BL-021** | Credit card payments across categories | Manual testing with **Barclaycard** (and similar): a single payment from the current account can blend **contractual minimum** (arguably Needs) with **discretionary overpayment** toward debt (Savings and debt). v1 assigns each transaction to **one** category (and optional one-off split is not in scope for arbitrary debits). | **Post-v1 product design**, not a quick tweak: model **split lines** or **allocation rules** per payment (e.g. minimum vs extra; fixed vs variable portions); **do not assume** how much is minimum versus extra (ratios change month to month and by product unless we integrate statement data or explicit user rules). Reconcile with recurring patterns, commitments (FR-M018), and attribution; consider Monzo-book mental model without forcing users to manually split every payment. **Related caveat:** Recurring review **Split expense pattern** today uses an implicit **equal halving** of the source typical fixed amount  -  also an assumption; any future work here should allow user-defined or rule-based portions, not only 50/50. Needs spec before implementation. |
+
+## Recurring pattern review
+
+| ID | Theme | Observation | Possible direction |
+|----|--------|-------------|-------------------|
+| **BL-019** | Detection review layout | Manual testing (Nov 2026): card-per-suggestion works as a first pass but a **dense table** (label, type, cadence, amount, actions) may be easier to scan when there are many suggestions. | **Add alongside** current layout, not a replacement: optional **table view** (toggle or secondary tab) for power users; keep cards as default if testing shows they help first-time reviewers. Align row actions with confirm / reject / merge flows. |
+| **BL-020** | Suggested patterns at £0.00 | Some suggestions show **typical £0.00**; users are unsure what **Confirm** would do and expected fallback amounts when history is short (e.g. last payment or average). | **Current behaviour (v1):** `RecurrenceDetector` infers **Fixed** vs **Variable** from amount spread; **typical amount** is only set for **Fixed** (median of absolute debit/credit amounts **with magnitude &gt; 0**). If amounts vary beyond tolerance, behaviour is **Variable** and `TypicalAmount` stays **null**, which the review layer shows as **£0.00** (`pattern.TypicalAmount ?? 0m` in `RecurrenceReviewService`). **Confirm** then persists **£0** as a **fixed** recurring line for expenses (detection never auto-selects `ExpenseCadence.Variable`; variable estimation runs only when cadence is **Variable**, which the UI does not set from suggestions today). **Direction:** surface **Variable / amount unknown** in the UI instead of £0; for variable patterns, show **estimated monthly** (reuse `VariableExpenseEstimator`) or **last observed** as a hint; block or warn on confirm with zero fixed amount; consider aligning suggestion copy with FR-M034 / US8 (three-month average when available, shorter history with explicit coverage) for the **suggestion** row, not only post-confirm. |
+| **BL-023** | Income suggestions missing while expenses appear | Manual testing (Nov 2026): user sees **outgoing** patterns but **no income**, despite having salary or other credits on file. Feels wrong vs expectation of "new job / new loan" without waiting months. | **Spec tension:** [US2 AC1](specs/001-potsure-v1/spec.md) asks for suggestions with **at least one month** of history **where inferable**; [FR-M007](specs/001-potsure-v1/spec.md) says weekly/fortnightly/monthly **where evidence exists**. **Implementation** is conservative: **≥3** eligible rows per normalised name plus **stable spacing** (weekly ~6–8 days, fortnightly ~13–16, monthly ~27–35) before any suggestion; mixed kinds for the same name are skipped; `InternalTransfer` / pot movements excluded. **Budget outcome today:** users do **not** need detection to refresh the plan ** - ** [US3 / FR-M031](specs/001-potsure-v1/spec.md): enter **budgeted income** (and period) on **Plan settings** immediately; category allocations follow from that. **Confirmed income patterns** are mainly for the **recurring summary** and optional suggestion of budgeted income; they do not block editing the plan. **FR-M018 commitments** use **confirmed recurring expenses** only, not income. **Direction:** keep clarifying on the review page; consider **manual add** for income/expense patterns without detection, or **weaker suggestions** (1–2 credits with explicit "uncertain" labelling), or cadence rules that tolerate irregular pay dates; promote with spec amendment if behaviour changes. |
+
+## Import, dedupe, and label display
+
+| ID | Theme | Observation | Possible direction |
+|----|--------|-------------|-------------------|
+| **BL-022** | Lower-case vendor names in the UI | Users notice merchant labels shown in **lower case**. **Import** stores `Transaction.Name` (and description) **as in the CSV** (`StatementImportService`). **Deduping** uses a **normalised** form internally (`DescriptionNormalizer`), not as the stored display name. **Recurrence** groups and labels use **`PatternLabelNormalizer`** (letters and digits → lower case, collapse spaces) for matching; the **suggestion title** reuses that normalised key, so the review page reads lowercase even when the statement used mixed case. | If testing shows friction: keep normalised keys for matching but surface a **display label** (e.g. most recent raw `Name` from the cluster) on recurrence and anywhere else keyed by normalised label; optional title-case helper **only for display**. |
 
 ---
 
