@@ -13,7 +13,7 @@
 
 ## Publishing
 
-See [plan/RELEASE.md](plan/RELEASE.md). This template creates **GitHub Releases** on `v*.*.*` tags. NuGet publishing is optional — use [dotnet-api-client-template](https://github.com/markheydon/dotnet-api-client-template) or extend `release.yml` yourself.
+See [plan/RELEASE.md](plan/RELEASE.md). This template creates **GitHub Releases** on `v*.*.*` tags. NuGet publishing is optional  -  use [dotnet-api-client-template](https://github.com/markheydon/dotnet-api-client-template) or extend `release.yml` yourself.
 
 ---
 

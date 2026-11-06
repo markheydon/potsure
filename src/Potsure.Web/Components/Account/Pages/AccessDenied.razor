@@ -1,0 +1,11 @@
+﻿@page "/Account/AccessDenied"
+@attribute [AllowAnonymous]
+
+<PageTitle>Access denied</PageTitle>
+
+<AuthFormCard Title="Access denied"
+              Description="You do not have permission to view this page.">
+    <BbAlert Variant="AlertVariant.Danger">
+        <BbAlertDescription>You do not have access to this resource.</BbAlertDescription>
+    </BbAlert>
+</AuthFormCard>

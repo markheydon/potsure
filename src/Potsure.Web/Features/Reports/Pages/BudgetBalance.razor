@@ -1,0 +1,145 @@
+﻿@page "/reports/budget-balance"
+@rendermode InteractiveServer
+
+<PageTitle>Budget balance</PageTitle>
+
+<PotsurePageHeader Title="Budget balance" HeadingLevel="1" />
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading report…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Report unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_report is not null)
+{
+    <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["role"] = "note" })">@ReportCopy.ForecastDisclaimer</BbTypographyMuted>
+
+    <section aria-labelledby="balance-income-chart">
+        <PotsurePageHeader Title="Planned income versus required total"
+                           HeadingLevel="2"
+                           Class="bb:sr-only bb:mb-4" />
+        <BbBarChart Data="@_budgetCompareRows"
+                    Title="Planned income vs required total"
+                    Height="300px"
+                    AriaLabel="Bar chart comparing planned income and required total">
+            <BbXAxis DataKey="Label" />
+            <BbYAxis />
+            <BbChartTooltip />
+            <BbBar DataKey="Amount" FillKey="Fill" BorderRadius="6" />
+        </BbBarChart>
+    </section>
+
+    <PotsureSection Title="Income (separate measures)">
+        <BbItemGroup Class="bb:grid bb:gap-2 bb:sm:grid-cols-2">
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount)</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_report.Value.ActualReceiptsInPeriod.Amount)</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+        </BbItemGroup>
+    </PotsureSection>
+
+    <PotsureSection Title="@ReportCopy.CommitmentsHeading">
+        <BbItemGroup>
+            @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
+            {
+                <BbItem>
+                    <BbItemTitle>@FormatKind(commitment.Category): @UkCurrencyDisplay.Format(commitment.AmountInPeriod.Amount)</BbItemTitle>
+                </BbItem>
+            }
+        </BbItemGroup>
+    </PotsureSection>
+
+    <PotsureSection Title="Required income">
+        <BbTypographyP>
+            Overall required:
+            @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.RequiredTotal.Amount)
+            (limiting category: @FormatKind(_report.Value.RequiredIncome.LimitingCategory))
+        </BbTypographyP>
+        @if (_potBreakdown.Count > 0)
+        {
+            <BbCollapsible>
+                <BbCollapsibleTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">
+                        Mapped pots for @FormatKind(_report.Value.RequiredIncome.LimitingCategory)
+                    </BbButton>
+                </BbCollapsibleTrigger>
+                <BbCollapsibleContent Class="bb:pt-2">
+                    <BbItemGroup>
+                        @foreach (CategoryPotBreakdownLine pot in _potBreakdown.Where(p => p.Category == _report.Value.RequiredIncome.LimitingCategory))
+                        {
+                            <BbItem>
+                                <BbItemTitle>@pot.PotName  -  recorded funding @UkCurrencyDisplay.Format(pot.RecordedFunding)</BbItemTitle>
+                            </BbItem>
+                        }
+                    </BbItemGroup>
+                </BbCollapsibleContent>
+            </BbCollapsible>
+        }
+        @if (_report.Value.RequiredIncome.Shortfall.Amount > 0m)
+        {
+            <BbAlert Variant="AlertVariant.Warning">
+                <BbAlertTitle>Shortfall</BbAlertTitle>
+                <BbAlertDescription>
+                    Planned income is @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.Shortfall.Amount) below the required amount.
+                    Balance conclusion: No.
+                </BbAlertDescription>
+            </BbAlert>
+        }
+        else
+        {
+            <BbAlert Variant="AlertVariant.Default">
+                <BbAlertTitle>Balance conclusion</BbAlertTitle>
+                <BbAlertDescription>Yes  -  planned income meets required income for this period.</BbAlertDescription>
+            </BbAlert>
+        }
+    </PotsureSection>
+
+    @if (_variableExpenses.Count > 0)
+    {
+        <PotsureSection Title="Variable expense coverage">
+            <BbItemGroup>
+                @foreach (ConfirmedExpenseSummaryRow expense in _variableExpenses)
+                {
+                    <BbItem>
+                        <BbItemTitle>@expense.VendorLabel: @(expense.EstimateCoverageLabel ?? "Estimate pending")</BbItemTitle>
+                    </BbItem>
+                }
+            </BbItemGroup>
+        </PotsureSection>
+    }
+
+    <BbTypographyMuted Class="bb:mt-4"
+                       AdditionalAttributes="@(new Dictionary<string, object> { ["id"] = "balance-text-summary" })">
+        Textual summary: planned income @UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount);
+        actual receipts @UkCurrencyDisplay.Format(_report.Value.ActualReceiptsInPeriod.Amount);
+        required total @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.RequiredTotal.Amount).
+    </BbTypographyMuted>
+
+    @if (_report.Value.ExpectedIncomePayments.Count > 0)
+    {
+        <PotsureSection Title="@ReportCopy.ExpectedIncomeHeading">
+            <BbItemGroup>
+                @foreach (ExpectedIncomePayment payment in _report.Value.ExpectedIncomePayments)
+                {
+                    <BbItem>
+                        <BbItemTitle>@payment.ExpectedDate: @UkCurrencyDisplay.Format(payment.Amount.Amount)</BbItemTitle>
+                    </BbItem>
+                }
+            </BbItemGroup>
+        </PotsureSection>
+    }
+}

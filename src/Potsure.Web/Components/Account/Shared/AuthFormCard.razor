@@ -1,0 +1,55 @@
+<BbCard Class="@CardClass">
+    <BbCardHeader Class="@HeaderClass">
+        @if (ShowBrand)
+        {
+            <div class="bb:flex bb:justify-center bb:sm:items-start bb:mb-2">
+                <LucideIcon Name="piggy-bank" Size="28" Class="bb:text-primary" />
+            </div>
+        }
+        <BbCardTitle Class="bb:text-2xl">@Title</BbCardTitle>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <BbCardDescription>@Description</BbCardDescription>
+        }
+    </BbCardHeader>
+    <BbCardContent>
+        @ChildContent
+    </BbCardContent>
+    @if (!string.IsNullOrWhiteSpace(FooterLinkText) && !string.IsNullOrWhiteSpace(FooterHref))
+    {
+        <BbCardFooter>
+            <AuthCardFooterLink Prompt="@FooterPrompt"
+                                LinkText="@FooterLinkText"
+                                Href="@FooterHref" />
+        </BbCardFooter>
+    }
+</BbCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    [Parameter]
+    public bool ShowBrand { get; set; } = true;
+
+    [Parameter]
+    public string CardClass { get; set; } = "bb:w-full";
+
+    [Parameter]
+    public string HeaderClass { get; set; } = "bb:text-center";
+
+    [Parameter]
+    public string FooterPrompt { get; set; } = "";
+
+    [Parameter]
+    public string? FooterLinkText { get; set; }
+
+    [Parameter]
+    public string? FooterHref { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

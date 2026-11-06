@@ -1,0 +1,106 @@
+﻿@page "/privacy"
+@rendermode InteractiveServer
+
+<PageTitle>Export and delete data</PageTitle>
+
+<PotsurePageHeader Title="Export and delete data"
+                   Description="Export your financial data or permanently delete it. You will be asked to reauthenticate before either action completes."
+                   HeadingLevel="1"
+                   />
+
+<PotsureSection Title="Export">
+    <div class="bb:grid bb:gap-4 bb:max-w-2xl">
+        <div>
+            <BbLabel>Format</BbLabel>
+            <BbSelect TValue="ExportFormat" @bind-Value="_exportFormat">
+                <BbSelectTrigger>
+                    <BbSelectValue Placeholder="Select format">
+                        <ChildContent Context="ignored">
+                            @FormatExportFormat(_exportFormat)
+                        </ChildContent>
+                    </BbSelectValue>
+                </BbSelectTrigger>
+                <BbSelectContent>
+                    <BbSelectItem TValue="ExportFormat" Value="@ExportFormat.JsonBundle" Text="JSON bundle" />
+                    <BbSelectItem TValue="ExportFormat" Value="@ExportFormat.CsvZip" Text="CSV ZIP" />
+                </BbSelectContent>
+            </BbSelect>
+        </div>
+    </div>
+    <BbButton Disabled="_busy" OnClick="BeginExportAsync">Export data</BbButton>
+    @if (_showExportReauth)
+    {
+        <div class="bb:rounded-lg bb:border bb:p-4 bb:space-y-4" aria-label="Confirm export">
+            <PotsurePageHeader Title="Confirm export" HeadingLevel="3" />
+            @if (IsHosted)
+            {
+                <BbTypographyP>Enter your current account password to confirm export.</BbTypographyP>
+                <BbInput Type="InputType.Password"
+                         @bind-Value="_hostedPassword"
+                         Autocomplete="current-password"
+                         Placeholder="Current password" />
+            }
+            else
+            {
+                <BbTypographyP>Type @ExportPhrase to confirm you want to download your financial data.</BbTypographyP>
+                <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
+            }
+            <BbButton Disabled="_busy" OnClick="ConfirmExportReauthAsync">Continue export</BbButton>
+        </div>
+    }
+    @if (_exportMessage is not null)
+    {
+        <BbTypographyP AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">@_exportMessage</BbTypographyP>
+    }
+    @if (_downloadBase64 is not null && _downloadFileName is not null)
+    {
+        <BbTypographyP>
+            <BbLink Href="@($"data:{_downloadContentType};base64,{_downloadBase64}")"
+                    AdditionalAttributes="@(new Dictionary<string, object> { ["download"] = _downloadFileName! })">
+                Download @_downloadFileName
+            </BbLink>
+        </BbTypographyP>
+    }
+</PotsureSection>
+
+<PotsureSection Title="Permanent deletion">
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Irreversible</BbAlertTitle>
+        <BbAlertDescription>
+            This removes all imported transactions, patterns, plan data, and pots for your account. It cannot be undone.
+        </BbAlertDescription>
+    </BbAlert>
+    <div class="bb:flex bb:items-center bb:gap-2">
+        <BbCheckbox @bind-Checked="_confirmDelete" Id="confirm-delete" />
+        <BbLabel For="confirm-delete" Class="bb:font-normal">I understand this will permanently delete my financial data</BbLabel>
+    </div>
+    <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy || !_confirmDelete" OnClick="BeginDeleteAsync">
+        Delete all financial data
+    </BbButton>
+    @if (_showDeleteReauth)
+    {
+        <div class="bb:rounded-lg bb:border bb:p-4 bb:space-y-4" aria-label="Confirm deletion">
+            <PotsurePageHeader Title="Confirm deletion" HeadingLevel="3" />
+            @if (IsHosted)
+            {
+                <BbTypographyP>Enter your current account password to confirm permanent deletion.</BbTypographyP>
+                <BbInput Type="InputType.Password"
+                         @bind-Value="_hostedPassword"
+                         Autocomplete="current-password"
+                         Placeholder="Current password" />
+            }
+            else
+            {
+                <BbTypographyP>Type @DeletePhrase to confirm permanent deletion.</BbTypographyP>
+                <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
+            }
+            <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy" OnClick="ConfirmDeleteReauthAsync">
+                Continue deletion
+            </BbButton>
+        </div>
+    }
+    @if (_deleteMessage is not null)
+    {
+        <BbTypographyP AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">@_deleteMessage</BbTypographyP>
+    }
+</PotsureSection>

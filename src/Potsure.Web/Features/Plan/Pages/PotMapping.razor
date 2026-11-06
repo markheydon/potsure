@@ -1,0 +1,138 @@
+@page "/plan/pots"
+@rendermode InteractiveServer
+
+<PageTitle>Pot mapping</PageTitle>
+
+<PotsurePageHeader Title="Bank pot mapping"
+                   Description="Map each Monzo pot to exactly one budget category, or budget by category only."
+                   HeadingLevel="1">
+    <Actions>
+        <PotsureRelatedNav>
+            <BbButton Href="/plan/funding" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="wallet" Size="15" /></Icon>
+                <ChildContent>Recorded funding</ChildContent>
+            </BbButton>
+        </PotsureRelatedNav>
+    </Actions>
+</PotsurePageHeader>
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading pot settings…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Pot mapping unavailable</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+}
+else
+{
+    <PotsureSection Title="How do you use Monzo pots?"
+                    Description="Choose whether Potsure tracks Monzo pots or only category totals. You can change this at any time."
+                    Class="bb:w-full bb:max-w-4xl">
+        <div class="bb:grid bb:gap-2 bb:max-w-md">
+            <BbLabel For="pot-mode-select">Pot mapping</BbLabel>
+            <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
+                <BbSelectTrigger Id="pot-mode-select">
+                    <BbSelectValue Placeholder="Select how you use pots">
+                        <ChildContent Context="ignored">
+                            @PotMappingModeDisplay.Format(_mode)
+                        </ChildContent>
+                    </BbSelectValue>
+                </BbSelectTrigger>
+                <BbSelectContent>
+                    @foreach (PotMappingMode mode in PotMappingModeDisplay.OptionsInDisplayOrder)
+                    {
+                        <BbSelectItem TValue="PotMappingMode" Value="@mode" Text="@PotMappingModeDisplay.Format(mode)" />
+                    }
+                </BbSelectContent>
+            </BbSelect>
+        </div>
+    </PotsureSection>
+
+    @if (_mode != PotMappingMode.None)
+    {
+        <PotsureSection Title="Pots" Class="bb:w-full bb:max-w-4xl">
+            @if (_pots.Count == 0)
+            {
+                <BbEmpty Title="No pots yet"
+                         Description="Add a pot mapped to exactly one category."
+                         Size="EmptySize.Small">
+                    <Icon><LucideIcon Name="piggy-bank" /></Icon>
+                </BbEmpty>
+            }
+            else
+            {
+                <BbDataTable TData="BankPotReadModel"
+                             Data="@_pots"
+                             ShowToolbar="false"
+                             ShowPagination="false"
+                             AriaLabel="Mapped bank pots">
+                    <Columns>
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="string"
+                                           Header="Name"
+                                           Property="@(pot => pot.Name)" />
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="string"
+                                           Header="Category"
+                                           Property="@(pot => BudgetCategoryDisplay.Format(pot.CategoryKind))" />
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="decimal"
+                                           Header="Recorded funding">
+                            <CellTemplate Context="pot">
+                                @UkCurrencyDisplay.Format(pot.RecordedFundingAmount)
+                            </CellTemplate>
+                        </BbDataTableColumn>
+                    </Columns>
+                </BbDataTable>
+            }
+        </PotsureSection>
+
+        <PotsureSection Title="Add a pot" Class="bb:w-full bb:max-w-4xl">
+            <ChildContent>
+            <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>New pot name</BbLabel>
+                    <BbInput @bind-Value="_newPotName" />
+                </div>
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Category</BbLabel>
+                    <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select category">
+                                <ChildContent Context="ignored">
+                                    @SelectedNewPotCategoryLabel
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (CategoryOption option in _categories)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
+            </div>
+            </ChildContent>
+            <Footer>
+                <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
+            </Footer>
+        </PotsureSection>
+    }
+    else
+    {
+        <BbAlert Variant="AlertVariant.Info">
+            <Icon><LucideIcon Name="info" Size="18" /></Icon>
+            <ChildContent>
+                <BbAlertDescription>
+                    You are budgeting by category only (no Monzo pot mapping). Change pot mapping above if you use Monzo pots.
+                    <BbLink Href="/plan">Plan settings</BbLink>
+                </BbAlertDescription>
+            </ChildContent>
+        </BbAlert>
+    }
+}

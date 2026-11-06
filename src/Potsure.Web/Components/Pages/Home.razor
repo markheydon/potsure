@@ -1,0 +1,85 @@
+﻿@page "/"
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Components.Authorization
+@using Potsure.Web.Configuration
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Dashboard</PageTitle>
+
+@if (_redirecting)
+{
+    <PotsureLoadingState Message="Redirecting to sign in…" />
+}
+else
+{
+    <PotsurePageHeader Title="Dashboard"
+                       Description="Budgeting and statement import for your Monzo exports."
+                       HeadingLevel="1" />
+
+    <BbAlert Variant="AlertVariant.Info">
+        <Icon><LucideIcon Name="lightbulb" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Getting started</BbAlertTitle>
+            <BbAlertDescription>Import a Monzo statement, set up your plan, then review the reports to see how your pots are doing.</BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+
+    <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2 bb:lg:grid-cols-3">
+        @foreach (DashboardLink link in Links)
+        {
+            <BbCard>
+                <BbCardHeader>
+                    <div class="bb:flex bb:items-center bb:gap-2">
+                        <LucideIcon Name="@link.Icon" Size="20" />
+                        <BbCardTitle Class="bb:text-lg bb:font-semibold bb:leading-none">@link.Title</BbCardTitle>
+                    </div>
+                    <BbCardDescription>@link.Description</BbCardDescription>
+                </BbCardHeader>
+                <BbCardFooter>
+                    <BbButton Variant="ButtonVariant.Outline" Href="@link.Href">
+                        @link.Action
+                        <LucideIcon Name="arrow-right" Size="16" />
+                    </BbButton>
+                </BbCardFooter>
+            </BbCard>
+        }
+    </div>
+}
+
+@code {
+    private sealed record DashboardLink(string Title, string Description, string Icon, string Href, string Action);
+
+    private static readonly DashboardLink[] Links =
+    [
+        new("Import", "Bring in a Monzo CSV export.", "upload", "/import", "Import statement"),
+        new("Plan", "Set income, pots and recorded funding.", "wallet", "/plan", "Open plan"),
+        new("Category health", "See spend against budget by category.", "chart-column", "/reports/category-health", "View report"),
+        new("Budget balance", "Check your budget adds up.", "scale", "/reports/budget-balance", "View report"),
+        new("Runway", "Spot upcoming shortfalls early.", "triangle-alert", "/reports/runway", "View report"),
+        new("Recurring", "Review detected recurring items.", "repeat", "/recurrence/review", "Review items"),
+    ];
+
+    private bool _redirecting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DeploymentModeOptions deployment = Configuration
+            .GetSection(DeploymentModeOptions.SectionName)
+            .Get<DeploymentModeOptions>() ?? new DeploymentModeOptions();
+        if (deployment.Mode != DeploymentMode.Hosted)
+        {
+            return;
+        }
+
+        AuthenticationState state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            return;
+        }
+
+        _redirecting = true;
+        Navigation.NavigateTo("/Account/Login", replace: true);
+    }
+}

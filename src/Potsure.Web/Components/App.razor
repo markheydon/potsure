@@ -1,0 +1,30 @@
+﻿@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="icon" href="@Assets["favicon.svg"]" type="image/svg+xml" />
+    <link rel="stylesheet" href="@Assets["styles/themes/default.css"]" />
+    <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
+    <ImportMap />
+    <HeadOutlet />
+    <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+
+    <div id="blazor-error-ui" class="bb:hidden bb:fixed bb:bottom-0 bb:left-0 bb:right-0 bb:z-50 bb:p-4 bb:bg-destructive bb:text-destructive-foreground" data-nosnippet>
+        An error has occurred. This application may no longer respond until reloaded.
+        <a href="" class="bb:underline reload">Reload</a>
+    </div>
+
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

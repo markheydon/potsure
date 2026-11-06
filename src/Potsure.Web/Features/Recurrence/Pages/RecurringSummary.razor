@@ -1,0 +1,123 @@
+﻿@page "/recurrence/summary"
+@rendermode InteractiveServer
+
+<PageTitle>Recurring summary</PageTitle>
+
+<PotsurePageHeader Title="Confirmed recurring summary" HeadingLevel="1" />
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading summary…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Summary unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_model is not null)
+{
+    <PotsureSection Title="Confirmed income">
+        @if (_model.ConfirmedIncome.Count == 0)
+        {
+            <BbTypographyP>No confirmed income patterns yet.</BbTypographyP>
+        }
+        else
+        {
+            <BbDataTable TData="ConfirmedIncomeSummaryRow"
+                           Data="@_model.ConfirmedIncome"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Income patterns used for display splits only">
+                <Columns>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Source"
+                                       Property="@(row => row.SourceLabel)" />
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Cadence">
+                        <CellTemplate Context="row">
+                            @row.Cadence
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="decimal"
+                                       Header="Amount">
+                        <CellTemplate Context="row">
+                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.EstimateAmount ?? 0m)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Splits (Needs / Wants / Savings)">
+                        <CellTemplate Context="row">
+                            @row.SplitNeedsPercent% / @row.SplitWantsPercent% / @row.SplitSavingsDebtPercent%
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                </Columns>
+            </BbDataTable>
+        }
+    </PotsureSection>
+
+    <PotsureSection Title="Confirmed expenses">
+        @if (_model.ConfirmedExpenses.Count == 0)
+        {
+            <BbTypographyP>No confirmed expense patterns yet.</BbTypographyP>
+        }
+        else
+        {
+            <BbDataTable TData="ConfirmedExpenseSummaryRow"
+                           Data="@_model.ConfirmedExpenses"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Expense commitments for budget balance">
+                <Columns>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Vendor"
+                                       Property="@(row => row.VendorLabel)" />
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Category">
+                        <CellTemplate Context="row">
+                            @BudgetCategoryDisplay.Format(row.CategoryKind)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Cadence">
+                        <CellTemplate Context="row">
+                            @row.Cadence
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="decimal"
+                                       Header="Amount">
+                        <CellTemplate Context="row">
+                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.MonthlyEstimate ?? 0m)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Coverage"
+                                       Property="@(row => row.EstimateCoverageLabel ?? "-")" />
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Tag"
+                                       Property="@(row => row.Tag ?? "-")" />
+                </Columns>
+            </BbDataTable>
+        }
+    </PotsureSection>
+
+    <PotsureSection Title="Suggestions (not confirmed)">
+        @if (_model.Suggestions.Count == 0)
+        {
+            <BbTypographyP>No open suggestions.</BbTypographyP>
+        }
+        else
+        {
+            <BbItemGroup>
+                @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
+                {
+                    <BbItem>
+                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, @(row.AmountSummary ?? "Amount unknown")</BbItemTitle>
+                    </BbItem>
+                }
+            </BbItemGroup>
+            <BbTypographyP><BbLink Href="/recurrence/review">Review suggestions</BbLink></BbTypographyP>
+        }
+    </PotsureSection>
+}

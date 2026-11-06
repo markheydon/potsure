@@ -5,9 +5,23 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/Potsure/Potsure.csproj" />
+    <Project Path="src/Potsure.AppHost/Potsure.AppHost.csproj" />
+    <Project Path="src/Potsure.Budgeting/Potsure.Budgeting.csproj" />
+    <Project Path="src/Potsure.Data/Potsure.Data.csproj" />
+    <Project Path="src/Potsure.Infrastructure/Potsure.Infrastructure.csproj" />
+    <Project Path="src/Potsure.Recurrence/Potsure.Recurrence.csproj" />
+    <Project Path="src/Potsure.Reporting/Potsure.Reporting.csproj" />
+    <Project Path="src/Potsure.ServiceDefaults/Potsure.ServiceDefaults.csproj" />
+    <Project Path="src/Potsure.Statements/Potsure.Statements.csproj" />
+    <Project Path="src/Potsure.Web/Potsure.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Potsure.Tests/Potsure.Tests.csproj" />
+    <Project Path="tests/Potsure.Budgeting.Tests/Potsure.Budgeting.Tests.csproj" />
+    <Project Path="tests/Potsure.E2E/Potsure.E2E.csproj" />
+    <Project Path="tests/Potsure.Infrastructure.Tests/Potsure.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Potsure.Recurrence.Tests/Potsure.Recurrence.Tests.csproj" />
+    <Project Path="tests/Potsure.Reporting.Tests/Potsure.Reporting.Tests.csproj" />
+    <Project Path="tests/Potsure.Statements.Tests/Potsure.Statements.Tests.csproj" />
+    <Project Path="tests/Potsure.Web.Tests/Potsure.Web.Tests.csproj" />
   </Folder>
 </Solution>

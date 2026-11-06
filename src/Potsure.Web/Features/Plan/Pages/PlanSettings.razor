@@ -1,0 +1,131 @@
+@page "/plan"
+@rendermode InteractiveServer
+
+<PageTitle>Plan settings</PageTitle>
+
+<PotsurePageHeader Title="Plan settings"
+                   Description="Choose your allocation preset, budget period and planned income."
+                   HeadingLevel="1">
+    <Actions>
+        <PotsureRelatedNav>
+            <BbButton Href="/plan/pots" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="piggy-bank" Size="15" /></Icon>
+                <ChildContent>Pot mapping</ChildContent>
+            </BbButton>
+            <BbButton Href="/plan/funding" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="wallet" Size="15" /></Icon>
+                <ChildContent>Recorded funding</ChildContent>
+            </BbButton>
+        </PotsureRelatedNav>
+    </Actions>
+</PotsurePageHeader>
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading plan…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Could not save plan</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+}
+else
+{
+    @if (_saveMessage is not null)
+    {
+        <BbAlert Variant="AlertVariant.Success" AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+            <Icon><LucideIcon Name="circle-check" Size="18" /></Icon>
+            <ChildContent>
+                <BbAlertTitle>Plan saved</BbAlertTitle>
+                <BbAlertDescription>@_saveMessage</BbAlertDescription>
+            </ChildContent>
+        </BbAlert>
+    }
+
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <PotsureSection Title="Income and period" Class="bb:w-full bb:max-w-4xl">
+<ChildContent>
+            <BbTypographyMuted>
+                <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
+                Actual receipts in the period are shown on reports separately (@ReportCopy.ActualReceiptsHeading).
+            </BbTypographyMuted>
+
+            <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Allocation preset</BbLabel>
+                    <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select preset">
+                                <ChildContent Context="ignored">
+                                    @FormatPreset(_form.Preset)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
+                            {
+                                <BbSelectItem TValue="AllocationPreset" Value="@preset" Text="@FormatPreset(preset)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Planned income (budgeted)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(_form.BudgetedIncome)"
+                             ValueChanged="@(v => _form.BudgetedIncome = ParseDecimal(v, _form.BudgetedIncome))" />
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Period start (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.StartDate)"
+                                  ValueChanged="@(d => _form.StartDate = d ?? _form.StartDate)" />
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Period end (inclusive)</BbLabel>
+                    <BbDatePicker Value="@((DateTime?)_form.EndDate)"
+                                  ValueChanged="@(d => _form.EndDate = d ?? _form.EndDate)" />
+                </div>
+            </div>
+
+            @if (_incomeSuggestion is not null)
+            {
+                <BbAlert Variant="AlertVariant.Info">
+                    <Icon><LucideIcon Name="lightbulb" Size="18" /></Icon>
+                    <ChildContent>
+                        <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
+                        <BbAlertDescription>
+                            @UkCurrencyDisplay.Format(_incomeSuggestion.SuggestedAmount)  -  @_incomeSuggestion.Rationale
+                            @if (_incomeSuggestion.ExcludedSources.Count > 0)
+                            {
+                                <span> Not included (variable or ad hoc cadence, or no amount): @string.Join(", ", _incomeSuggestion.ExcludedSources).</span>
+                            }
+                        </BbAlertDescription>
+                    </ChildContent>
+                </BbAlert>
+            }
+
+            @if (_actualReceiptsInPeriod is not null)
+            {
+                <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+                    @ReportCopy.ActualReceiptsHeading:
+                    @UkCurrencyDisplay.Format(_actualReceiptsInPeriod.Value)
+                </BbTypographyMuted>
+            }
+</ChildContent>
+
+            <Footer>
+                <BbButton Type="ButtonType.Submit" Disabled="_saving">
+                    @(_saving ? "Saving…" : "Save plan")
+                </BbButton>
+            </Footer>
+        </PotsureSection>
+    </EditForm>
+}

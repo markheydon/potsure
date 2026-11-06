@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "aspire": {
+      "type": "stdio",
+      "command": "aspire",
+      "args": [
+        "agent",
+        "mcp"
+      ]
+    },
+    "blazorblueprint": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@blazorblueprint/mcp@latest"
+      ]
+    }
+  }
+}
