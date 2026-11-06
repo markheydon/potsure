@@ -4,6 +4,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
@@ -115,6 +116,33 @@ public partial class TransactionAttributionReview
 
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
         _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
+
+    private string CategoryLabel(Guid categoryId) =>
+        _categories.FirstOrDefault(c => c.Id == categoryId) is { } category
+            ? BudgetCategoryDisplay.Format(category.Kind)
+            : "Category";
+
+    private string PotSelectionLabel(Guid transactionId)
+    {
+        if (!_potByTransaction.TryGetValue(transactionId, out Guid? pot) || pot is not Guid id || id == Guid.Empty)
+        {
+            return "None";
+        }
+
+        return _pots.FirstOrDefault(p => p.Id == id)?.Name ?? "None";
+    }
+
+    private string PatternSelectionLabel(Guid transactionId)
+    {
+        if (!_patternByTransaction.TryGetValue(transactionId, out Guid? pattern)
+            || pattern is not Guid id
+            || id == Guid.Empty)
+        {
+            return "None";
+        }
+
+        return _patterns.FirstOrDefault(p => p.Id == id)?.Label ?? "None";
+    }
 
     private Guid GetPotSelection(Guid transactionId) =>
         _potByTransaction.TryGetValue(transactionId, out Guid? pot) && pot is Guid id ? id : Guid.Empty;

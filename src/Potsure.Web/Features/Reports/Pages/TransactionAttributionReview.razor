@@ -61,7 +61,11 @@ else
                 <CellTemplate Context="row">
                     <BbSelect TValue="Guid" @bind-Value="_categoryByTransaction[row.TransactionId]">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="Category" />
+                            <BbSelectValue Placeholder="Category">
+                                <ChildContent Context="ignored">
+                                    @CategoryLabel(_categoryByTransaction[row.TransactionId])
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             @foreach (CategoryOption category in _categories)
@@ -79,7 +83,11 @@ else
                               Value="@GetPotSelection(row.TransactionId)"
                               ValueChanged="@(id => SetPotSelection(row.TransactionId, id))">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="None" />
+                            <BbSelectValue Placeholder="None">
+                                <ChildContent Context="ignored">
+                                    @PotSelectionLabel(row.TransactionId)
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
@@ -98,7 +106,11 @@ else
                               Value="@GetPatternSelection(row.TransactionId)"
                               ValueChanged="@(id => SetPatternSelection(row.TransactionId, id))">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="None" />
+                            <BbSelectValue Placeholder="None">
+                                <ChildContent Context="ignored">
+                                    @PatternSelectionLabel(row.TransactionId)
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />

@@ -70,7 +70,11 @@ else
                 <CellTemplate Context="row">
                     <BbSelect TValue="Guid" @bind-Value="_selectedCategoryByTransaction[row.TransactionId]">
                         <BbSelectTrigger>
-                            <BbSelectValue Placeholder="Category" />
+                            <BbSelectValue Placeholder="Category">
+                                <ChildContent Context="ignored">
+                                    @CategoryLabel(_selectedCategoryByTransaction[row.TransactionId])
+                                </ChildContent>
+                            </BbSelectValue>
                         </BbSelectTrigger>
                         <BbSelectContent>
                             @foreach (CategoryOption category in _categories)

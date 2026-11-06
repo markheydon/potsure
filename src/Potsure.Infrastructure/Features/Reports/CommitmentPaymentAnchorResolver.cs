@@ -9,7 +9,7 @@ namespace Potsure.Infrastructure.Features.Reports;
 /// <summary>
 /// Derives payment anchor dates for commitment projection from attributed history.
 /// </summary>
-internal static class CommitmentPaymentAnchorResolver
+public static class CommitmentPaymentAnchorResolver
 {
     public static async Task<IReadOnlyDictionary<Guid, DateOnly>> ResolveExpenseAnchorsAsync(
         PotsureDbContext dbContext,

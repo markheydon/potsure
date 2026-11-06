@@ -113,7 +113,7 @@ else if (_model is not null)
                 @foreach (SuggestedPatternSummaryRow row in _model.Suggestions)
                 {
                     <BbItem>
-                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, ~@UkCurrencyDisplay.Format(row.TypicalAmount)</BbItemTitle>
+                        <BbItemTitle>@row.Label  -  @(row.IsIncome ? "Income" : "Expense"), @row.CadenceDescription, @(row.AmountSummary ?? "Amount unknown")</BbItemTitle>
                     </BbItem>
                 }
             </BbItemGroup>

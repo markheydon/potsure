@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
@@ -32,7 +33,8 @@ public sealed record ConfirmedExpenseSummaryRow(
 public sealed record SuggestedPatternSummaryRow(
     string Label,
     bool IsIncome,
-    decimal TypicalAmount,
+    decimal? TypicalAmount,
+    string? AmountSummary,
     string CadenceDescription);
 
 public sealed record RecurringSummaryReadModel(
@@ -80,6 +82,7 @@ public sealed class RecurringSummaryQuery(
                 r.Label,
                 r.IsIncome,
                 r.TypicalAmount,
+                FormatSuggestedAmountSummary(r),
                 r.IsIncome
                     ? r.IncomeCadence?.ToString() ?? "Unknown"
                     : r.ExpenseCadence?.ToString() ?? "Unknown"))
@@ -107,4 +110,28 @@ public sealed class RecurringSummaryQuery(
                 e.Tag)).ToList(),
             suggestions);
     }
+
+    private static string FormatSuggestedAmountSummary(RecurrenceReviewItem r)
+    {
+        if (r.IsIncome)
+        {
+            return r.TypicalAmount is decimal amount
+                ? $"Typical per payment {FormatGbp(amount)}"
+                : "Amount varies or unknown; choose cadence and enter an amount";
+        }
+
+        return r.DetectedAmountBehaviour switch
+        {
+            DetectedAmountBehaviour.Variable or DetectedAmountBehaviour.Unknown =>
+                r.TypicalAmount is decimal est
+                    ? $"Estimated monthly {FormatGbp(est)} (from history)"
+                    : "Amount varies; confirm uses a monthly estimate from history",
+            _ => r.TypicalAmount is decimal fixedAmount
+                ? $"Typical per payment {FormatGbp(fixedAmount)}"
+                : "Typical amount unknown",
+        };
+    }
+
+    private static string FormatGbp(decimal value) =>
+        value.ToString("C2", CultureInfo.GetCultureInfo("en-GB"));
 }

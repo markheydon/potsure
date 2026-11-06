@@ -1,4 +1,5 @@
 ﻿@page "/recurrence/review"
+@using Potsure.Infrastructure.Features.Recurrence
 @rendermode InteractiveServer
 
 <PageTitle>Recurring patterns</PageTitle>
@@ -48,7 +49,7 @@ else
                             <BbCardDescription>
                                 @(item.IsIncome ? "Income" : "Expense")
                                 · @FormatCadence(item)
-                                · typical @UkCurrencyDisplay.Format(item.TypicalAmount)
+                                · @(item.IsIncome ? item.IncomeAmountDescription() : item.ExpenseAmountDescription())
                             </BbCardDescription>
                         </BbCardHeader>
                         <BbCardContent>
@@ -84,6 +85,10 @@ else
                                 <BbInput Type="InputType.Number"
                                          Value="@FormatDecimal(splits.SavingsDebt)"
                                          ValueChanged="@(v => splits.SavingsDebt = ParseDecimal(v, splits.SavingsDebt))" />
+                                <BbLabel>Amount (per payment or estimate)</BbLabel>
+                                <BbInput Type="InputType.Number"
+                                         Value="@FormatDecimal(_incomeAmountByLabel[item.Label])"
+                                         ValueChanged="@(v => _incomeAmountByLabel[item.Label] = ParseDecimal(v, _incomeAmountByLabel[item.Label]))" />
                             </div>
                         }
                         else
@@ -126,6 +131,20 @@ else
                                 </BbSelect>
                                 <BbLabel>Tag (optional)</BbLabel>
                                 <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
+                                @if (item.ExpenseIsVariableAmount())
+                                {
+                                    <BbLabel>Monthly estimate (£)</BbLabel>
+                                    <BbInput Type="InputType.Number"
+                                             Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
+                                             ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                }
+                                else
+                                {
+                                    <BbLabel>Fixed amount per payment (£)</BbLabel>
+                                    <BbInput Type="InputType.Number"
+                                             Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
+                                             ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                }
                             </div>
                         }
                         <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-4">
@@ -245,17 +264,17 @@ else
         @if (SplitSourceReviewItem is { } splitSource)
         {
             <BbTypographyMuted Class="bb:text-sm bb:leading-snug">
-                Typical recurring amount for this pattern: <strong>@UkCurrencyDisplay.Format(splitSource.TypicalAmount)</strong>
-                @if (splitSource.TypicalAmount > 0m)
+                @if (splitSource.ExpenseIsVariableAmount())
                 {
                     <span>
-                        Each of the two new patterns is saved with a <strong>fixed</strong> amount of <strong>@UkCurrencyDisplay.Format(splitSource.TypicalAmount / 2m)</strong> per payment (half of the source).
+                        Each part keeps half of the source <strong>monthly estimate</strong> when the source is variable.
                     </span>
                 }
                 else
                 {
                     <span>
-                        The source typical amount is zero, so each new pattern is saved with <strong>@UkCurrencyDisplay.Format(0m)</strong> fixed; adjust amounts later if we add editing on recurring patterns.
+                        Typical fixed amount for this pattern: <strong>@UkCurrencyDisplay.Format(splitSource.TypicalAmount ?? 0m)</strong>.
+                        Each of the two new patterns is saved with <strong>@UkCurrencyDisplay.Format((splitSource.TypicalAmount ?? 0m) / 2m)</strong> fixed per payment (half of the source).
                     </span>
                 }
             </BbTypographyMuted>

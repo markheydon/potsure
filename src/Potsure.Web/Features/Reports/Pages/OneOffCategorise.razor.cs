@@ -4,6 +4,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
@@ -45,6 +46,11 @@ public partial class OneOffCategorise
             _loading = false;
         }
     }
+
+    private string CategoryLabel(Guid categoryId) =>
+        _categories.FirstOrDefault(c => c.Id == categoryId) is { } category
+            ? BudgetCategoryDisplay.Format(category.Kind)
+            : "Category";
 
     private async Task ReloadTransactionsAsync()
     {

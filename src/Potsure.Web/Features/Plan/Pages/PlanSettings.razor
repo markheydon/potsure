@@ -103,6 +103,10 @@ else
                         <BbAlertTitle>Suggested planned income (not applied)</BbAlertTitle>
                         <BbAlertDescription>
                             @UkCurrencyDisplay.Format(_incomeSuggestion.SuggestedAmount)  -  @_incomeSuggestion.Rationale
+                            @if (_incomeSuggestion.ExcludedSources.Count > 0)
+                            {
+                                <span> Not included (variable or ad hoc cadence, or no amount): @string.Join(", ", _incomeSuggestion.ExcludedSources).</span>
+                            }
                         </BbAlertDescription>
                     </ChildContent>
                 </BbAlert>

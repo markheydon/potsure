@@ -53,6 +53,8 @@ public partial class DetectionReview
     private Dictionary<string, string?> _expenseTagByLabel = [];
     private Dictionary<string, IncomeSplitInput> _incomeSplitsByLabel = [];
     private Dictionary<string, IncomeCadence> _incomeCadenceByLabel = [];
+    private Dictionary<string, decimal> _incomeAmountByLabel = [];
+    private Dictionary<string, decimal> _expenseAmountByLabel = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
@@ -129,6 +131,15 @@ public partial class DetectionReview
             {
                 _incomeCadenceByLabel[item.Label] = item.IncomeCadence ?? IncomeCadence.Monthly;
             }
+
+            if (item.IsIncome)
+            {
+                _incomeAmountByLabel[item.Label] = item.TypicalAmount ?? 0m;
+            }
+            else
+            {
+                _expenseAmountByLabel[item.Label] = item.TypicalAmount ?? 0m;
+            }
         }
     }
 
@@ -160,12 +171,20 @@ public partial class DetectionReview
             {
                 IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
                 IncomeCadence cadence = _incomeCadenceByLabel[item.Label];
-                decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : item.TypicalAmount;
-                decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? item.TypicalAmount : null;
+                decimal amount = _incomeAmountByLabel.GetValueOrDefault(item.Label);
+                if (amount <= 0m)
+                {
+                    _statusMessage = "Enter a positive amount for this income line before confirming.";
+                    return;
+                }
+
+                decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : amount;
+                decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? amount : null;
+
                 await IncomeService.SaveAsync(
                     new SaveIncomeSourceRequest(
                         item.PersistedId,
-                        item.SourceLabelFallback(),
+                        item.SourceOrVendorLabel(),
                         cadence,
                         fixedAmount,
                         estimateAmount,
@@ -180,26 +199,42 @@ public partial class DetectionReview
                 Guid? potId = _expensePotByLabel[item.Label];
                 string? tag = NullIfWhiteSpace(_expenseTagByLabel[item.Label]);
                 ExpenseCadence cadence = item.ExpenseCadence ?? ExpenseCadence.Monthly;
-                bool isVariable = cadence == ExpenseCadence.Variable;
+                bool treatAsVariable = item.ExpenseIsVariableAmount();
+                VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
+                decimal entered = _expenseAmountByLabel.GetValueOrDefault(item.Label);
                 decimal? monthlyEstimate = null;
-                string? coverageLabel = null;
-                if (isVariable)
+                string? coverageLabel = estimate.CoverageLabel;
+                decimal? fixedAmount = null;
+
+                if (treatAsVariable)
                 {
-                    VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
-                    monthlyEstimate = estimate.MonthlyEstimate;
-                    coverageLabel = estimate.CoverageLabel;
+                    monthlyEstimate = entered > 0m ? entered : estimate.MonthlyEstimate;
+                    if (monthlyEstimate is null or <= 0m)
+                    {
+                        _statusMessage = "Enter a positive monthly estimate for this variable expense before confirming.";
+                        return;
+                    }
+                }
+                else
+                {
+                    fixedAmount = entered > 0m ? entered : item.TypicalAmount;
+                    if (fixedAmount is null or <= 0m)
+                    {
+                        _statusMessage = "Enter a positive fixed amount per payment before confirming.";
+                        return;
+                    }
                 }
 
                 RecurringExpenseEntity saved = await ExpenseService.SaveAsync(
                     new SaveRecurringExpenseRequest(
                         item.PersistedId,
-                        item.Label,
+                        item.SourceOrVendorLabel(),
                         categoryId,
                         potId,
                         cadence,
                         PaymentType: "Card",
-                        AmountKind: isVariable ? "Variable" : "Fixed",
-                        isVariable ? null : item.TypicalAmount,
+                        AmountKind: treatAsVariable ? "Variable" : "Fixed",
+                        fixedAmount,
                         monthlyEstimate,
                         coverageLabel,
                         tag,
@@ -224,13 +259,17 @@ public partial class DetectionReview
         {
             if (item.IsIncome)
             {
+                IncomeCadence cadence = _incomeCadenceByLabel.GetValueOrDefault(item.Label, item.IncomeCadence ?? IncomeCadence.Monthly);
+                decimal amount = _incomeAmountByLabel.GetValueOrDefault(item.Label);
+                decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : amount;
+                decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? amount : null;
                 await IncomeService.SaveAsync(
                     new SaveIncomeSourceRequest(
                         item.PersistedId,
-                        item.SourceLabelFallback(),
-                        item.IncomeCadence ?? IncomeCadence.Monthly,
-                        item.TypicalAmount,
-                        null,
+                        item.SourceOrVendorLabel(),
+                        cadence,
+                        fixedAmount,
+                        estimateAmount,
                         50m,
                         30m,
                         20m,
@@ -239,18 +278,30 @@ public partial class DetectionReview
             else
             {
                 Guid categoryId = _expenseCategoryByLabel[item.Label];
+                bool variable = item.ExpenseIsVariableAmount();
+                decimal amount = _expenseAmountByLabel.GetValueOrDefault(item.Label);
+                decimal? fixedPart = variable ? null : (item.TypicalAmount ?? amount);
+                decimal? monthlyPart = variable ? (item.TypicalAmount ?? amount) : null;
+                string? coverage = null;
+                if (variable && (monthlyPart is null or <= 0m))
+                {
+                    VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
+                    monthlyPart = estimate.MonthlyEstimate;
+                    coverage = estimate.CoverageLabel;
+                }
+
                 await ExpenseService.SaveAsync(
                     new SaveRecurringExpenseRequest(
                         item.PersistedId,
-                        item.Label,
+                        item.SourceOrVendorLabel(),
                         categoryId,
                         null,
                         item.ExpenseCadence ?? ExpenseCadence.Monthly,
                         "Card",
-                        "Fixed",
-                        item.TypicalAmount,
-                        null,
-                        null,
+                        variable ? "Variable" : "Fixed",
+                        fixedPart,
+                        monthlyPart,
+                        coverage,
                         null,
                         PatternConfirmationState.Rejected));
             }
@@ -320,16 +371,31 @@ public partial class DetectionReview
 
         try
         {
+            List<Guid> ids = selected.Select(s => s.PersistedId!.Value).ToList();
+            List<RecurringExpenseEntity> entities = await DbContext.RecurringExpenses
+                .AsNoTracking()
+                .Where(e => ids.Contains(e.Id))
+                .ToListAsync();
+
+            bool anyVariable = entities.Any(e =>
+                string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase));
+            decimal? mergedFixed = anyVariable
+                ? null
+                : entities.Sum(e => e.FixedAmount ?? 0m);
+            decimal? mergedMonthly = anyVariable
+                ? entities.Sum(e => e.MonthlyEstimate ?? e.FixedAmount ?? 0m)
+                : null;
+
             await MergeSplitService.MergeAsync(
                 new MergeRecurringExpensesRequest(
-                    selected.Select(s => s.PersistedId!.Value).ToList(),
+                    ids,
                     mergedLabel,
                     new PatternResolution(_mergeCategoryId, _mergePotId, NullIfWhiteSpace(_mergeTag)),
                     selected[0].ExpenseCadence ?? ExpenseCadence.Monthly,
-                    "Fixed",
-                    selected[0].TypicalAmount,
-                    null,
-                    null,
+                    anyVariable ? "Variable" : "Fixed",
+                    mergedFixed,
+                    mergedMonthly,
+                    anyVariable ? "Merged from selected patterns." : null,
                     UserResolvedAssignments: true));
 
             _mergeSelection.Clear();
@@ -362,6 +428,23 @@ public partial class DetectionReview
 
         try
         {
+            RecurringExpenseEntity? sourceEntity = await DbContext.RecurringExpenses
+                .AsNoTracking()
+                .SingleOrDefaultAsync(e => e.Id == source.PersistedId!.Value);
+
+            bool variable = sourceEntity is not null
+                            && string.Equals(sourceEntity.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase);
+            decimal? halfFixed = variable
+                ? null
+                : (sourceEntity?.FixedAmount ?? source.TypicalAmount) is decimal f
+                    ? f / 2m
+                    : null;
+            decimal? halfMonthly = variable
+                ? (sourceEntity?.MonthlyEstimate ?? source.TypicalAmount) is decimal m
+                    ? m / 2m
+                    : null
+                : null;
+
             await MergeSplitService.SplitAsync(
                 new SplitRecurringExpenseRequest(
                     source.PersistedId!.Value,
@@ -373,10 +456,10 @@ public partial class DetectionReview
                                 _splitPartOnePotId,
                                 NullIfWhiteSpace(_splitPartOneTag)),
                             source.ExpenseCadence ?? ExpenseCadence.Monthly,
-                            "Fixed",
-                            source.TypicalAmount / 2m,
-                            null,
-                            null),
+                            variable ? "Variable" : "Fixed",
+                            halfFixed,
+                            halfMonthly,
+                            variable ? "Split from variable pattern." : null),
                         new SplitExpensePart(
                             _splitPartTwoLabel.Trim(),
                             new PatternResolution(
@@ -384,10 +467,10 @@ public partial class DetectionReview
                                 _splitPartTwoPotId,
                                 NullIfWhiteSpace(_splitPartTwoTag)),
                             source.ExpenseCadence ?? ExpenseCadence.Monthly,
-                            "Fixed",
-                            source.TypicalAmount / 2m,
-                            null,
-                            null),
+                            variable ? "Variable" : "Fixed",
+                            halfFixed,
+                            halfMonthly,
+                            variable ? "Split from variable pattern." : null),
                     ]));
 
             _statusMessage = $"Split {source.Label} into two patterns.";
@@ -517,9 +600,4 @@ public partial class DetectionReview
         DateOnly asOf = coverageDays.Count > 0 ? coverageDays[^1] : DateOnly.FromDateTime(DateTime.UtcNow);
         return VariableExpenseEstimator.Estimate(debits, coverageDays, asOf);
     }
-}
-
-internal static class RecurrenceReviewItemExtensions
-{
-    internal static string SourceLabelFallback(this RecurrenceReviewItem item) => item.Label;
 }

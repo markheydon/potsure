@@ -12,7 +12,8 @@ public sealed record RecurrenceReviewItem(
     bool IsIncome,
     ExpenseCadence? ExpenseCadence,
     IncomeCadence? IncomeCadence,
-    decimal TypicalAmount,
+    decimal? TypicalAmount,
+    DetectedAmountBehaviour? DetectedAmountBehaviour,
     PatternConfirmationState State,
     Guid? PersistedId);
 
@@ -86,7 +87,8 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                 isIncome,
                 pattern.IsIncome ? null : pattern.ExpenseCadence,
                 pattern.IsIncome ? pattern.IncomeCadence : null,
-                pattern.TypicalAmount ?? 0m,
+                pattern.TypicalAmount,
+                pattern.AmountBehaviour,
                 state,
                 id);
         }
@@ -104,7 +106,10 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                 true,
                 null,
                 source.Cadence,
-                source.FixedAmount ?? source.EstimateAmount ?? 0m,
+                source.Cadence is IncomeCadence.Variable or IncomeCadence.AdHoc
+                    ? source.EstimateAmount ?? source.FixedAmount
+                    : source.FixedAmount ?? source.EstimateAmount,
+                null,
                 source.State,
                 source.Id);
         }
@@ -122,12 +127,51 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                 false,
                 expense.Cadence,
                 null,
-                expense.FixedAmount ?? expense.MonthlyEstimate ?? 0m,
+                string.Equals(expense.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase)
+                    ? expense.MonthlyEstimate ?? expense.FixedAmount
+                    : expense.FixedAmount ?? expense.MonthlyEstimate,
+                string.Equals(expense.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase)
+                    ? DetectedAmountBehaviour.Variable
+                    : null,
                 expense.State,
                 expense.Id);
         }
 
-        return merged.Values
+        List<RecurrenceReviewItem> items = merged.Values.ToList();
+        List<DateOnly> coverageDays = transactions
+            .Select(t => t.TransactionDate)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+        DateOnly asOf = coverageDays.Count > 0 ? coverageDays[^1] : DateOnly.FromDateTime(DateTime.UtcNow);
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            RecurrenceReviewItem item = items[i];
+            if (item.IsIncome
+                || item.State != PatternConfirmationState.Suggested
+                || item.DetectedAmountBehaviour is not (DetectedAmountBehaviour.Variable or DetectedAmountBehaviour.Unknown))
+            {
+                continue;
+            }
+
+            if (item.TypicalAmount is not null && item.TypicalAmount > 0m)
+            {
+                continue;
+            }
+
+            string normalised = PatternLabelNormalizer.Normalize(item.Label);
+            List<(DateOnly Date, decimal Amount)> debits = transactions
+                .Where(t => t.Kind == TransactionKind.ExpenseDebit)
+                .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
+                .Select(t => (t.TransactionDate, t.Amount))
+                .ToList();
+
+            VariableExpenseEstimateResult estimate = VariableExpenseEstimator.Estimate(debits, coverageDays, asOf);
+            items[i] = item with { TypicalAmount = estimate.MonthlyEstimate };
+        }
+
+        return items
             .OrderBy(i => i.State)
             .ThenBy(i => i.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();

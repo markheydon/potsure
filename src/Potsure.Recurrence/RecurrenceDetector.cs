@@ -28,11 +28,14 @@ public static class RecurrenceDetector
 
         List<DetectedRecurrencePattern> patterns = new();
         foreach (IGrouping<string, RecurrenceTransactionInput> group in eligible
-                     .Select(t => t with { Label = PatternLabelNormalizer.Normalize(t.Label) })
-                     .Where(t => !string.IsNullOrEmpty(t.Label))
-                     .GroupBy(t => t.Label))
+                     .Select(t => t)
+                     .Where(t => !string.IsNullOrEmpty(PatternLabelNormalizer.Normalize(t.Label)))
+                     .GroupBy(t => PatternLabelNormalizer.Normalize(t.Label)))
         {
             List<RecurrenceTransactionInput> rows = group.OrderBy(t => t.Date).ToList();
+            string displayLabel = string.IsNullOrWhiteSpace(rows[^1].Label)
+                ? group.Key
+                : rows[^1].Label.Trim();
             if (rows.Count < MinimumObservations)
             {
                 continue;
@@ -57,17 +60,17 @@ public static class RecurrenceDetector
 
             if (intervalDays is >= 6 and <= 8)
             {
-                patterns.Add(CreatePattern(group.Key, isIncome, weekly: true, fortnightly: false, monthly: false,
+                patterns.Add(CreatePattern(displayLabel, isIncome, weekly: true, fortnightly: false, monthly: false,
                     amountBehaviour, typicalAmount, dates));
             }
             else if (intervalDays is >= 13 and <= 16)
             {
-                patterns.Add(CreatePattern(group.Key, isIncome, weekly: false, fortnightly: true, monthly: false,
+                patterns.Add(CreatePattern(displayLabel, isIncome, weekly: false, fortnightly: true, monthly: false,
                     amountBehaviour, typicalAmount, dates));
             }
             else if (intervalDays is >= 27 and <= 35)
             {
-                patterns.Add(CreatePattern(group.Key, isIncome, weekly: false, fortnightly: false, monthly: true,
+                patterns.Add(CreatePattern(displayLabel, isIncome, weekly: false, fortnightly: false, monthly: true,
                     amountBehaviour, typicalAmount, dates));
             }
         }
