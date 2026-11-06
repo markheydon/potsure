@@ -29,5 +29,11 @@
     "editor.formatOnSave": true,
     "[csharp]": {
         "editor.defaultFormatter": "ms-dotnettools.csharp"
-    }
+    },
+    "cSpell.words": [
+        "Antiforgery",
+        "Blazor",
+        "Monzo",
+        "potsure"
+    ]
 }
