@@ -1,13 +1,13 @@
 # Data Model: Potsure v1
 
 **Feature**: `001-potsure-v1`  
-**Date**: 2026-11-02 (schema orchestration note: 2026-11-03)
+**Date**: 2026-11-09 (standing plan pivot; schema orchestration note: 2026-11-03)
 
-Conceptual model aligned with spec key entities, planning prompt, and FR-M001–M037. Physical EF mapping is an implementation concern; invariants below are normative for v1.
+Conceptual model aligned with spec key entities, planning prompt, and FR-M001–M037 plus **FR-M008c**, **FR-M008d**, **FR-M013**–**FR-M013c**, **FR-M031a**. Physical EF mapping is an implementation concern; invariants below are normative for v1.
 
 ## Schema evolution
 
-- Physical tables map from aggregates below via EF Core in `Potsure.Infrastructure`.
+- Physical tables map from aggregates below via EF Core in `Potsure.Data` / `Potsure.Infrastructure` (implement layout).
 - Schema changes ship as **versioned EF migrations** in source control (not ad hoc DDL at runtime).
 - **Applying** migrations is an orchestration/deployment step (Aspire `AddEFMigrations` locally; controlled job when hosted)  -  see [plan.md](plan.md) and [research.md](research.md). Runtime services seed **application** data (e.g. default budget categories on profile create) separately from schema migration.
 
@@ -15,7 +15,8 @@ Conceptual model aligned with spec key entities, planning prompt, and FR-M001–
 
 - Every user-owned aggregate carries **`UserId`** (hosted) or a single local profile key (local-only mode).
 - **One Monzo account association** per user/plan; all imports and transactions bind to it.
-- **One working budget period** per plan (FR-M031); edit dates and budgeted income in place.
+- **One standing budget plan** per user (**FR-M031**): preset, estimated income + cadence, confirmed recurring items, pot mode, horizon settings; **no** saved plan start/end dates or library of plan profiles.
+- **Report date range** is **in-session per browser tab** for report views (**FR-M031a**); not persisted on the standing plan (**FR-X006**).
 - **GBP only** for stored monetary amounts (FR-M026).
 
 ## Enumerations (conceptual)
@@ -24,17 +25,18 @@ Conceptual model aligned with spec key entities, planning prompt, and FR-M001–
 |------|--------|-------|
 | `BudgetCategoryKind` | Needs, Wants, SavingsAndDebt | Fixed trio; FR-M012 |
 | `AllocationPreset` | FiftyThirtyTwenty (default), SeventyFiveFifteenTen | Category-level only |
-| `IncomeCadence` | Weekly, Fortnightly, Monthly, Variable, AdHoc | Detection + display |
+| `PlanIncomeCadence` | Weekly, Fortnightly, Monthly, Quarterly, Yearly | Standing plan estimated income |
+| `IncomeCadence` | Weekly, Fortnightly, Monthly, Variable, AdHoc, Quarterly, Yearly | Per confirmed income pattern |
 | `ExpenseCadence` | Weekly, Fortnightly, Monthly, Variable, AnnualRare | Annual detection not guaranteed complete |
 | `PaymentType` | DirectDebit, Card, FasterPayment, Other | From Monzo `Type` mapping |
-| `ExpenseAmountKind` | Fixed, Variable | Variable uses FR-M034 averaging |
+| `ExpenseAmountKind` | Fixed, Variable | User authoritative per **FR-M008d** |
 | `TransactionKind` | ExpenseDebit, IncomeCredit, RefundCredit, InternalTransfer, PotMovement, Unknown | Drives detection exclusion and actuals |
-| `PatternConfirmationState` | Suggested, Confirmed, Rejected | Suggestions never drive commitments |
-| `PotMappingMode` | None, CategoryNamedPots, ExpenseSpecificPots | UX configuration; maths at category |
+| `PatternConfirmationState` | Suggested, Confirmed, Rejected | Rejected may re-suggest |
+| `PotMappingMode` | CategoryOnly, ThreePots, SeveralPots | **FR-M013**; default category-only acceptable |
 
 ## Core aggregates
 
-### BudgetProfile
+### BudgetProfile (standing plan)
 
 Root planning aggregate for a user (1:1 with plan in v1).
 
@@ -45,45 +47,51 @@ Root planning aggregate for a user (1:1 with plan in v1).
 | SelectedPreset | AllocationPreset | Default FiftyThirtyTwenty |
 | Currency | ISO | Fixed GBP |
 | MonzoAccount | MonzoAccountAssociation | Required before import persist |
-| WorkingPeriod | BudgetPeriod | Embedded or 1:1 child |
+| PotMappingMode | PotMappingMode | Default CategoryOnly |
+| EstimatedIncomeAmount | Money? | Null until user saves |
+| EstimatedIncomeCadence | PlanIncomeCadence? | Null until user saves; both required for allocations |
+| EstimatedIncomeComplete | bool | Derived: both amount and cadence saved |
 | Categories | BudgetCategory[3] | Exactly three fixed kinds |
-| OptionalPots | BankPot[] | Each maps to exactly one category |
-| ForecastHorizonMonths | int | Default 3; user override FR-M035 |
+| OptionalPots | BankPot[] | Empty in category-only; mode invariants otherwise |
+| ForecastHorizonMonths | int | 1–12; default 3; **FR-M035** |
+| ActualIncomeWindowMonths | int | 1–12; default 3; persisted **FR-M019** |
 | RememberedColumnMapping | MonzoColumnMapping? | Reused when layout unchanged |
 
-**Invariants**: Cannot remove/replace categories; preset change recalculates **allocations only** from current budgeted income (FR-M011).
+**Invariants**: Cannot remove/replace categories. Preset change recalculates **monthly-equivalent allocations only** from current estimated income (**FR-M011**). Incomplete estimated income → reports show **not set**, not £0 planned maths (**FR-M031**).
 
 ### BudgetCategory (fixed ×3)
 
 | Field | Type | Rules |
 |-------|------|-------|
 | Kind | BudgetCategoryKind | Immutable kind |
-| AllocationAmount | Money | Preset × budgeted income for period |
+| MonthlyAllocationAmount | Money? | Preset × monthly-equivalent income when complete |
 | RecordedFundingDirect | Money | User-declared; not from imports |
 | PlannedFutureFundingDirect | Money | Optional user intent |
 
-Derived (not stored as source of truth in core; may be cached): **actual activity**, **under/over**, pot rollups.
+Derived (not stored as source of truth in core; may be cached): **range-prorated allocation**, **actual activity**, **under/over**, pot rollups.
 
 ### BankPot (optional)
 
 | Field | Type | Rules |
 |-------|------|-------|
 | Id | Guid | |
-| Name | string | User label (e.g. "Needs - 75 Pot") |
+| Name | string | User label (Monzo-aligned) |
 | CategoryId | Guid | Exactly one parent category |
 | AllocationToPot | Money? | Optional slice of category allocation |
 | RecordedFunding | Money | User-declared |
 | PlannedFutureFunding | Money? | |
 
-**Invariants**: No parent pot; no preset ratios; pot amounts roll into category **once** for totals, warnings, and runway (FR-M013–M017).
+**Invariants**: No parent pot; no preset ratios; mode limits (**FR-M013**). Pot amounts roll into category **once** (FR-M013–M017). Delete with non-zero recorded funding → roll to category or discard (**FR-M013c**).
 
-### BudgetPeriod
+### ReportDateRange (session UI state, not plan aggregate)
 
 | Field | Type | Rules |
 |-------|------|-------|
-| StartDate | DateOnly | Inclusive FR-M031 |
+| StartDate | DateOnly | Inclusive |
 | EndDate | DateOnly | Inclusive |
-| BudgetedIncome | Money | User-confirmed; optional suggestion from income patterns not auto-applied |
+| TabId | string? | Implementation hook for per-tab scope |
+
+**Invariants**: Default current calendar month when unset in tab (**FR-M031a**). Shared across report views in same tab; independent across tabs. Not exported as a saved preset (**FR-X006**).
 
 ### MonzoAccountAssociation
 
@@ -99,9 +107,9 @@ Derived (not stored as source of truth in core; may be cached): **actual activit
 |-------|------|-------|
 | Id | Guid | |
 | SourceLabel | string | e.g. payee name |
-| AmountKind | Fixed / Estimate | Fixed amount or confirmed estimate |
+| AmountKind | ExpenseAmountKind | Fixed vs variable per **FR-M008d** |
 | FixedAmount | Money? | |
-| EstimateAmount | Money? | |
+| VariableEstimate | Money? | When variable |
 | Cadence | IncomeCadence | |
 | ExpectedDates | DateOnly[]? | Optional receipt hints |
 | SplitNeedsPercent | decimal | Display-only splits |
@@ -109,7 +117,7 @@ Derived (not stored as source of truth in core; may be cached): **actual activit
 | SplitSavingsDebtPercent | decimal | FR-M010 |
 | State | PatternConfirmationState | |
 
-**Invariants**: Splits **must not** drive category allocations or FR-M018 (display-only).
+**Invariants**: Splits **must not** drive category allocations or FR-M018. Editable/deletable **FR-M008c**.
 
 ### RecurringExpense (confirmed recurring expense pattern)
 
@@ -118,17 +126,19 @@ Derived (not stored as source of truth in core; may be cached): **actual activit
 | Id | Guid | |
 | VendorLabel | string | |
 | CategoryId | Guid | One of three |
-| MappedPotId | Guid? | Optional |
+| MappedPotId | Guid? | Optional; cleared when pot deleted |
 | Cadence | ExpenseCadence | |
 | PaymentType | PaymentType | |
-| AmountKind | ExpenseAmountKind | |
-| FixedAmount | Money? | |
-| MonthlyEstimate | Money? | From FR-M034 window |
-| EstimateCoverage | CoverageWindow | Months/days covered; labelled |
+| AmountKind | ExpenseAmountKind | User override **FR-M008d** |
+| FixedAmountPerOccurrence | Money? | Fixed patterns |
+| PaymentAnchorDate | DateOnly? | Fixed occurrence stepping **FR-M008c** |
+| PaymentAnchorUserOverride | bool | Re-import may refresh only when false |
+| StoredMonthlyEstimate | Money? | Variable; **FR-M018**/**FR-M020**; stable until user edit |
+| EstimateCoverage | CoverageWindow | For FR-M032/034 labelling |
 | Tag | string? | Free text; no calc effect FR-M009 |
 | State | PatternConfirmationState | |
 
-**Invariants**: Contributes to **period commitments** when confirmed and projected (FR-M018). Merge/split requires user resolution of category/pot/tag (FR-M008).
+**Invariants**: Contributes to **range commitments** when confirmed. Merge/split/edit/delete per **FR-M008**/**FR-M008c**. Variable estimate not auto-updated on import.
 
 ### Transaction (imported statement row)
 
@@ -157,7 +167,8 @@ Derived (not stored as source of truth in core; may be cached): **actual activit
 | Id | Guid | |
 | TransactionId | Guid? | Per-transaction override |
 | RecurringExpenseId | Guid? | Pattern-level default |
-| CategoryId | Guid | |
+| CategoryId | Guid? | Income attribution may omit category |
+| IsIncomeAttribution | bool | FR-M010b |
 | MappedPotId | Guid? | Compatible with category |
 | Tag | string? | Display |
 | ConfirmedAt | DateTimeOffset | |
@@ -180,28 +191,28 @@ Not a durable aggregate root; output of budgeting core + reporting layer.
 
 | Field | Description |
 |-------|-------------|
-| Period | Start/end |
-| BudgetedIncome | Planned |
-| ExpectedIncomeInPeriod | From income patterns (separate from budgeted) |
-| ActualIncomeInPeriod | From statements |
-| PerCategory | Allocation, recorded funding (direct + pots once), actual activity (net attributed), under/over, over-allocation flag |
+| ReportRange | Inclusive start/end |
+| RunwayWindow | Inclusive start (report start) through runway end **FR-M020** |
+| EstimatedIncomeMonthlyEquivalent | From standing plan when complete |
+| EstimatedIncomeInRange | Prorated for **FR-M018** |
+| ActualIncomeMonthlyMean | **FR-M019** over N calendar months |
+| PerCategory | Range allocation (prorated), recorded funding, actual activity, under/over, over-allocation flag |
 | PerPot | Optional funding/activity detail |
 | UncategorisedSpendTotal | Unattributed debits |
-| CommitmentsTotal | Cadence-projected recurring expenses |
+| CommitmentsTotal | Cadence-projected recurring expenses in range |
 | RequiredIncomePerCategory | FR-M018 |
-| RequiredIncomeTotal | |
+| RequiredIncomeTotal | Max of three |
 | Shortfall | |
 | LimitingCategory | With tie rules |
-| BudgetBalanceConclusion | Yes/no + monetary gap |
+| BudgetBalanceConclusion | Yes/no + monetary gap; **not set** when plan income incomplete |
 | UncertaintyFlags | History gaps, estimate coverage |
 
-**Invariants**: Under/over = allocation − actual activity (recorded funding excluded). Count each pound once in category totals.
+**Invariants**: Under/over = range allocation − range actual activity (recorded funding excluded). Count each pound once in category totals.
 
 ## Relationships (ER sketch)
 
 ```text
 User 1──1 BudgetProfile
-BudgetProfile 1──1 BudgetPeriod
 BudgetProfile 1──3 BudgetCategory
 BudgetProfile 0──* BankPot ──*──1 BudgetCategory
 BudgetProfile 1──1 MonzoAccountAssociation
@@ -211,6 +222,7 @@ User 1──* RecurringExpense
 RecurringExpense *──0..1 BankPot
 Transaction 0──* Assignment
 RecurringExpense 0──* Assignment (pattern defaults)
+(Session) ReportDateRange  -  not child of BudgetProfile
 ```
 
 ## Validation rules (summary)
@@ -219,12 +231,16 @@ RecurringExpense 0──* Assignment (pattern defaults)
 |------|--------|
 | Income split percents sum to 100% | FR-M010 |
 | Non-GBP rows rejected | FR-M026 |
-| Pot + direct recorded funding ≤ allocation → warning if exceeded | FR-M017a |
+| Pot mode invariants on map/switch | FR-M013 |
+| Pot funding roll/discard on delete | FR-M013c |
+| Estimated income + cadence both required for allocation maths | FR-M031 |
+| Forecast horizon and actual-income window 1–12 | FR-M019, FR-M035 |
 | Category assignment required on confirm/split children | FR-M008 |
 | De-dupe key per FR-M004 | FR-M004 |
 | One-off → actuals only | FR-M037 |
 | Deterministic reports for unchanged inputs | FR-M036 |
+| Banker's 2dp at report emission | FR-M036 |
 
 ## Deletion
 
-Transactional wipe of user financial rows, assignments, patterns, transactions, pots, period, profile; hosted **Identity** account data per operator policy (email/password v1; optional passkeys post–v1.0.0); retain non-financial audit marker only (user prompt reliability/deletion).
+Transactional wipe of user financial rows, assignments, patterns, transactions, pots, profile; hosted **Identity** account data per operator policy (email/password v1; optional passkeys post–v1.0.0); retain non-financial audit marker only (user prompt reliability/deletion).

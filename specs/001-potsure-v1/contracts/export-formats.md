@@ -1,7 +1,7 @@
 # Contract: Export formats
 
 **Feature**: `001-potsure-v1`  
-**Version**: 1.0.0  
+**Version**: 1.1.0 (standing plan fields 2026-11-09)  
 **Requirements**: FR-M022, reauthentication before export.
 
 ## User choice at export time
@@ -20,10 +20,12 @@
   "currency": "GBP",
   "budgetProfile": {
     "preset": "FiftyThirtyTwenty",
+    "potMappingMode": "CategoryOnly",
     "forecastHorizonMonths": 3,
-    "period": { "start": "2026-10-01", "end": "2026-10-31", "budgetedIncome": 2500.00 },
+    "actualIncomeWindowMonths": 3,
+    "estimatedIncome": { "amount": 2500.00, "cadence": "Monthly" },
     "categories": [
-      { "kind": "Needs", "allocation": 1250.00, "recordedFundingDirect": 0, "plannedFutureFundingDirect": 0 }
+      { "kind": "Needs", "monthlyAllocation": 1250.00, "recordedFundingDirect": 0, "plannedFutureFundingDirect": 0 }
     ],
     "bankPots": [],
     "monzoAccount": { "displayName": "…", "fingerprint": "…" }
@@ -47,7 +49,7 @@ Headers: `Id,MonzoTransactionId,Date,Time,Type,Name,Amount,Currency,Description,
 
 ### `plan.csv`
 
-Headers: `Section,Key,Value`  -  rows for preset, period, budgeted income, category allocations, pot funding, confirmed pattern summaries.
+Headers: `Section,Key,Value`  -  rows for preset, pot mapping mode, estimated income amount and cadence, forecast horizon, actual-income window, monthly category allocations, pot funding, confirmed pattern summaries (including payment anchors and stored variable estimates). **Report date range is not exported** (in-session only, FR-X006).
 
 ### `metadata.json`
 

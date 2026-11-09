@@ -1,16 +1,18 @@
 # Implementation Plan: Potsure v1
 
-**Branch**: `001-potsure-v1` | **Date**: 2026-11-04 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-potsure-v1` | **Date**: 2026-11-09 | **Spec**: [spec.md](./spec.md)
 
 **Governance**: [constitution v1.2.0](../../.specify/memory/constitution.md); agent workflow in [AGENTS.md](../../AGENTS.md) (Aspire consumption + central package versioning).
 
-**Re-plan note (2026-11-04)**: Identity / hosted auth sections updated for password-primary ASP.NET Core Identity and Blazor Identity template UX; budgeting, Monzo import, EF migration orchestration, and Azure/Aspire topology unchanged unless auth wiring requires it.
+**Re-plan note (2026-11-09)**: Standing **budget plan** (estimated income + cadence, no plan start/end dates); **report date range** for period-scoped reports (**FR-M031a**, default current calendar month, shared per browser tab, not persisted); **pot mapping modes** (category-only, three pots, several pots; **FR-M013**–**FR-M013c**); recurring **edit/delete** and **payment anchor** (**FR-M008c**); user **fixed vs variable** override (**FR-M008d**); **30.4375** day proration and **banker's** 2dp rounding (**FR-M017**, **FR-M036**); **max-of-ratios** required income (**FR-M018**); variable commitment uses **stored monthly estimate** not live rolling average; **FR-M019** / **FR-M035** persisted on plan. Identity, Monzo import, EF migration orchestration, and Azure/Aspire topology unchanged from 2026-11-04 unless plan-model work touches them.
+
+**Re-plan note (2026-11-04)**: Identity / hosted auth  -  password-primary ASP.NET Core Identity and Blazor Identity template UX.
 
 **Input**: Feature specification plus planning prompt (conceptual data model, architecture, stack, Azure/Aspire stages, Monzo CSV reference layout) and **EF migrations review prompt** (Aspire migration orchestration, separation of schema apply from web startup, `dotnet ef` developer workflow).
 
 ## Summary
 
-Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orchestration) that ingests **Monzo CSV** statements for a **single account**, detects and user-confirms **recurring income/expenses**, applies fixed **50/30/20** or **75/15/10** presets across **Needs / Wants / Savings & Debt**, optionally maps **Monzo pots** to categories without double-counting, and reports **category health**, **required income / limiting category**, **runway warnings**, and **export/deletion**. A **pure budgeting core library** holds all ratio and shortfall maths for golden unit tests; **statement parsing**, **recurrence detection**, **EF Core persistence**, and **BlazorBlueprint** UI sit at the edges.
+Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orchestration) that ingests **Monzo CSV** statements for a **single account**, detects and user-confirms **recurring income/expenses** (with **edit/delete**, **payment anchors**, and **fixed vs variable** overrides), maintains one **standing budget plan** (**estimated income** + **cadence**, preset, confirmed recurring items; **no** saved plan-period dates), and lets users pick an in-session **report date range** (shared per browser tab) for **category health**, **budget balance** (max-of-ratios **FR-M018**), and **runway** (**FR-M020**). Users choose **category-only**, **three pots**, or **several pots** mapping modes (**FR-M013**). Fixed **50/30/20** or **75/15/10** presets apply to **Needs / Wants / Savings & Debt**; allocations **prorate** with **30.4375** average-month days. A **pure budgeting core library** holds proration, commitment projection, and shortfall maths for golden unit tests; **statement parsing**, **recurrence detection**, **EF Core persistence**, and **BlazorBlueprint** UI sit at the edges.
 
 ## Technical Context
 
@@ -38,7 +40,11 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 **Performance / import bounds**: Interactive Blazor acceptable for single-user/small hosted instances; Monzo CSV import uses streaming parse within operator-documented row/size limits (see [research.md](./research.md)); bounded DB retries compatible with SQL auto-pause on dev/test tiers.
 
 **Constraints**:
-- Budgeting core: no I/O (constitution III).
+- Budgeting core: no I/O (constitution III); inject all calendar boundaries; **30.4375** proration divisor and **banker's rounding** at report emission (**FR-M036**).
+- Standing plan: one profile per user; **estimated income** + **income cadence** (no plan start/end); incomplete income → explicit **not set** on allocations and **FR-M018** (**FR-M031**).
+- Reports: **report date range** independent of plan; default current month; **FR-M031a** tab-scoped session state (not persisted **FR-X006**).
+- Pot modes: **category-only** | **three pots** | **several pots** with invariant enforcement and **FR-M013b** pre-selection.
+- Recurring: **stored** variable monthly estimate for commitments; **FR-M034** suggestions only on user actions; reject does not permanently suppress re-suggestion (**FR-M008**).
 - GBP only; no raw statements in logs; no Blob retention for uploads v1.
 - Local-only mode not network-exposed; hosted mode requires Identity sign-in before financial data (email/password v1).
 - UK English UI/docs.
@@ -46,7 +52,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 - **Central package management** (constitution 1.2.0): new packages only in `Directory.Packages.props` at latest stable when introduced; `dotnet package list --outdated` and full `dotnet test Potsure.slnx -c Release` after dependency upgrades (AGENTS.md).
 - **EF migration orchestration**: finite migration apply before database-dependent resources start; web must not own schema migration at startup; Aspire resource graph `database → migrations → web` with `WaitFor` / `WaitForCompletion` (see [research.md](./research.md)).
 
-**Scale/Scope**: v1 single working budget period per user; one Monzo account; Must FR-M001–M037; deferred services per release gates (Redis, SignalR, Blob staging, Key Vault, etc.).
+**Scale/Scope**: v1 one **standing budget plan** per user plus in-session **report date ranges**; one Monzo account; Must FR-M001–M037 (incl. **FR-M008c**/**FR-M008d**, **FR-M013** modes); deferred services per release gates (Redis, SignalR, Blob staging, Key Vault, etc.).
 
 ## Constitution Check
 
@@ -60,13 +66,13 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 | IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (`ICurrentOwnerAccessor`, EF query filters, fallback authorization policy); local-only unchanged; validation, encryption, structured logging; optional passkeys on template  -  aligned with constitution 1.2.0 |
 | V Documentation | plan, research, data-model, contracts, quickstart; implement adds XML + self-host docs |
 | VI Transparency | Decisions traceable to spec and research.md |
-| Budget model (constitution) | Three categories, two presets, optional pots, single Monzo CSV  -  aligned |
+| Budget model (constitution) | Three categories, two presets, optional pots (three modes), single Monzo CSV, standing plan + report range  -  aligned with spec 2026-11-09 |
 | Deployment governance | Self-host + local-only + hosted auth paths in Aspire staging model |
 | Aspire resource consumption (constitution 1.2.0) | AppHost `WithReference` to SQL; web uses `AddSqlServerDbContext<PotsureDbContext>("potsure")`; EF design-time factory reads config for migrations only  -  not runtime bypass |
 | Central package versioning (constitution 1.2.0) | Dependencies listed for central management; implement/tasks gate on latest-stable pins and outdated-package sweep before dependency work is “done” |
 | EF migration execution (review prompt + constitution II) | No startup `MigrateAsync` on web; AppHost models explicit migration resource; schema seeding not bundled into migration job; AppHost not unit-tested |
 
-**Post-design re-check** (2026-11-04): Phase 1 artifacts respect module boundaries and non-negotiable budget rules. Hosted auth plan uses password-primary Identity (constitution 1.2.0); no passkey-only mandate. Aspire client consumption, central package workflow, and EF migration orchestration (`AddEFMigrations`, design-time factory, hosted apply path) remain documented in this plan, [research.md](./research.md), and [quickstart.md](./quickstart.md). **No unjustified gate violations.** Complexity Tracking table empty.
+**Post-design re-check** (2026-11-09): Phase 1 artifacts updated for household standing plan, report date range, pot modes, proration, and recurring lifecycle (**FR-M008c**/**FR-M008d**). Module boundaries and constitution budget model (three categories, two presets) preserved. Hosted auth unchanged (password-primary Identity 1.2.0). Implementation backlog in [tasks.md](./tasks.md) still reflects pre–2026-11-09 **BudgetPeriod** naming in places; run **`/speckit-converge`** then **`/speckit-tasks`** to align tasks with this plan. **No unjustified gate violations.** Complexity Tracking table empty.
 
 ## Project Structure
 
@@ -137,7 +143,7 @@ Statements    Recurrence          Reporting
 
 ## Phase 0  -  Research
 
-Completed in [research.md](./research.md): Monzo/CsvHelper, de-dupe, variable expense averaging with partial-month normalisation, one-off vs commitment rules, EF/Aspire/Identity/OTel, BlazorBlueprint v4, staged ACA/SQL policy, upload/export streaming, **EF migration ownership and Aspire `AddEFMigrations` orchestration** (2026-11-03), **hosted Identity template + password-primary auth** (2026-11-04).
+Completed in [research.md](./research.md): Monzo/CsvHelper, de-dupe, **standing plan + report range**, **30.4375 proration / banker's rounding**, pot mapping modes, **payment-anchor occurrence projection**, variable expense **stored estimate vs FR-M034 suggestions**, edit/delete recurring and pots, one-off vs commitment rules, EF/Aspire/Identity/OTel, BlazorBlueprint v4, staged ACA/SQL policy, upload/export streaming, **EF migration ownership** (2026-11-03), **hosted Identity** (2026-11-04), **household plan model** (2026-11-09).
 
 All Technical Context items resolved; no remaining **NEEDS CLARIFICATION**.
 
@@ -243,4 +249,4 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 
 ## Next steps
 
-`tasks.md` is generated; run `/speckit-implement` starting with **Phase 23** (**T143**–**T148**) and release-evidence tasks **T149**–**T151**. Pre-implement `/speckit-analyze` gate: artifacts aligned 2026-11-04; open checkboxes are implement backlog, not spec gaps.
+After this re-plan: run **`/speckit-converge`** to append implementation tasks for the 2026-11-09 plan pivot (standing income/cadence, report range session state, pot modes, proration golden files, **FR-M008c**/**FR-M008d**), then **`/speckit-tasks`** if tasks need regeneration, then **`/speckit-analyze`**. Continue **`/speckit-implement`** on the converged backlog; Phase 23 Identity tasks remain valid where not superseded by plan-model work.

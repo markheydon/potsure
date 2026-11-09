@@ -1,12 +1,20 @@
 # Contract: Budgeting core (pure)
 
 **Feature**: `001-potsure-v1`  
-**Version**: 1.0.0  
+**Version**: 1.1.0 (2026-11-09 standing plan + proration)  
 **Module**: `Potsure.Budgeting` (library, no I/O)
 
 ## Purpose
 
-Deterministic calculations for preset allocations, category health, required income, budget balance, and runway warnings. All golden tests MUST assert against this contract (SC-004, Constitution II).
+Deterministic calculations for preset allocations, **range proration**, category health, **max-of-ratios** required income, budget balance, and runway warnings. All golden tests MUST assert against this contract (SC-004, Constitution II).
+
+## Constants
+
+| Name | Value | Use |
+|------|-------|-----|
+| `AverageMonthDays` | **30.4375** | All day-based proration (**FR-M017**, **FR-M018**, **FR-M020**) |
+| `MoneyScale` | 2 | GBP fraction digits at emission |
+| `RoundingMode` | Banker's (half to even) | At each report emission boundary (**FR-M036**) |
 
 ## Input DTOs (records)
 
@@ -15,19 +23,38 @@ Deterministic calculations for preset allocations, category health, required inc
 | Field | Description |
 |-------|-------------|
 | `Preset` | FiftyThirtyTwenty \| SeventyFiveFifteenTen |
-| `Period` | Inclusive `Start`, `End` |
-| `BudgetedIncome` | User-confirmed planned income |
+| `PlanIncome` | Optional `EstimatedAmount` + `Cadence` (weekly…yearly); null ⇒ **not set** outputs |
+| `ReportRange` | Inclusive `Start`, `End` for actuals and **FR-M018** income side |
+| `RunwayWindow` | Inclusive `Start` (= report start), `End` (report end + N months, clamped) |
 | `Categories[3]` | Kind, `RecordedFundingDirect`, optional `PlannedFutureFundingDirect` |
 | `Pots[]` | `CategoryKind`, `RecordedFunding`, `AllocationToPot` optional |
-| `Commitments[]` | Per confirmed recurring expense: category, optional pot, cadence, fixed or monthly estimate, coverage metadata |
-| `Actuals[]` | Per category: net attributed spend in period |
-| `UncategorisedSpend` | Total unattributed debits |
-| `ForecastHorizonEnd` | End date for runway (default period end + horizon months) |
+| `Commitments[]` | Per confirmed recurring **expense**: category, optional pot, cadence, fixed amount + anchor or stored monthly estimate, amount kind |
+| `Actuals[]` | Per category: net attributed spend in **ReportRange** only |
+| `UncategorisedSpend` | Total unattributed debits in **ReportRange** |
+| `ForecastHorizonMonths` | N for runway end derivation (**FR-M035**) |
 
 ### `Money`
 
-- `Amount`: decimal, scale 2, GBP.
-- Operations use banker's rounding at **report emission** unless a test documents otherwise.
+- `Amount`: decimal, scale 2 at emission, GBP.
+
+### `PlanIncomeCadence` factors (monthly equivalent)
+
+Weekly × 52÷12; Fortnightly × 26÷12; Monthly × 1; Quarterly ÷ 3; Yearly ÷ 12 (**FR-M031**).
+
+## Proration
+
+```
+ProrateMonthlyEquivalent(monthly, inclusiveStart, inclusiveEnd) =
+  monthly × (inclusiveDayCount ÷ 30.4375)
+```
+
+Round with banker's rule at report line emission.
+
+## Commitment projection (expense, recurring only)
+
+- **Fixed**: `AmountPerOccurrence × OccurrenceCountInRange` from stored **payment anchor** and cadence stepping (monthly: calendar month steps + last-day clamp; weekly/fortnightly: day intervals; annual: yearly steps).
+- **Variable**: `StoredMonthlyEstimate × (inclusiveDayCount ÷ 30.4375)` for the projection window (report range for **FR-M018**; full runway window for **FR-M020** expense side).
+- **No** calendar-month overlap apportionment for variable patterns.
 
 ## Output DTOs
 
@@ -35,45 +62,48 @@ Deterministic calculations for preset allocations, category health, required inc
 
 | Field | Formula / rule |
 |-------|----------------|
-| `Allocation` | `BudgetedIncome × presetPercent` |
+| `Allocation` | Monthly-equivalent category allocation **prorated** to **ReportRange** |
 | `RecordedFunding` | Direct + sum(pot recorded) once |
-| `ActualActivity` | Net attributed spend |
+| `ActualActivity` | Net attributed spend in **ReportRange** |
 | `UnderOver` | `Allocation − ActualActivity` (funding **not** in formula) |
-| `OverAllocationWarning` | `(pot allocations + direct recorded slices) > Allocation` |
+| `OverAllocationWarning` | Recorded/pot slices vs **prorated** allocation (**FR-M017a**) |
+| `NotSet` | When `PlanIncome` incomplete |
 
 ### `RequiredIncomeResult`
 
 | Field | Rule |
 |-------|------|
-| `RequiredByCategory[c]` | `Commitments[c] / presetPercent[c]` (guard div-by-zero) |
-| `RequiredTotal` | Max or sum per documented algorithm in implement (spec: per-category and overall requirement  -  use **maximum** of category required incomes as overall income needed to satisfy all category ratios simultaneously) |
-| `LimitingCategory` | Category with highest `RequiredByCategory`; tie → Needs, then Wants, then Savings & Debt |
-| `Shortfall` | `max(0, RequiredTotal − BudgetedIncome)` |
-| `Conclusion` | Yes if `BudgetedIncome >= RequiredTotal` else No + monetary gap |
-
-**Note**: Implement phase MUST codify overall required income formula in one ADR or XML doc and golden files; typical 50/30/20 check: income `I` must satisfy `I×50% ≥ needs commitments`, etc.; overall required `I* = max(N/0.5, W/0.3, S/0.2)`.
+| `RequiredByCategory[c]` | `Commitments[c] / presetPercent[c]` (0% ⇒ 0) |
+| `RequiredTotal` | **Maximum** of the three per-category values (**FR-M018**) |
+| `LimitingCategory` | Argmax; tie → Needs, Wants, Savings & Debt |
+| `EstimatedIncomeInRange` | Monthly-equivalent from plan income **prorated** to **ReportRange** |
+| `Shortfall` | `max(0, RequiredTotal − EstimatedIncomeInRange)` |
+| `Conclusion` | Yes if `EstimatedIncomeInRange >= RequiredTotal` else No + gap; **not set** if plan income incomplete |
 
 ### `RunwayWarning`
 
-For each category, compute `ProjectedRemainingSpend` over window = in-period actual to date + cadence-projected remaining commitments + variable estimates (FR-M034). Emit warning if:
+For each category:
 
-`ProjectedRemainingSpend > (Allocation − ActualActivity + RecordedFunding)`
-
-Optional pot-level breakdown in message payload.
+- `ProjectedSpend` = cadence-projected **expense** commitments over **RunwayWindow** (variable uses stored estimate proration).
+- `AllocationRunway` = monthly-equivalent category allocation prorated over **RunwayWindow**.
+- `ActualInReportRange` = actual activity in **ReportRange** only.
+- Warn if `ProjectedSpend > (AllocationRunway − ActualInReportRange + RecordedFunding)` (**FR-M020**).
 
 ## Invariants
 
-- FR-M036: same inputs → bit-identical outputs.
-- No I/O, no clocks (inject `IClock` or pass dates as parameters).
+- FR-M036: same inputs → bit-identical outputs (including 30.4375 and banker's emission).
+- No I/O, no clocks (pass dates as parameters).
 - Pots never introduce custom preset percentages.
+- One-offs and income patterns **excluded** from commitment totals.
 
 ## Test catalogue (minimum golden scenarios)
 
-1. Category-only budget (no pots), 50/30/20, fixed commitments.
-2. Three category-named pots; funding and activity without double count.
-3. Several expense-specific pots mapped to one category.
-4. Preset switch mid-period: allocations change; actuals unchanged.
-5. Net refunds reduce actual activity.
-6. Limiting category tie-break.
-7. Runway with recorded funding covering gap vs not.
-8. Variable expense estimate from 1-, 2-, and 3-month windows with coverage labels.
+1. Category-only budget, 50/30/20, fixed monthly anchor stepping with month-end clamp.
+2. Report range not one calendar month: allocation and income proration match 30.4375.
+3. Max-of-ratios required income; limiting category tie-break.
+4. Variable expense: stored monthly estimate prorated; not live average.
+5. Three pots and several pots; funding roll-up without double count.
+6. Plan income incomplete → not set on allocations and balance.
+7. Runway window: actuals in report range only; commitments over full runway.
+8. Banker's rounding edge cases (half to even) at emission.
+9. Preset switch: monthly-equivalent allocations change; prorated report outputs consistent.

@@ -49,16 +49,28 @@ Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprin
 ## Scenario 2  -  Recurring confirmation (US2)
 
 1. With ≥1 month of fixture data, open detection review.
-2. Confirm one expense → assign Needs + optional pot; confirm income with splits totalling 100%.
-3. Re-upload same period fixture.
-4. **Expect**: Assignments remembered; matched debits auto-attributed; income splits visible but do not change category allocations. (**SC-003** evidence: integration tests **T106** / **T140**–**T142**; release sign-off **T151**.)
+2. Confirm one expense → assign Needs + optional pot; override **fixed vs variable** if suggestion wrong (**FR-M008d**); confirm income with splits totalling 100%.
+3. Edit confirmed rent amount; delete an obsolete recurring item; reject a suggestion then re-import and **Expect** re-suggestion allowed (**FR-M008**).
+4. Re-upload same fixture.
+5. **Expect**: Assignments remembered; matched debits auto-attributed; stored variable monthly estimate stable until user edit; income splits visible but do not change category allocations. (**SC-003** evidence: integration tests **T106** / **T140**–**T142**; release sign-off **T151**.)
 
-## Scenario 3  -  Preset and period (US3)
+## Scenario 4b  -  Pot mapping modes (US4)
 
-1. Default preset 50/30/20; set inclusive period covering fixture dates.
-2. Enter budgeted income; verify allocations = preset × income.
-3. Switch to 75/15/10.
-4. **Expect**: Allocations update immediately; recorded funding and actuals unchanged.
+1. Start in **category-only**; confirm no pot mapping UI on expense assignment.
+2. Switch to **three pots**; map one pot per category at most.
+3. Switch toward **several pots** with multiple pots on one category; attempt **three pots** switch **Expect** blocked until surplus removed.
+4. Delete mapped pot with recorded funding **Expect** roll-or-discard prompt (**FR-M013c**).
+5. On expense assign in three pots mode with mapped category pot **Expect** pre-selection per **FR-M013b**.
+
+## Scenario 3  -  Preset and standing plan income (US3)
+
+1. Default preset 50/30/20; open category health **before** saving plan income.
+2. **Expect**: Allocations and budget balance show **not set**, not £0 planned maths (**FR-M031**).
+3. Save **estimated income** and **cadence** (e.g. monthly £2500); verify monthly allocations = preset × monthly-equivalent income.
+4. Set report date range to a non-month-long inclusive span; verify category health allocation line **prorates** with 30.4375 rule (**FR-M017**).
+5. Switch to 75/15/10.
+6. **Expect**: Monthly-equivalent allocations update immediately; recorded funding and report-scoped actuals unchanged.
+7. Open a second report view in the **same tab** after changing range; **Expect**: same range (**FR-M031a**). Second browser tab may differ.
 
 ## Scenario 4  -  Category health (US6)
 
@@ -68,9 +80,10 @@ Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprin
 
 ## Scenario 5  -  Budget balance (US7)
 
-1. Set budgeted income below commitment-implied requirement.
-2. Open budget balance report.
-3. **Expect**: Limiting category, shortfall, no/not covered messaging; commitments from recurring expenses only ([budgeting-core.md](contracts/budgeting-core.md)).
+1. With complete estimated income, choose report range covering fixture commitments.
+2. Set estimated income (prorated to range) below max-of-ratios required income.
+3. Open budget balance report.
+4. **Expect**: Limiting category (tie → Needs, Wants, Savings & Debt), shortfall, yes/no gap; commitments from recurring expenses only; income side range-prorated ([budgeting-core.md](contracts/budgeting-core.md)).
 
 ## Scenario 6  -  Export and delete (US10)
 
@@ -81,8 +94,8 @@ Phase 23 (**T143**–**T148**) lands template Identity pages with BlazorBlueprin
 
 ## Scenario 7  -  Determinism (FR-M036)
 
-1. Open category health and budget balance twice without changes.
-2. **Expect**: Identical totals both times.
+1. Fix report date range in tab; open category health and budget balance twice without data changes.
+2. **Expect**: Identical totals (including banker's 2dp emission and 30.4375 proration).
 
 ## Scenario 8  -  Unit/core-only (CI)
 
@@ -141,7 +154,8 @@ Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `P
 |----------|--------|-------|
 | 1  -  Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
 | 2  -  Recurring confirmation | Partial | Review and summary pages added; confirm/split flows rely on existing pattern services |
-| 3  -  Preset and period | Partial | Plan settings UI and suggestion service implemented |
+| 3  -  Preset and standing plan income | Partial | Legacy **BudgetPeriod** UI/services; 2026-11-09 plan pivot pending converge tasks |
+| 4b  -  Pot mapping modes | Not run | Spec **FR-M013**; verify after converge |
 | 4  -  Category health | Partial | Report UI with textual summary; one-off service available |
 | 5  -  Budget balance | Partial | Report UI with separated income measures |
 | 6  -  Export and delete | Partial | Export/delete UI and contract tests pass in CI |

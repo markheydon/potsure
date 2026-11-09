@@ -1,8 +1,8 @@
 # Research: Potsure v1
 
 **Feature**: `001-potsure-v1`  
-**Date**: 2026-11-03 (identity auth amended 2026-11-04)  
-**Status**: Complete  -  all Technical Context items resolved from spec, constitution v1.2.0, AGENTS.md, and planning prompt (Azure/Aspire baseline included in prompt; no separate attachment). Amended 2026-11-03 for Aspire integration consumption, central package versioning gates, and **EF migration orchestration** (EF migrations review prompt). Amended 2026-11-04 for **password-primary hosted Identity** (constitution 1.2.0).
+**Date**: 2026-11-03 (identity auth amended 2026-11-04; household plan model 2026-11-09)  
+**Status**: Complete  -  all Technical Context items resolved from spec, constitution v1.2.0, AGENTS.md, and planning prompt. Amended 2026-11-03 for Aspire integration consumption, central package versioning, **EF migration orchestration**. Amended 2026-11-04 for **password-primary hosted Identity**. Amended 2026-11-09 for **standing plan**, **report date range**, **pot mapping modes**, **proration**, and recurring lifecycle (**FR-M008c**/**FR-M008d**).
 
 ## Monzo CSV parsing
 
@@ -14,7 +14,7 @@
 - Hand-rolled `string.Split`  -  rejected; brittle on quoted fields and `Notes and #tags`.
 - Generic “bring your own bank” mapper  -  out of v1 scope (FR-M005).
 
-**Monzo column contract** (see `contracts/monzo-import.md`): map `Transaction ID`, `Date`, `Time`, `Type`, `Name`, `Amount`, `Currency`, `Description`, `Money Out`, `Money In`; derive debit/credit sign consistently with Monzo conventions; classify `Pot transfer`, inter-pot moves, and identifiable non-spend transfers per FR-M017.
+**Monzo column contract** (see `contracts/monzo-import.md`): map `Transaction ID`, `Date`, `Time`, `Type`, `Name`, `Amount`, `Currency`, `Description`, `Money Out`, `Money In`; derive debit/credit sign consistently with Monzo conventions; classify `Pot transfer`, inter-pot moves, and identifiable non-spend transfers per import classification rules (**FR-M003**, **FR-M017** transaction exclusion).
 
 ## Account identity and de-duplication
 
@@ -28,38 +28,69 @@
 
 ## Recurrence detection and categorisation
 
-**Decision**: Separate **detection engine** (I/O at boundary) operating on normalised `Transaction` rows excluding classified internal transfers/pot movements; cadences weekly, fortnightly, monthly; user confirm/merge/split/reject; short history uses user-led confirmation without claiming complete annual detection.
+**Decision**: Separate **detection engine** (I/O at boundary) on normalised `Transaction` rows excluding internal transfers/pot movements; cadences weekly, fortnightly, monthly, with **annual/rare** manual confirm/edit; user confirm/merge/split/reject/**edit/delete** (**FR-M008c**); **reject does not permanently suppress** re-suggestion for the same merchant (**FR-M008**). Infer **fixed vs variable** amount behaviour in suggestions; user override authoritative at confirm/merge/split/edit (**FR-M008d**). **Fixed** expenses store **payment anchor** (default latest attributed then vendor-matched debit; user override; re-import may advance non-overridden anchor). **Variable** expenses store **user-confirmed monthly estimate** (initial from suggestion only).
 
-**Rationale**: Constitution module boundary; spec FR-M007/M008 and edge cases on history gaps.
+**Rationale**: Constitution module boundary; spec FR-M007/M008/M008c/M008d and Session 2026-11-09.
 
 **Alternatives considered**:
 - ML classifier  -  rejected for v1 complexity and explainability.
 - Auto-confirm all suggestions  -  rejected; violates confirmation workflow.
+- Permanent suppress on reject  -  rejected; spec requires re-suggestion allowed.
+
+## Standing plan vs report date range
+
+**Decision**: Persist **one standing budget plan** per user: preset, **estimated income** amount, **income cadence** (weekly through yearly), confirmed recurring items, **forecast horizon N** (1–12 months, default 3), **actual-income rolling window N** (default 3 months, max 12), pot mapping mode, mapped pots, recorded funding. **No** plan start/end dates. Until estimated income **and** cadence are saved, allocations and **FR-M018** show explicit **not set** (not £0 maths). Reports use user-selected **report date range** (inclusive calendar days): default **current calendar month** on first open in a tab; **one shared range per browser tab** across report views; **not** persisted across visits; **not** synced across tabs (**FR-M031a**, **FR-X006**). Monthly-equivalent income = pay-period factors on estimated amount (**FR-M031**).
+
+**Rationale**: Session 2026-11-09 clarifications; household mental model.
+
+**Alternatives considered**:
+- Single working budget period entity  -  superseded 2026-11-09.
+- Persisted report presets  -  rejected (**FR-X006**).
+
+## Pot mapping modes
+
+**Decision**: Three explicit modes: **category-only** (no mapped-pot CRUD; no **FR-M013b** on expense flows), **three pots** (≤3 pots, ≤1 per category, one-to-one), **several pots** (unlimited pots, multiple per category). Mode switches blocked until invariants satisfied; switching to category-only requires deleting all mapped pots with **FR-M013c** funding roll/discard prompt. **FR-M013b** pre-selection rules per mode.
+
+**Rationale**: FR-M013, FR-M014, Monzo user workflows.
+
+**Alternatives considered**:
+- Implicit “zero pots” without category-only mode  -  rejected; spec requires first-class category-only.
+
+## Proration and money rounding
+
+**Decision**: Report-scoped **allocation** and **estimated income** for **FR-M018**: prorate monthly-equivalent figures with **inclusive day count ÷ 30.4375** (365.25÷12). **Variable** commitments in a range: stored monthly estimate × (inclusive days ÷ 30.4375). **Fixed** commitments: occurrence count × amount per occurrence from **payment anchor** with cadence-specific stepping (monthly = calendar months + last-day clamp; annual = yearly step). **Runway window**: report range start through report end + **N** calendar months (clamped end date), then same proration rules; **actual activity** in runway compare uses **report range only**. Emit money at report boundaries with **banker's rounding** (half to even) to 2dp (**FR-M036**).
+
+**Rationale**: FR-M017, FR-M018, FR-M020, SC-004.
+
+**Alternatives considered**:
+- Calendar-month overlap for variable commitments  -  rejected (spec Session 2026-11-09).
+- 30-day month approximation  -  rejected; spec mandates 30.4375.
 
 ## Variable recurring expense forecasting
 
-**Decision**: For confirmed **variable** recurring expenses, monthly estimate = average of **calendar-month totals** over the last three complete or partial months with data, or fewer months when history is shorter; label coverage window and qualify incomplete months. **Partial months**: normalise by counting only days with statement coverage within each calendar month (missing days are **unknown**, not zero spend); disclose gaps in UI and FR-M032.
+**Decision**: **FR-M034** computes last **three whole calendar months** of vendor-matched spend ending on **today** when user confirms/merges/splits/edits  -  to **suggest** monthly estimate only; report range changes MUST NOT recompute suggestions. **FR-M018** / **FR-M020** use **stored** monthly estimate until user save or explicit acceptance. Label coverage when history shorter than three months (**FR-M032**).
 
-**Rationale**: FR-M034, user prompt on groceries and irregular timing; avoids treating upload gaps as £0 spend.
+**Rationale**: FR-M034, FR-M008c, Session 2026-11-09 (stable commitments vs live averages).
 
 **Alternatives considered**:
-- Daily rate × days in month  -  rejected when import gaps exist; understates uncertainty.
-- Single last payment amount  -  rejected for variable groceries.
+- Auto-update stored estimate on every import  -  rejected; breaks user trust and spec.
+- Report-range-ended suggestion window  -  rejected; spec ends on today.
 
 ## One-off spend and commitments
 
-**Decision**: Genuine one-offs affect **actual activity only** (FR-M037); never projected into FR-M018 commitments or runway recurring projections. FR-M018 commitments = **confirmed recurring expense patterns only**, cadence-projected into the selected inclusive period.
+**Decision**: Genuine one-offs affect **actual activity only** (FR-M037). **FR-M018** commitments = **confirmed recurring expense patterns only**, projected into the selected **report date range** (or full **runway window** for **FR-M020**). **Required income**: per category = commitments ÷ preset fraction; **overall** = **max** of three; limiting category tie **Needs → Wants → Savings & Debt**.
 
-**Rationale**: Spec clarifications and release gate for one-offs in v1.0.0.
+**Rationale**: Spec 2026-11-09; release gate for one-offs in v1.0.0.
 
 ## Budgeting core (pure library)
 
-**Decision**: `Potsure.Budgeting` (name TBD in implement)  -  pure functions/records: preset application, category allocation from budgeted income, net actual activity, under/over (= allocation − actual), recorded funding rollup (pots + direct, count once), over-allocation warnings, required income / limiting category / shortfall / yes-no balance, runway comparison `(allocation − actual + recorded funding)` vs projected remaining spend. Money as `decimal` with explicit **GBP 2dp rounding** at report boundaries; document tie-breaking for limiting category (e.g. highest required income, then category order Needs → Wants → Savings & Debt).
+**Decision**: `Potsure.Budgeting`  -  pure functions/records: monthly-equivalent preset allocations; **range proration**; net actual activity; under/over; recorded funding rollup; over-allocation warnings; **occurrence-based** fixed commitment projection from anchors; **day-prorated** variable commitments; **max-of-ratios** required income / limiting category / shortfall / yes-no vs **range-prorated estimated income**; runway comparison per FR-M020. No clocks inside library  -  pass `ReportRange`, `RunwayWindow`, and anchor dates as inputs. **Banker's** 2dp at emission (**FR-M036**).
 
 **Rationale**: Constitution II and III; SC-004 golden scenarios.
 
 **Alternatives considered**:
-- Integer pence internally  -  acceptable implementation detail; plan requires documented rounding at outputs.
+- Integer pence internally  -  acceptable; emission rule still banker's 2dp.
+- Sum-of-category required incomes  -  rejected; spec max-of-ratios.
 
 ## Persistence and tenancy
 
