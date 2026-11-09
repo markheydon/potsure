@@ -13,6 +13,8 @@ Read before non-trivial changes:
 - Active feature under `specs/` (see `.specify/feature.json`, e.g. `specs/001-potsure-v1/`)
 - `adr/` - accepted decisions
 
+`plan/FEEDBACK.md` holds manual testing notes and ideas only. It is **not** product direction, a backlog, or a substitute for the active feature spec. Do not implement or steer Spec Kit from it unless the user explicitly promotes an item into `specs/`.
+
 ## Language
 
 UK English in documentation, comments, and user-facing text. Do not use the em dash (U+2014); see `CONVENTIONS.md` (Documentation).
