@@ -1,6 +1,6 @@
 {
   "name": "Potsure",
-  "image": "mcr.microsoft.com/devcontainers/base:3-ubuntu24.04",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {},
     "ghcr.io/devcontainers/features/azure-cli:1": {},
