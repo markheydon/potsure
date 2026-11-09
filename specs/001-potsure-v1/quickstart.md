@@ -124,7 +124,7 @@ dotnet test Potsure.slnx -c Release
 3. Observe dashboard ordering: `potsure` database healthy → migration resource runs and **completes** → web becomes healthy.
 4. Confirm no `Database.MigrateAsync` (or similar) in `Potsure.Web` startup  -  schema apply is AppHost-only locally per [plan.md](plan.md).
 
-**Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with Infrastructure project + Web startup per plan.
+**Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with `--project src/Potsure.Data/Potsure.Data.csproj` and Web startup per plan (**T186** aligns operator docs).
 
 **Known defect (2026-11-04 re-smoke, T154/T157)**: AppHost logs show `Could not perform substitution for environment variable ASPNETCORE_URLS` on `ef-tool-ef-migrations` with `portForServing "web"`  -  the migration executable does not produce the `/web` service endpoint. Until fixed upstream or in AppHost wiring, Scenario 8c remains **Partial** despite **T115** pass on 2026-11-03.
 

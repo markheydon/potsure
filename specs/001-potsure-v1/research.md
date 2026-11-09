@@ -103,22 +103,22 @@
 
 ## EF Core migration ownership and orchestration
 
-**Decision (current solution shape)**: Single `PotsureDbContext` in `Potsure.Infrastructure` with migrations and model snapshot under `Persistence/Migrations/`. **No** separate migrations-only project  -  one database boundary, model and artefacts already co-located cleanly. `Potsure.Web` is the EF **startup project** (Aspire SQL client + Identity registration); Infrastructure holds the model assembly for `--project`.
+**Decision (current solution shape)**: Single `PotsureDbContext` in **`src/Potsure.Data/`** with migrations and model snapshot under `Migrations/PotsureDbContext/`. **No** separate migrations-only project. `Potsure.Web` is the EF **startup project** (Aspire SQL client + Identity registration); `Potsure.Data` is the migrations **project** for `dotnet ef` and AppHost `WithMigrationsProject`. Repositories and seeders remain in `Potsure.Infrastructure`.
 
 **Migration execution**:
 - **Reject** `Database.MigrateAsync()` (or `EnsureCreated`) on normal `Potsure.Web` startup  -  schema apply is deployment/orchestration, not request pipeline.
-- **Local Aspire**: Use built-in **`AddEFMigrations`** (Aspire **13.6.4** line  -  add `Aspire.Hosting.EntityFrameworkCore` to AppHost at implement time) on the web project resource: `WithMigrationsProject<Projects.Potsure_Infrastructure>()`, fully qualified context `Potsure.Infrastructure.Persistence.PotsureDbContext`, `WithReference(database)`, `WaitFor(database)`, `RunDatabaseUpdateOnStart()`. Web uses `WaitForCompletion(migrations)` so Blazor starts only after migrations finish successfully (finite `dotnet ef database update`, not a long-lived service).
+- **Local Aspire**: Use built-in **`AddEFMigrations`** (Aspire **13.6.4** line) on the web project resource: `WithMigrationsProject` → **`Potsure.Data`**, fully qualified context `Potsure.Data.PotsureDbContext` (match AppHost registration), `WithReference(database)`, `WaitFor(database)`, `RunDatabaseUpdateOnStart()`. Web uses `WaitForCompletion(migrations)` so Blazor starts only after migrations finish successfully (finite `dotnet ef database update`, not a long-lived service). **T158** tracks Aspire `ef-tool-*` URL substitution defects separately from project choice.
 - **Hosted / publish**: `RunDatabaseUpdateOnStart` is local-run only; continue **controlled single-runner** apply via CI or `dotnet ef database update` / published migration script per `docs/deployment-database.md`.
 - **Application seeding** (`BudgetProfileSeeder`, fixed category rows on profile create) remains **runtime** application logic  -  not executed inside the migration resource.
 
-**Design-time**: Keep `IDesignTimeDbContextFactory` in Infrastructure with `UseSqlServer` from config/localdb fallback for standalone `dotnet ef` when AppHost is not running (constitution 1.2.0  -  not a runtime bypass).
+**Design-time**: Keep `IDesignTimeDbContextFactory` in `Potsure.Data/DesignTime/` with `UseSqlServer` from config/localdb fallback for standalone `dotnet ef` when AppHost is not running (constitution 1.2.0  -  not a runtime bypass).
 
 **Rationale**: EF migrations review prompt; [Aspire EF Core migrations integration](https://aspire.dev/integrations/databases/efcore/migrations/); avoids custom migration worker boilerplate while giving AppHost an explicit migration dependency; matches constitution Aspire consumption (web still uses `AddSqlServerDbContext` at runtime).
 
 **Alternatives considered**:
 - Dedicated `Potsure.Migrations` executable  -  viable if `AddEFMigrations` fails with this project layout; prefer built-in integration first on 13.6.4.
 - Web `WaitFor(database)` only (current AppHost)  -  **insufficient**; web can start before schema exists.
-- Migrations in Web project  -  rejected; keeps domain/EF model in Infrastructure module boundary (constitution III).
+- Migrations in Web project  -  rejected; EF model in **`Potsure.Data`** keeps module boundary clear (constitution III).
 
 ## Upload and export pipeline
 

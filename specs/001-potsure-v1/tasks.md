@@ -5,9 +5,11 @@ description: "Task list for Potsure v1 implementation"
 
 # Tasks: Potsure v1
 
-**Plan sync**: 2026-11-04 (hosted Identity pivot: email/password primary, passkey-only path superseded per [plan.md](./plan.md), [spec.md](./spec.md) Session 2026-11-04, constitution 1.2.0). Prior sync 2026-11-03: Aspire SQL client, EF `AddEFMigrations`.
+**Plan sync**: 2026-11-09 (standing budget plan: estimated income + cadence, no plan period dates; report date range **FR-M031a**; pot mapping modes **FR-M013**–**FR-M013c**; **30.4375** proration and banker's rounding **FR-M036**; recurring edit/delete and payment anchor **FR-M008c**; fixed vs variable override **FR-M008d**). Prior sync 2026-11-04: hosted Identity pivot; 2026-11-03: Aspire SQL client, EF `AddEFMigrations`.
 
-**Analyze gate (2026-11-04)**: Core artifacts align with constitution **1.2.0** (hosted Identity pivot, release gates, superseded-task mapping). **Unchecked** tasks below are the **implementation and release-evidence queue** (Phase 23 + **T149**–**T151** + superseded placeholders **T022** / **T042** / **T132** / **T136**)  -  not missing spec or plan coverage.
+**Tasks gate (2026-11-09)**: Phases **1–26** reflect work through the Identity pivot and pre-pivot **BudgetPeriod** model. **Phase 27** is the primary **implementation queue** for the 2026-11-09 plan pivot; quickstart Scenarios 3, 4b, and 7 remain **Partial** until Phase 27 completes. **`[X]` on T012**–**T016**, **T074**, and **T078** is pre-pivot evidence only; **SC-004** / **FR-M036** acceptance requires **T163**–**T167** and **T184** after Phase 27. Superseded passkey tasks (**T022**, **T042**, **T132**, **T136**) are **N/A** (replaced by **T143**–**T147**); leave unchecked.
+
+**Analyze gate (2026-11-09)**: EF model/migrations canonical project is **`Potsure.Data`** per [plan.md](./plan.md); AppHost already uses `WithMigrationsProject` → Data (**T112**/**T113** descriptions below corrected for audit traceability).
 
 **Input**: Design documents from `/specs/001-potsure-v1/`
 
@@ -71,7 +73,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T019 Create initial EF migration in `src/Potsure.Data/Migrations/` and document idempotent deploy approach in `docs/deployment-database.md`
 - [X] T020 Configure ASP.NET Core Data Protection key ring persistence to SQL in `src/Potsure.Infrastructure/` reconciled with Aspire SQL resource
 - [X] T021 Implement deployment mode options (local-only vs hosted) in `src/Potsure.Web/Configuration/DeploymentModeOptions.cs` with FR-M024 network non-exposure for local-only
-- [ ] T022 Configure ASP.NET Core Identity with passkey support and SQL persistence in `src/Potsure.Web/` for hosted mode (FR-M025; no password fallback v1)  -  **Superseded 2026-11-04** (passkey-primary / no-password policy incompatible with constitution 1.2.0); **replaced by T143**–**T146** (not acceptance evidence while unchecked)
+- [ ] T022 **N/A (superseded 2026-11-04)** Passkey-primary Identity  -  **replaced by T143**–**T146**; do not implement
 - [X] T023 Implement local-only single-user profile key path without remote account in `src/Potsure.Infrastructure/` when deployment mode is local-only
 - [X] T024 Register `AddBlazorBlueprintComponents()`, `App.razor` theme assets, `_Imports.razor`, and `BbPortalHost` in interactive root layout under `src/Potsure.Web/`
 - [X] T025 Create base interactive layout and navigation shell in `src/Potsure.Web/Components/Layout/` (UK English labels)
@@ -84,9 +86,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 ### EF migration orchestration (plan amend 2026-11-03)
 
 - [X] T111 Add `Aspire.Hosting.EntityFrameworkCore` to central `Directory.Packages.props` (13.6.4, aligned with existing Aspire packages) and reference from `src/Potsure.AppHost/Potsure.AppHost.csproj`
-- [X] T112 Add AppHost project reference to `src/Potsure.Infrastructure/Potsure.Infrastructure.csproj` only as needed for `WithMigrationsProject<Projects.Potsure_Infrastructure>()` (no Infrastructure → AppHost reference)
-- [X] T113 Wire `AddEFMigrations` on the web resource in `src/Potsure.AppHost/AppHost.cs`: `WithReference(database)`, `WaitFor(database)`, `WithMigrationsProject<Projects.Potsure_Infrastructure>()`, explicit DbContext `Potsure.Infrastructure.Persistence.PotsureDbContext`, `RunDatabaseUpdateOnStart()` for local AppHost only; web keeps `WithReference(database)` and uses `WaitForCompletion(migrations)` instead of schema readiness via `WaitFor(database)` alone; confirm no `Database.MigrateAsync()` (or equivalent) in `src/Potsure.Web/Program.cs`; confirm `BudgetProfileSeeder` and other app-data init are not invoked from the migration resource (plan.md AppHost resource model and EF Core migrations architecture)
-- [X] T114 [P] Update `docs/deployment-database.md` and `docs/self-host.md` to distinguish local Aspire auto-apply vs hosted controlled migration job; document unchanged `dotnet ef migrations add` / `database update` commands (`--project` Infrastructure, `--startup-project` Web); note migration resource hidden in Aspire dashboard by default (`aspire describe --include-hidden`)
+- [X] T112 Add AppHost project reference to `src/Potsure.Data/Potsure.Data.csproj` for `WithMigrationsProject` (no Data → AppHost reference); historical note: early drafts referenced Infrastructure
+- [X] T113 Wire `AddEFMigrations` on the web resource in `src/Potsure.AppHost/AppHost.cs`: `WithReference(database)`, `WaitFor(database)`, `WithMigrationsProject` → `src/Potsure.Data/Potsure.Data.csproj`, explicit `PotsureDbContext` in `Potsure.Data`, `RunDatabaseUpdateOnStart()` for local AppHost only; web keeps `WithReference(database)` and uses `WaitForCompletion(migrations)`; confirm no `Database.MigrateAsync()` in `src/Potsure.Web/Program.cs`; confirm `BudgetProfileSeeder` is not invoked from the migration resource (plan.md EF table; **T158** tracks Aspire ef-tool defects)
+- [X] T114 [P] Update `docs/deployment-database.md` and `docs/self-host.md` to distinguish local Aspire auto-apply vs hosted controlled migration job; document unchanged `dotnet ef migrations add` / `database update` commands (`--project src/Potsure.Data/Potsure.Data.csproj`, `--startup-project` Web); errata: legacy wording said Infrastructure  -  corrected by **T186**; note migration resource hidden in Aspire dashboard by default (`aspire describe --include-hidden`)
 - [X] T116 [P] Wire hosted publish migration artefact path (`PublishAsMigrationScript()` and/or documented migration bundle) on AppHost publish model in `src/Potsure.AppHost/AppHost.cs` and single-runner apply steps in `docs/deployment-database.md` (no concurrent migrate on all replicas; `RunDatabaseUpdateOnStart` local-only) per plan.md hosted publish bullet
 
 **Checkpoint**: AppHost starts; migrations complete before web; web resolves SQL via Aspire client DI; **local-only** shell loads; hosted mode blocks anonymous financial access (middleware). **Hosted email/password Identity UI** completes in **Phase 23** (**T143**–**T148**). Budgeting golden tests pass in CI.
@@ -128,7 +130,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 **Independent Test**: Local-only without network account; hosted requires Identity sign-in (passkeys not required); users isolated (spec US11). **Pivot**: passkey-only implementation from **T042** superseded  -  execute **Phase 23** (**T143**–**T148**).
 
 - [X] T041 [P] [US11] Document local-only vs hosted behaviour in `docs/self-host.md` and `docs/local-only-mode.md`
-- [ ] T042 [US11] Enforce hosted passkey-only sign-in UI and guidance when passkey unavailable in `src/Potsure.Web/Components/Account/` (FR-M025)  -  **Superseded 2026-11-04**; **replaced by T143** / **T145** (not acceptance evidence while unchecked)
+- [ ] T042 **N/A (superseded 2026-11-04)** Passkey-only sign-in UI  -  **replaced by T143** / **T145**; do not implement
 - [X] T043 [US11] Block financial data endpoints and pages without authentication on hosted in `src/Potsure.Web/` middleware/filters
 - [X] T044 [US11] Verify local-only mode does not bind Kestrel to public interfaces by default in `src/Potsure.Web/Program.cs` and document operator checklist in `docs/self-host.md`
 - [X] T045 [US11] Add integration tests for tenancy isolation in `tests/Potsure.Infrastructure.Tests/TenancyIsolationTests.cs`
@@ -140,9 +142,11 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ## Phase 5: User Story 3  -  Choose preset and plan the period (Priority: P1)
 
-**Goal**: Single working budget period, preset selection, user-confirmed budgeted income drives allocations only.
+**Legacy note (2026-11-09)**: Implemented against **`BudgetPeriod`** / budgeted income on a working period. Spec and plan now require a **standing plan** (estimated income + `PlanIncomeCadence` on `BudgetProfile`, **no** saved plan start/end) and a separate **report date range** (**FR-M031a**). Do not extend this phase; execute **Phase 27** for US3 acceptance.
 
-**Independent Test**: Switch presets; set inclusive date range; enter planned income; allocations = preset × budgeted income only (spec US3).
+**Goal (historical)**: Single working budget period, preset selection, user-confirmed budgeted income drives allocations only.
+
+**Independent Test (target, post Phase 27)**: Switch presets; save estimated income and cadence; pick report date range; allocations = preset × monthly-equivalent estimated income; incomplete income shows **not set** (spec US3).
 
 - [X] T046 [P] [US3] Seed fixed three `BudgetCategory` rows on profile create in `src/Potsure.Infrastructure/Persistence/BudgetProfileSeeder.cs` (FR-M012)
 - [X] T047 [US3] Implement working period CRUD (inclusive `StartDate`/`EndDate`; single period only FR-M031) in `src/Potsure.Infrastructure/Features/Plan/BudgetPeriodService.cs`
@@ -173,7 +177,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T055 [US2] Persist `IncomeSource` with splits must sum to 100% validation (display-only splits) in `src/Potsure.Infrastructure/Features/Recurrence/IncomePatternService.cs` per FR-M010
 - [X] T056 [US2] Persist `RecurringExpense` with category required; optional pot and tag (tag free-text, no calc effect) in `src/Potsure.Infrastructure/Features/Recurrence/ExpensePatternService.cs` per FR-M009
 - [X] T057 [US2] Implement merge/split workflows requiring user resolution of category, optional pot, and tag before save in `src/Potsure.Infrastructure/Features/Recurrence/PatternMergeSplitService.cs` per FR-M008
-- [X] T058 [US2] Implement auto-attribution of matching debits to confirmed expense patterns with per-transaction override persistence in `src/Potsure.Infrastructure/Features/Reports/TransactionAttributionService.cs` per FR-M010a
+- [X] T058 [US2] Implement auto-attribution of matching debits to confirmed expense patterns with per-transaction override persistence in `src/Potsure.Infrastructure/Features/Reports/TransactionAttributionService.cs` per **FR-M010a** and income credit attribution per **FR-M010b** (extend in **T137** for transaction-level overrides)
 - [X] T106 [US2] Add re-import integration test asserting remembered pattern assignments and auto-attribution without manual re-entry in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (SC-003)
 - [X] T059 [US2] Build detection review UI (suggested vs confirmed, income vs expense) in `src/Potsure.Web/Features/Recurrence/Pages/`
 - [X] T117 [P] [US2] Add UK English onboarding copy that three months of statement history is recommended for automatic recurring detection (**FR-S004**) in `src/Potsure.Web/Features/Recurrence/Pages/` and/or import completion summary without blocking one-month onboarding
@@ -334,7 +338,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Phase Dependencies
 
-- **Phase 1 Setup** → **Phase 2 Foundational** → user story phases **3–14** → **Phase 15 Polish**
+- **Phase 1 Setup** → **Phase 2 Foundational** → user story phases **3–14** → **Phase 15 Polish** → convergence **Phases 16–26** → **Phase 27 (2026-11-09 pivot)** before v1.0.0 release sign-off
 - **Phase 4 (US11)** can start after T021–T023 but should complete before hosted demo of later stories; **Phase 23 (T143–T148)** must complete for constitution 1.2.0 hosted acceptance after the Identity pivot
 - **Phase 5 (US3)** can proceed in parallel with late US1 work once T017 profile entities exist (after T017)
 
@@ -344,18 +348,18 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 |-------|------------|-------|
 | US1 | Phase 2 | No other stories |
 | US11 | Phase 2 T021–T023; **Phase 23** for pivot | Foundational auth; **T143–T148** supersede passkey-only **T022** / **T042** |
-| US3 | Phase 2, profile entities | Independent of imports for empty plan |
+| US3 | Phase 2, profile entities; **Phase 27** for spec acceptance | Legacy Phase 5 uses `BudgetPeriod`; standing plan requires **T159**–**T172** |
 | US2 | US1 transactions | Detection needs history |
-| US4 | US3 categories | Pots map to categories |
+| US4 | US3 categories; **Phase 27** **T177**–**T179** for **FR-M013** modes | Legacy pot UX partial |
 | US5 | US3, optional US4 | Funding UI |
-| US6 | US1, US2, US3, FR-M037 one-offs | Core lazy-believer view |
-| US7 | US2 commitments, US3 preset/income | Uses Budgeting core |
-| US8 | US2, US5, US6 inputs | Runway projection |
+| US6 | US1, US2, US3, **T168**–**T170** report range, **T163**–**T166** proration | Core lazy-believer view |
+| US7 | US2 commitments, US3 standing income, **T182** max-of-ratios | Uses Budgeting core |
+| US8 | US2, US5, US6 inputs, **T170** runway window | Runway projection |
 | US9 | US2 | Read-only summary |
 | US10 | Persistence populated | Export/delete |
 | US12 | Core UI pages exist | Polish pass |
 
-Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → US3 → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): also US10, US11 (**Phase 23** hosted Identity pivot), FR-M037 (`T071`), hosted encryption verification (`T102`), Aspire SQL client consumption (`T107`–`T108`, re-smoke after **T144**–**T146**), EF migration orchestration (`T111`–`T114`, `T116`), dependency hygiene (`T110` after any package add including `T111`), migration orchestration validation (`T115`), Playwright E2E closure (`T149`; implementation partial on **T125**, **T128**, **T133**), **SC-003** closure (`T151`), moderated usability for **SC-001** / **SC-002** / **SC-009** (release QA  -  no CI tasks), and quickstart validation (`T100`, **T148** for hosted register/sign-in, **T150** for keyboard audit).
+Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → **Phase 27** (standing plan + report range + proration) → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): **Phase 27** complete (**T159**–**T186**), US10, US11 (**Phase 23**), FR-M037 (`T071`), hosted encryption (`T102`), Aspire SQL (`T107`–`T108`), EF migration orchestration (`T111`–`T116`, **`T158`** Scenario 8c **Pass**), dependency hygiene (`T110`), Playwright E2E (`T149`), **SC-003** (`T151`), **T155** hosted HTTP Identity smoke, quickstart (`T100`, **T150**, **T185**), and pot modes Scenario 4b.
 
 ### Parallel Opportunities
 
@@ -393,7 +397,7 @@ T032 src/Potsure.Statements/MonzoCsvParser.cs
 
 ### v1.0.0 release (full Must scope)
 
-Before tagging v1.0.0, also complete Phase 4 infrastructure tasks (`T102`, `T043`–`T045`; **not** US11 acceptance without **Phase 23**), **Phase 23** (`T143`–`T148`), Phase 13 (US10; hosted reauth via **T147** supersedes passkey **T132** / **T136**), one-offs (`T071`), Phase 2 Aspire consumption (`T107`–`T108`) and migration orchestration (`T111`–`T114`, `T116`), US2 **FR-S004** copy (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`, **T149**–**T151**), and remaining P1/P2 stories as scheduled in spec.
+Before tagging v1.0.0, complete **Phase 27** (**T159**–**T186**, standing plan pivot), Phase 4 (`T102`, `T043`–`T045`), **Phase 23** (`T143`–`T148`), Phase 13 (US10; **T147**), one-offs (`T071`), Aspire + migrations (`T107`–`T116`, **`T158`**, **`T186`**), US2 **FR-S004** (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`, **T149**–**T151**, **`T155`**), and remaining P1/P2 stories.
 
 ### Incremental Delivery
 
@@ -421,6 +425,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - Optional WebAuthn passkeys: deferred post–v1.0.0 (template-style optional submit), not mandatory sign-in
 - Retire placeholder `src/Potsure/` when T002 completes
 - **FR-S002** (transaction-level actual-spend drill-down) is Should-level; deferred unless explicitly pulled into scope  -  category health (`T073`) covers aggregate actuals only
+- **2026-11-09 pivot**: Do not add new `BudgetPeriod` features; all new plan/report work belongs in **Phase 27** (**T159**–**T186**)
 
 ---
 
@@ -455,7 +460,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T129 [US2] [US8] Wire `VariableExpenseEstimator` when confirming variable recurring expenses (persist `MonthlyEstimate` and `EstimateCoverageLabel` via `ExpensePatternService` / detection review) and surface coverage labelling on runway, budget balance, and recurring summary UIs per FR-M034 and SC-008 (partial)
 - [X] T130 [US2] Allow confirming income patterns with `IncomeCadence.AdHoc` or `IncomeCadence.Variable` (amount without forced weekly/fortnightly/monthly recurrence) in `DetectionReview` and persistence per US2/AC2 (partial)
 - [X] T131 [US1] Add user-adjustable Monzo column mapping controls in `ImportWizard` before import proceeds (not read-only confirm only) per FR-M002 and US1/AC1 (partial)
-- [ ] T132 [US10] Replace typed phrase reauthentication with hosted passkey step-up (Identity) before export and permanent deletion when deployment mode is hosted; keep an appropriate local-only challenge per `research.md`, T026, and `plan.md` reauthentication notes (partial)  -  **Superseded 2026-11-04** (passkey step-up not required for v1); **replaced by T147** (not acceptance evidence while unchecked)
+- [ ] T132 **N/A (superseded 2026-11-04)** Passkey step-up for export/delete  -  **replaced by T147**; do not implement
 - [X] T133 [P] [US12] Extend `tests/Potsure.E2E/KeyJourneysTests.cs` to confirm at least one suggested recurring pattern in the UI (not only navigate to review) before category health and export when `POTSURE_E2E_BASE_URL` is set per Constitution II and T128 (partial)
 
 ---
@@ -466,7 +471,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T134 [US1] Persist the user-confirmed column map from `ImportWizard` / `StatementImportService.ImportAsync` to `BudgetProfile.RememberedColumnMappingJson` and pre-fill mapping on subsequent uploads when the file header layout is unchanged per FR-M002, US1/AC1, and T038 (partial)
 - [X] T135 [US2] Add optional mapped bank pot and free-text tag inputs on `DetectionReview` for expense confirm, merge, and split; when merging confirmed patterns with differing category, pot, or tag, require explicit resolution (and validate in `PatternMergeSplitService`) before save per FR-M008, FR-M009, and US2 acceptance scenarios 3, 5, and 6 (partial)
-- [ ] T136 [US10] Wire hosted export and permanent deletion reauthentication to an Identity passkey step-up challenge (not self-attestation checkbox only) before granting `ReauthenticationService` per T132, `research.md`, and `plan.md` reauthentication notes (partial)  -  **Superseded 2026-11-04**; **replaced by T147** (not acceptance evidence while unchecked)
+- [ ] T136 **N/A (superseded 2026-11-04)** Passkey step-up wiring  -  **replaced by T147**; do not implement
 
 ---
 
@@ -474,7 +479,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-03, post Phase 19) between spec intent and present codebase behaviour.
 
-- [X] T137 [US2] Add UI to reassign individual imported transactions (including auto-attributed debits) via `TransactionAttributionService.OverrideAttributionAsync`, with optional pot and pattern link, and navigation from category health or a dedicated review list per FR-M010a and US2 acceptance scenario 7 (missing)
+- [X] T137 [US2] Add UI to reassign individual imported transactions (expense debits and income credits per **FR-M010a** / **FR-M010b**) via `TransactionAttributionService.OverrideAttributionAsync`, with optional pot and pattern link, and navigation from category health or a dedicated review list per US2 acceptance scenario 7 (missing)
 - [X] T138 [US1] When a remembered Monzo column map pre-fills on unchanged layout, still require an explicit mapping confirm-or-adjust step before import proceeds (do not skip the mapping panel solely because `RememberedMonzoColumnMapping` matched) per FR-M002 and US1/AC1 (partial)
 - [X] T139 [US7] [US8] Surface confirmed variable recurring expense `EstimateCoverageLabel` on `BudgetBalance.razor` (matching runway and recurring summary disclosure) per FR-M034 and SC-008 (partial)
 - [X] T140 [P] [US2] Replace placeholder assertions in `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` with an integration test that re-imports overlapping CSV, asserts auto-attribution to confirmed patterns, and verifies manual overrides persist without re-auto-attribution per SC-003 and FR-M010a (partial)
@@ -541,3 +546,67 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 25) between spec intent, plan decisions, and present codebase behaviour.
 
 - [ ] T158 [P] Resolve local AppHost `AddEFMigrations` orchestration in `src/Potsure.AppHost/AppHost.cs` so `ef-tool-*` migration resources finish successfully (fix `ASPNETCORE_URLS` / `portForServing "web"` substitution failure documented in quickstart Scenario 8c, or adopt a supported migration-worker fallback per [research.md](./research.md)); re-run quickstart Scenario 8c and set the validation log to **Pass** per constitution 1.2.0 Scenario 8c, plan: EF migration orchestration, and **T115**/**T154**/**T157** (partial)
+
+---
+
+## Phase 27: Standing plan, report range, and proration pivot (2026-11-09)
+
+**Purpose**: Align persistence, pure budgeting core, reporting, recurrence, and UI with [plan.md](./plan.md) (2026-11-09), [data-model.md](./data-model.md), and [contracts/budgeting-core.md](./contracts/budgeting-core.md) v1.1.0. **Blocks v1.0.0 acceptance** for US3, US4 (modes), US6–US8 proration, US2/US9 recurring lifecycle gaps, and quickstart Scenarios 3, 4b, 5, 7.
+
+**Goal**: One standing `BudgetProfile` with estimated income + cadence; tab-scoped report date range; **30.4375** proration and banker's 2dp emission; pot mapping modes; payment anchors and stored variable estimates for commitments.
+
+**Independent Test**: quickstart Scenarios 3, 4b, 5, 7, and partial-month labelling; `dotnet test tests/Potsure.Budgeting.Tests -c Release` golden catalogue including proration scenarios.
+
+### Data model and EF (standing plan)
+
+- [ ] T159 [US3] Add `EstimatedIncomeAmount`, `EstimatedIncomeCadence` (`PlanIncomeCadence`), `ActualIncomeWindowMonths` (**1–12**; default **3** per data-model **FR-M019**), and derived incomplete-income handling on `BudgetProfileEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` and `src/Potsure.Data/Configurations/PotsureEntityConfigurations.cs`; remove `BudgetPeriodId` / `BudgetPeriodEntity` after data migration
+- [ ] T160 [US3] Create EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/` migrating existing `BudgetPeriod.BudgetedIncomeAmount` into profile estimated income (default cadence **Monthly** where needed) and dropping `BudgetPeriod` table; document rollback notes in `docs/deployment-database.md`
+- [ ] T161 [P] [US3] Replace `BudgetPeriodService` with `StandingPlanIncomeService` in `src/Potsure.Infrastructure/Features/Plan/` exposing estimated income + cadence CRUD; update `CategoryAllocationSync` to use monthly-equivalent income factors (weekly × 52÷12, fortnightly × 26÷12, monthly × 1, quarterly ÷ 3, yearly ÷ 12 per **FR-M031**)
+- [ ] T162 [US3] Retire `src/Potsure.Infrastructure/Features/Plan/BudgetPeriodService.cs` and `PeriodScope` period-from-profile usage; remove `BudgetPeriod` includes from `src/Potsure.Infrastructure/Features/Reports/` query paths
+
+### Budgeting core (30.4375, plan income, commitments)
+
+- [ ] T163 [P] Implement `AverageMonthDays` (**30.4375**) proration helper and `PlanIncomeCadence` monthly-equivalent factors in `src/Potsure.Budgeting/ProrationCalculator.cs` per contracts/budgeting-core.md
+- [ ] T164 [P] Refactor `AllocationCalculator`, `CategoryHealthCalculator`, `RequiredIncomeCalculator`, and `RunwayCalculator` in `src/Potsure.Budgeting/` to accept `ReportRange`, optional `PlanIncome`, commitment DTOs with **payment anchors**, and emit banker's 2dp at boundaries per **FR-M036**
+- [ ] T165 Implement fixed expense **occurrence count** projection from stored `PaymentAnchorDate` with cadence stepping (monthly calendar-month steps + last-day clamp; weekly/fortnightly day intervals; annual yearly steps) in `src/Potsure.Budgeting/CommitmentProjector.cs` per contracts/budgeting-core.md
+- [ ] T166 Implement variable expense commitment as `StoredMonthlyEstimate × (inclusiveDayCount ÷ 30.4375)` in `src/Potsure.Budgeting/CommitmentProjector.cs` (**no** calendar-month overlap apportionment)
+- [ ] T167 [P] Extend golden fixtures in `tests/Potsure.Budgeting.Tests/` for contract catalogue scenarios **2**, **4**, **7**, **8**, and **6** (plan income incomplete → **not set**) with independently verified expected results (**SC-004**)
+
+### Report date range (FR-M031a)
+
+- [ ] T168 [P] [US6] Implement tab-scoped `ReportDateRange` session state (default **current calendar month** when unset; **not** persisted per **FR-X006**) in `src/Potsure.Web/Services/ReportDateRangeSessionState.cs`
+- [ ] T169 [US6] Add shared report range picker component in `src/Potsure.Web/Features/Reports/Components/ReportDateRangePicker.razor` wired into `CategoryHealth.razor`, `BudgetBalance.razor`, and `RunwayWarnings.razor` so one tab shares one inclusive range (**FR-M031a**)
+- [ ] T170 [US6] [US7] [US8] Refactor `PeriodReportService`, `RunwayReportService`, and `PeriodSummaryBuilder` in `src/Potsure.Reporting/` and `src/Potsure.Infrastructure/Features/Reports/` to accept caller-supplied `ReportRange` instead of `BudgetPeriod` dates; runway end = report end + **N** whole calendar months with last-day clamp per **FR-M020**/**FR-M035**
+
+### Plan settings UI (US3)
+
+- [ ] T171 [US3] Replace period date and budgeted income fields in `src/Potsure.Web/Features/Plan/Pages/PlanSettings.razor` with estimated income amount, income cadence selector (`PlanIncomeCadence`: Weekly, Fortnightly, Monthly, Quarterly, Yearly), and `ActualIncomeWindowMonths` (**1–12**); show **not set** until both amount and cadence saved (**FR-M031**)
+- [ ] T172 [P] [US3] Wire `BudgetedIncomeSuggestionService` in `src/Potsure.Infrastructure/Features/Plan/BudgetedIncomeSuggestionService.cs` to suggest estimated income from confirmed income patterns without auto-apply; refresh only on explicit user confirm in plan UI
+
+### Recurring lifecycle (FR-M008c, FR-M008d)
+
+- [ ] T173 [US2] [US9] Add `PaymentAnchorDate`, `PaymentAnchorUserOverride`, and rename or map `StoredMonthlyEstimate` on `RecurringExpenseEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` with EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/`
+- [ ] T174 [US2] Persist payment anchors on confirm/edit in `ExpensePatternService` and `CommitmentPaymentAnchorResolver` in `src/Potsure.Infrastructure/Features/Recurrence/` and `src/Potsure.Infrastructure/Features/Reports/`; re-import may advance anchor only when `PaymentAnchorUserOverride` is false per data-model
+- [ ] T175 [US2] [US9] Implement edit and delete confirmed recurring flows in `IncomePatternService`, `ExpensePatternService`, and `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` / `RecurringSummary.razor` per **FR-M008c** (delete removes commitment projection; transactions remain)
+- [ ] T176 [US2] Enforce user-authoritative `ExpenseAmountKind` (fixed vs variable) on confirm, merge, split, and edit in `ExpensePatternService` and detection UI per **FR-M008d**; variable commitments use **stored** monthly estimate only (not live **FR-M034** average)
+
+### Pot mapping modes (US4)
+
+- [ ] T177 [US4] Align `PotMappingMode` enum in `src/Potsure.Budgeting/DomainTypes.cs` and persistence with **CategoryOnly**, **ThreePots**, **SeveralPots** (migrate from legacy `None` / UX-only modes); default **CategoryOnly** per data-model
+- [ ] T178 [US4] Enforce mode invariants in `BankPotService` in `src/Potsure.Infrastructure/Features/Plan/BankPotService.cs`: **three pots** ≤3 pots and ≤1 per category; **several pots** unlimited; block mode switches until invariants satisfied (**FR-M013**, **FR-M013c** funding roll-or-discard on delete); pot rename and category reassignment on `PotMapping.razor` respect active mode rules (**FR-M013** scenario 11)
+- [ ] T179 [US4] Implement **FR-M013b** optional pot pre-selection in expense assign flows in `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` and related assign components; hide pot UI in **category-only** mode
+
+### Reports and not-set UX (US6, US7)
+
+- [ ] T180 [US6] [US7] Surface explicit **not set** (not £0) for category allocations and budget balance when estimated income or cadence missing in `PeriodSummaryBuilder` and report Razor pages per **FR-M031**
+- [ ] T181 [US6] Compute **ActualIncomeMonthlyMean** over stored **N**-month window ending **today** on plan settings and over **N** months ending report range **end** on period reports in `src/Potsure.Reporting/ActualIncomeCalculator.cs` per **FR-M019**
+- [ ] T182 [US7] Ensure `RequiredIncomeCalculator` uses **max-of-ratios** (not sum) and range-prorated estimated income in `src/Potsure.Reporting/BudgetBalanceReportBuilder.cs` per **FR-M018**
+
+### Export and tests
+
+- [ ] T183 [P] [US10] Update `ExportSnapshotBuilder` in `src/Potsure.Infrastructure/Features/Export/ExportSnapshotBuilder.cs` and contracts/export-formats.md alignment for standing plan fields (no budget period dates; estimated income + cadence)
+- [ ] T184 [P] Update `DeterminismTests` and reporting integration tests in `tests/Potsure.Reporting.Tests/` for **30.4375** proration and unchanged-input repeat viewing (**FR-M036**)
+- [ ] T185 [P] Refresh quickstart validation log Scenarios **3**, **4b**, **5**, and **7** in `specs/001-potsure-v1/quickstart.md` after Phase 27 checkpoint
+- [ ] T186 [P] Align `docs/deployment-database.md`, `docs/self-host.md`, and quickstart Scenario 8c notes with canonical `dotnet ef` `--project src/Potsure.Data` and AppHost `WithMigrationsProject` → Data (artifact audit **2026-11-09**); pair with **T158** Aspire ef-tool fix
+
+**Checkpoint**: Standing plan saves without period dates; report range shared per tab; category health and budget balance prorate with **30.4375**; pot modes enforce **FR-M013**; recurring edit/delete and anchors persist; budgeting golden tests cover new catalogue items.

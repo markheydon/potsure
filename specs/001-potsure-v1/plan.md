@@ -29,7 +29,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 
 **Future (post–v1.0.0 acceptance, optional)**: WebAuthn passkeys on login/register/manage (template-style optional submit), not a v1 primary dependency.
 
-**Storage**: Azure SQL Database (hosted); SQL Server container locally (`RunAsContainer`). EF model and migrations in `Potsure.Infrastructure` (single `PotsureDbContext`  -  no separate migrations-only project unless structure later justifies it). Schema apply is an **explicit orchestration step** (Aspire `AddEFMigrations` locally; controlled CI/job or publish migration script/bundle for hosted  -  not `Database.MigrateAsync()` on web startup). Application data seeding (`BudgetProfileSeeder`, etc.) stays separate from migration execution. UserId on owned tables, query filters, explicit ownership checks. Data Protection key ring in SQL.
+**Storage**: Azure SQL Database (hosted); SQL Server container locally (`RunAsContainer`). EF entities, `PotsureDbContext`, and versioned migrations live in **`src/Potsure.Data/`** (see EF table below); repositories, seeding, and feature orchestration live in **`Potsure.Infrastructure`**. Schema apply is an **explicit orchestration step** (Aspire `AddEFMigrations` with `WithMigrationsProject` → `Potsure.Data`; controlled CI/job or publish migration script/bundle for hosted  -  not `Database.MigrateAsync()` on web startup). Application data seeding (`BudgetProfileSeeder`, etc.) stays separate from migration execution. UserId on owned tables, query filters, explicit ownership checks. Data Protection key ring in SQL.
 
 **Testing**: xUnit v3, NSubstitute, built-in Assert; golden files for Monzo parsing; independent expected results for budgeting core; Playwright C# for key journeys; AppHost not unit-tested.
 
@@ -72,7 +72,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 | Central package versioning (constitution 1.2.0) | Dependencies listed for central management; implement/tasks gate on latest-stable pins and outdated-package sweep before dependency work is “done” |
 | EF migration execution (review prompt + constitution II) | No startup `MigrateAsync` on web; AppHost models explicit migration resource; schema seeding not bundled into migration job; AppHost not unit-tested |
 
-**Post-design re-check** (2026-11-09): Phase 1 artifacts updated for household standing plan, report date range, pot modes, proration, and recurring lifecycle (**FR-M008c**/**FR-M008d**). Module boundaries and constitution budget model (three categories, two presets) preserved. Hosted auth unchanged (password-primary Identity 1.2.0). Implementation backlog in [tasks.md](./tasks.md) still reflects pre–2026-11-09 **BudgetPeriod** naming in places; run **`/speckit-converge`** then **`/speckit-tasks`** to align tasks with this plan. **No unjustified gate violations.** Complexity Tracking table empty.
+**Post-design re-check** (2026-11-09): Phase 1 artifacts updated for household standing plan, report date range, pot modes, proration, and recurring lifecycle (**FR-M008c**/**FR-M008d**). Module boundaries and constitution budget model preserved. Hosted auth unchanged (password-primary Identity 1.2.0). [tasks.md](./tasks.md) **Phase 27** (**T159**–**T186**) is the implementation backlog for the standing-plan pivot; Phases 1–26 with **`BudgetPeriod`** naming are legacy completed work unless noted. **No unjustified gate violations.** Complexity Tracking table empty.
 
 ## Project Structure
 
@@ -103,7 +103,8 @@ src/
 ├── Potsure.Statements/           # Monzo CSV parse, validate, classify, dedupe
 ├── Potsure.Recurrence/           # Pattern detection + projection (I/O-free logic + interfaces)
 ├── Potsure.Reporting/            # PeriodSummary, report DTO assembly (uses Budgeting)
-└── Potsure.Infrastructure/       # EF Core, repositories, upload pipeline, export stream
+├── Potsure.Data/                 # EF entities, DbContext, migrations, design-time factories
+└── Potsure.Infrastructure/       # Repositories, upload/export, feature services (references Data)
 
 tests/
 ├── Potsure.Budgeting.Tests/      # Golden maths
@@ -130,11 +131,11 @@ docs/                             # Self-host, encryption, deployment stages (im
 └───────────────────────────┬─────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────┐
-│ Potsure.Infrastructure (EF, upload/export, auth hooks)  │
+│ Potsure.Infrastructure (repositories, upload/export)    │
 └─┬───────────────┬────────────────────┬──────────────────┘
   │               │                    │
   ▼               ▼                    ▼
-Statements    Recurrence          Reporting
+Statements    Recurrence          Reporting ──► Potsure.Data (EF)
   │               │                    │
   └───────────────┴──────────┬─────────┘
                              ▼
@@ -249,4 +250,4 @@ Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packa
 
 ## Next steps
 
-After this re-plan: run **`/speckit-converge`** to append implementation tasks for the 2026-11-09 plan pivot (standing income/cadence, report range session state, pot modes, proration golden files, **FR-M008c**/**FR-M008d**), then **`/speckit-tasks`** if tasks need regeneration, then **`/speckit-analyze`**. Continue **`/speckit-implement`** on the converged backlog; Phase 23 Identity tasks remain valid where not superseded by plan-model work.
+Run **`/speckit-implement`** on [tasks.md](./tasks.md) **Phase 27** (**T159**–**T186**) for the standing-plan pivot, then close release-evidence tasks **T150**, **T151**, **T155**, and **T158**. Use **`/speckit-converge`** only if implementation discovers new spec gaps; re-run **`/speckit-analyze`** after large artifact edits. Phase 23 Identity tasks remain valid where not superseded by plan-model work.
