@@ -20,7 +20,7 @@ public partial class PotMapping
 
     private bool _loading = true;
     private string? _error;
-    private PotMappingMode _mode = PotMappingMode.None;
+    private PotMappingMode _mode = PotMappingMode.CategoryOnly;
 
     private PotMappingMode Mode
     {

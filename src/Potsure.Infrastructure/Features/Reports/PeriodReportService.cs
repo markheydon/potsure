@@ -3,6 +3,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Features.Plan;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -14,42 +15,43 @@ public sealed class PeriodReportService(
     PotsureDbContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
-    /// <summary>
-    /// Builds the category health period summary for the working period.
-    /// </summary>
-    public async Task<PeriodSummary> GetPeriodSummaryAsync(CancellationToken cancellationToken = default)
+    public async Task<PeriodSummary> GetPeriodSummaryAsync(
+        DateOnly reportStart,
+        DateOnly reportEnd,
+        CancellationToken cancellationToken = default)
     {
-        PeriodSummaryInput input = await BuildPeriodSummaryInputAsync(cancellationToken);
+        PeriodSummaryInput input = await BuildPeriodSummaryInputAsync(reportStart, reportEnd, cancellationToken);
         return PeriodSummaryBuilder.Build(input);
     }
 
-    /// <summary>
-    /// Builds the budget balance report for the working period.
-    /// </summary>
-    public async Task<BudgetBalanceReport> GetBudgetBalanceReportAsync(CancellationToken cancellationToken = default)
+    public async Task<BudgetBalanceReport> GetBudgetBalanceReportAsync(
+        DateOnly reportStart,
+        DateOnly reportEnd,
+        CancellationToken cancellationToken = default)
     {
-        BudgetBalanceReportInput input = await BuildBudgetBalanceInputAsync(cancellationToken);
+        BudgetBalanceReportInput input = await BuildBudgetBalanceInputAsync(reportStart, reportEnd, cancellationToken);
         return BudgetBalanceReportBuilder.Build(input);
     }
 
-    private async Task<PeriodSummaryInput> BuildPeriodSummaryInputAsync(CancellationToken cancellationToken)
+    private async Task<PeriodSummaryInput> BuildPeriodSummaryInputAsync(
+        DateOnly reportStart,
+        DateOnly reportEnd,
+        CancellationToken cancellationToken)
     {
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.BudgetPeriod)
             .Include(p => p.Categories)
             .Include(p => p.Pots)
             .SingleAsync(cancellationToken);
 
         EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
-        BudgetPeriodEntity period = profile.BudgetPeriod;
 
         Dictionary<Guid, BudgetCategoryKind> categoryKinds = profile.Categories
             .ToDictionary(c => c.Id, c => c.Kind);
 
         IReadOnlyList<PeriodTransactionInput> transactions = await LoadPeriodTransactionsAsync(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             categoryKinds,
             cancellationToken);
 
@@ -59,16 +61,18 @@ public sealed class PeriodReportService(
 
         IReadOnlyList<CategoryFundingInput> funding = BuildFundingInputs(profile);
         IReadOnlyList<CategoryCommitmentInput> commitments = await LoadCommitmentsAsync(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             categoryKinds,
             cancellationToken);
 
+        PlanIncome? planIncome = StandingPlanIncomeService.ToPlanIncome(profile);
+
         return new PeriodSummaryInput(
             profile.SelectedPreset,
-            period.StartDate,
-            period.EndDate,
-            period.BudgetedIncomeAmount,
+            reportStart,
+            reportEnd,
+            planIncome,
             actualIncome,
             profile.ForecastHorizonMonths,
             funding,
@@ -76,45 +80,48 @@ public sealed class PeriodReportService(
             commitments);
     }
 
-    private async Task<BudgetBalanceReportInput> BuildBudgetBalanceInputAsync(CancellationToken cancellationToken)
+    private async Task<BudgetBalanceReportInput> BuildBudgetBalanceInputAsync(
+        DateOnly reportStart,
+        DateOnly reportEnd,
+        CancellationToken cancellationToken)
     {
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.BudgetPeriod)
             .Include(p => p.Categories)
             .SingleAsync(cancellationToken);
 
         EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
-        BudgetPeriodEntity period = profile.BudgetPeriod;
 
         Dictionary<Guid, BudgetCategoryKind> categoryKinds = profile.Categories
             .ToDictionary(c => c.Id, c => c.Kind);
 
         IReadOnlyList<PeriodTransactionInput> transactions = await LoadPeriodTransactionsAsync(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             categoryKinds,
             cancellationToken);
 
-        decimal actualIncome = transactions
+        decimal actualReceipts = transactions
             .Where(t => t.Kind == TransactionKind.IncomeCredit)
             .Sum(t => Math.Abs(t.SignedAmount));
 
         IReadOnlyList<CommitmentExpenseInput> expenses = await LoadConfirmedExpenseCommitmentsAsync(
-            period.StartDate,
+            reportStart,
             categoryKinds,
             cancellationToken);
 
         IReadOnlyList<IncomeScheduleInput> incomeSchedules = await LoadConfirmedIncomeSchedulesAsync(
-            period.StartDate,
+            reportStart,
             cancellationToken);
+
+        PlanIncome? planIncome = StandingPlanIncomeService.ToPlanIncome(profile);
 
         return new BudgetBalanceReportInput(
             profile.SelectedPreset,
-            period.StartDate,
-            period.EndDate,
-            period.BudgetedIncomeAmount,
-            actualIncome,
+            reportStart,
+            reportEnd,
+            planIncome,
+            actualReceipts,
             expenses,
             incomeSchedules);
     }
@@ -175,7 +182,7 @@ public sealed class PeriodReportService(
             categoryKinds,
             cancellationToken);
 
-        return CommitmentProjector.ProjectIntoPeriod(periodStart, periodEnd, expenses);
+        return Potsure.Reporting.CommitmentProjector.ProjectIntoPeriod(periodStart, periodEnd, expenses);
     }
 
     private async Task<IReadOnlyList<CommitmentExpenseInput>> LoadConfirmedExpenseCommitmentsAsync(
@@ -198,10 +205,11 @@ public sealed class PeriodReportService(
             .Select(e => new CommitmentExpenseInput(
                 categoryKinds[e.CategoryId],
                 e.Cadence,
-                string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase),
+                e.AmountKind,
                 e.FixedAmount,
-                e.MonthlyEstimate,
-                anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback))
+                e.StoredMonthlyEstimate,
+                e.PaymentAnchorDate
+                    ?? (anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback)))
             .ToList();
     }
 

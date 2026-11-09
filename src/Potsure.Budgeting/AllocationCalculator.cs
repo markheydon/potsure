@@ -5,17 +5,43 @@ namespace Potsure.Budgeting;
 /// </summary>
 public static class AllocationCalculator
 {
-    public static IReadOnlyDictionary<BudgetCategoryKind, Money> Calculate(
+    public static IReadOnlyDictionary<BudgetCategoryKind, Money> CalculateMonthlyEquivalent(
         AllocationPreset preset,
-        Money budgetedIncome)
+        Money monthlyEquivalentIncome)
     {
         Dictionary<BudgetCategoryKind, Money> result = new();
         foreach (BudgetCategoryKind kind in PresetPercentages.TieBreakOrder)
         {
             decimal percent = PresetPercentages.For(kind, preset);
-            result[kind] = (budgetedIncome * percent).RoundForReport();
+            result[kind] = (monthlyEquivalentIncome * percent).RoundForReport();
         }
 
         return result;
+    }
+
+    public static IReadOnlyDictionary<BudgetCategoryKind, Money> CalculateForReportRange(
+        AllocationPreset preset,
+        PlanIncome? planIncome,
+        DateRange reportRange)
+    {
+        if (planIncome is null)
+        {
+            return new Dictionary<BudgetCategoryKind, Money>();
+        }
+
+        Money monthlyEquivalent = ProrationCalculator.MonthlyEquivalentFromPlan(planIncome.Value);
+        IReadOnlyDictionary<BudgetCategoryKind, Money> monthly =
+            CalculateMonthlyEquivalent(preset, monthlyEquivalent);
+
+        Dictionary<BudgetCategoryKind, Money> prorated = new();
+        foreach (BudgetCategoryKind kind in PresetPercentages.TieBreakOrder)
+        {
+            prorated[kind] = ProrationCalculator.ProrateMonthlyEquivalent(
+                monthly[kind],
+                reportRange.Start,
+                reportRange.End);
+        }
+
+        return prorated;
     }
 }

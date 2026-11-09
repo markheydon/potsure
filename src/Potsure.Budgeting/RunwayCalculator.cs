@@ -12,6 +12,14 @@ public static class RunwayCalculator
         IReadOnlyList<CategoryHealthLine> health = CategoryHealthCalculator.Calculate(context);
         List<RunwayWarning> warnings = new();
 
+        bool notSet = context.PlanIncome is null;
+        IReadOnlyDictionary<BudgetCategoryKind, Money> runwayAllocations = notSet
+            ? new Dictionary<BudgetCategoryKind, Money>()
+            : AllocationCalculator.CalculateForReportRange(
+                context.Preset,
+                context.PlanIncome,
+                context.RunwayWindow);
+
         foreach (CategoryHealthLine line in health)
         {
             if (!projectedRemainingByCategory.TryGetValue(line.Kind, out Money projected))
@@ -19,7 +27,14 @@ public static class RunwayCalculator
                 projected = Money.Zero;
             }
 
-            Money threshold = (line.Allocation - line.ActualActivity + line.RecordedFunding).RoundForReport();
+            if (notSet || line.Allocation is null)
+            {
+                warnings.Add(new RunwayWarning(line.Kind, projected.RoundForReport(), Money.Zero, false));
+                continue;
+            }
+
+            Money runwayAllocation = runwayAllocations[line.Kind];
+            Money threshold = (runwayAllocation - line.ActualActivity + line.RecordedFunding).RoundForReport();
             bool shortfall = projected > threshold;
             warnings.Add(new RunwayWarning(line.Kind, projected.RoundForReport(), threshold, shortfall));
         }

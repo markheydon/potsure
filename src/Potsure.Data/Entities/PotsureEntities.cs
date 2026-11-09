@@ -12,15 +12,17 @@ public sealed class BudgetProfileEntity
 
     public string Currency { get; set; } = "GBP";
 
-    public PotMappingMode PotMappingMode { get; set; } = PotMappingMode.None;
+    public PotMappingMode PotMappingMode { get; set; } = PotMappingMode.CategoryOnly;
 
     public int ForecastHorizonMonths { get; set; } = 3;
 
+    public int ActualIncomeWindowMonths { get; set; } = 3;
+
+    public decimal? EstimatedIncomeAmount { get; set; }
+
+    public PlanIncomeCadence? EstimatedIncomeCadence { get; set; }
+
     public string? RememberedColumnMappingJson { get; set; }
-
-    public Guid BudgetPeriodId { get; set; }
-
-    public BudgetPeriodEntity BudgetPeriod { get; set; } = null!;
 
     public MonzoAccountAssociationEntity? MonzoAccount { get; set; }
 
@@ -29,19 +31,6 @@ public sealed class BudgetProfileEntity
     public List<BudgetCategoryEntity> Categories { get; set; } = [];
 
     public List<BankPotEntity> Pots { get; set; } = [];
-}
-
-public sealed class BudgetPeriodEntity
-{
-    public Guid Id { get; set; }
-
-    public string OwnerKey { get; set; } = string.Empty;
-
-    public DateOnly StartDate { get; set; }
-
-    public DateOnly EndDate { get; set; }
-
-    public decimal BudgetedIncomeAmount { get; set; }
 }
 
 public sealed class BudgetCategoryEntity
@@ -173,11 +162,15 @@ public sealed class RecurringExpenseEntity
 
     public string PaymentType { get; set; } = "Other";
 
-    public string AmountKind { get; set; } = "Fixed";
+    public ExpenseAmountKind AmountKind { get; set; } = ExpenseAmountKind.Fixed;
 
     public decimal? FixedAmount { get; set; }
 
-    public decimal? MonthlyEstimate { get; set; }
+    public DateOnly? PaymentAnchorDate { get; set; }
+
+    public bool PaymentAnchorUserOverride { get; set; }
+
+    public decimal? StoredMonthlyEstimate { get; set; }
 
     public string? EstimateCoverageLabel { get; set; }
 

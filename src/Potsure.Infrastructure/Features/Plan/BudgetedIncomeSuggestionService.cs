@@ -9,41 +9,33 @@ using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
-/// <summary>
-/// Optional budgeted income suggestion from confirmed income patterns (FR-M031); never auto-applied.
-/// </summary>
-public sealed record BudgetedIncomeSuggestion(
+public sealed record EstimatedIncomeSuggestion(
     decimal SuggestedAmount,
+    PlanIncomeCadence SuggestedCadence,
     string Rationale,
     IReadOnlyList<string> SourceLabels,
     IReadOnlyList<string> ExcludedSources);
 
 /// <summary>
-/// Derives a display-only income suggestion from confirmed recurring income sources.
+/// Optional estimated income suggestion from confirmed income patterns (FR-M031); never auto-applied.
 /// </summary>
 public sealed class BudgetedIncomeSuggestionService(
     PotsureDbContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
-    /// <summary>
-    /// Returns a projected total for the working budget period from schedulable income patterns; otherwise null.
-    /// </summary>
-    public async Task<BudgetedIncomeSuggestion?> GetSuggestionAsync(
+    public async Task<EstimatedIncomeSuggestion?> GetSuggestionAsync(
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity? profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.BudgetPeriod)
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (profile?.BudgetPeriod is null)
+        if (profile is null)
         {
             return null;
         }
 
-        DateOnly periodStart = profile.BudgetPeriod.StartDate;
-        DateOnly periodEnd = profile.BudgetPeriod.EndDate;
-        DateOnly anchorFallback = periodStart;
+        EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
 
         List<IncomeSourceEntity> confirmed = await dbContext.IncomeSources
             .AsNoTracking()
@@ -55,23 +47,29 @@ public sealed class BudgetedIncomeSuggestionService(
             return null;
         }
 
-        foreach (IncomeSourceEntity source in confirmed)
-        {
-            EntityOwnershipValidator.EnsureOwnedBy(source.OwnerKey, ownerAccessor.OwnerKey);
-        }
-
+        DateOnly anchorFallback = DateOnly.FromDateTime(DateTime.UtcNow);
         IReadOnlyDictionary<Guid, DateOnly> anchors = await CommitmentPaymentAnchorResolver.ResolveIncomeAnchorsAsync(
             dbContext,
             confirmed,
             cancellationToken);
 
-        List<IncomeScheduleInput> schedulable = [];
+        decimal monthlyTotal = 0m;
+        List<string> includedLabels = [];
         List<string> excludedLabels = [];
         foreach (IncomeSourceEntity source in confirmed)
         {
+            EntityOwnershipValidator.EnsureOwnedBy(source.OwnerKey, ownerAccessor.OwnerKey);
+
             if (source.Cadence is IncomeCadence.Variable or IncomeCadence.AdHoc)
             {
                 excludedLabels.Add(source.SourceLabel);
+                decimal estimate = source.EstimateAmount ?? source.FixedAmount ?? 0m;
+                if (estimate > 0m)
+                {
+                    monthlyTotal += estimate;
+                    includedLabels.Add(source.SourceLabel);
+                }
+
                 continue;
             }
 
@@ -82,51 +80,31 @@ public sealed class BudgetedIncomeSuggestionService(
                 continue;
             }
 
-            DateOnly anchor = anchors.TryGetValue(source.Id, out DateOnly a) ? a : anchorFallback;
-            schedulable.Add(new IncomeScheduleInput(source.Cadence, amount, anchor));
-        }
-
-        if (schedulable.Count == 0)
-        {
-            return null;
-        }
-
-        IReadOnlyList<ExpectedIncomePayment> payments = IncomePaymentSchedule.ListExpectedPayments(
-            periodStart,
-            periodEnd,
-            schedulable);
-
-        decimal periodTotal = payments.Sum(p => p.Amount.Amount);
-        HashSet<string> includedLabels = new(StringComparer.OrdinalIgnoreCase);
-        foreach (IncomeSourceEntity source in confirmed)
-        {
-            if (source.Cadence is IncomeCadence.Variable or IncomeCadence.AdHoc)
+            decimal monthly = source.Cadence switch
             {
-                continue;
-            }
-
-            decimal amount = source.FixedAmount ?? source.EstimateAmount ?? 0m;
-            if (amount <= 0m)
-            {
-                continue;
-            }
-
+                IncomeCadence.Weekly => amount * (52m / 12m),
+                IncomeCadence.Fortnightly => amount * (26m / 12m),
+                IncomeCadence.Monthly => amount,
+                _ => amount,
+            };
+            monthlyTotal += monthly;
             includedLabels.Add(source.SourceLabel);
         }
 
-        if (periodTotal <= 0m)
+        if (monthlyTotal <= 0m)
         {
             return null;
         }
 
         CultureInfo uk = CultureInfo.GetCultureInfo("en-GB");
         string rationale =
-            $"Sum of confirmed income payments expected between {periodStart.ToString("dd/MM/yyyy", uk)} and {periodEnd.ToString("dd/MM/yyyy", uk)} (inclusive), from weekly, fortnightly, and monthly patterns only. Apply manually if you agree.";
+            $"Monthly-equivalent total from {includedLabels.Count} confirmed income pattern(s) as at {DateOnly.FromDateTime(DateTime.UtcNow).ToString("dd/MM/yyyy", uk)}. Confirm manually to save as estimated income.";
 
-        return new BudgetedIncomeSuggestion(
-            Math.Round(periodTotal, 2, MidpointRounding.ToEven),
+        return new EstimatedIncomeSuggestion(
+            Math.Round(monthlyTotal, 2, MidpointRounding.ToEven),
+            PlanIncomeCadence.Monthly,
             rationale,
-            includedLabels.Count > 0 ? includedLabels.ToList() : new List<string> { "(income)" },
+            includedLabels,
             excludedLabels);
     }
 }

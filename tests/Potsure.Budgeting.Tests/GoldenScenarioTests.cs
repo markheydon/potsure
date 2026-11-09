@@ -8,7 +8,9 @@ public sealed class GoldenScenarioTests
     public void Allocation_FiftyThirtyTwenty_SplitsBudgetedIncome()
     {
         IReadOnlyDictionary<BudgetCategoryKind, Money> allocations =
-            AllocationCalculator.Calculate(AllocationPreset.FiftyThirtyTwenty, Money.FromRaw(2000m));
+            AllocationCalculator.CalculateMonthlyEquivalent(
+                AllocationPreset.FiftyThirtyTwenty,
+                Money.FromRaw(2000m));
 
         Assert.Equal(1000m, allocations[BudgetCategoryKind.Needs].Amount);
         Assert.Equal(600m, allocations[BudgetCategoryKind.Wants].Amount);
@@ -27,10 +29,13 @@ public sealed class GoldenScenarioTests
         CategoryHealthLine needs = CategoryHealthCalculator.Calculate(context)
             .Single(l => l.Kind == BudgetCategoryKind.Needs);
 
-        Assert.Equal(500m, needs.Allocation.Amount);
+        DateOnly start = new(2026, 1, 1);
+        DateOnly end = new(2026, 1, 31);
+        decimal allocation = BudgetingTestHelpers.ProratedMonthlyAmount(500m, start, end);
+        Assert.Equal(allocation, needs.Allocation!.Value.Amount);
         Assert.Equal(500m, needs.RecordedFunding.Amount);
         Assert.Equal(200m, needs.ActualActivity.Amount);
-        Assert.Equal(300m, needs.UnderOver.Amount);
+        Assert.Equal(allocation - 200m, needs.UnderOver!.Value.Amount);
     }
 
     [Fact]
@@ -67,7 +72,10 @@ public sealed class GoldenScenarioTests
         RunwayWarning needs = RunwayCalculator.Calculate(context, projected)
             .Single(w => w.Category == BudgetCategoryKind.Needs);
 
-        Assert.Equal(150m, needs.Threshold.Amount);
+        decimal threshold = BudgetingTestHelpers.ProratedMonthlyAmount(500m, new(2026, 1, 1), new(2026, 1, 31))
+            - 400m
+            + 50m;
+        Assert.Equal(threshold, needs.Threshold.Amount);
         Assert.True(needs.IsShortfall);
     }
 
@@ -105,13 +113,14 @@ public sealed class GoldenScenarioTests
 
         return new BudgetingContext(
             preset,
+            BudgetingTestHelpers.MonthlyPlan(budgetedIncome),
             period,
-            Money.FromRaw(budgetedIncome),
+            period,
             categories,
             [],
             commitments,
             actuals,
             Money.Zero,
-            period.End);
+            3);
     }
 }

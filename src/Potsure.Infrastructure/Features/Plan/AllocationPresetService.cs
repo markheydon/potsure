@@ -33,13 +33,12 @@ public sealed class AllocationPresetService(
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
-            .Include(p => p.BudgetPeriod)
             .Include(p => p.Categories)
             .SingleAsync(cancellationToken);
 
         EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
         profile.SelectedPreset = preset;
-        CategoryAllocationSync.ApplyFromBudgetedIncome(profile);
+        CategoryAllocationSync.ApplyFromStandingPlan(profile);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return profile.SelectedPreset;

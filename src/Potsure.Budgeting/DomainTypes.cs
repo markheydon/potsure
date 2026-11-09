@@ -53,12 +53,37 @@ public enum ExpenseCadence
 
 public enum PotMappingMode
 {
-    None,
-    CategoryNamedPots,
-    ExpenseSpecificPots,
+    CategoryOnly,
+    ThreePots,
+    SeveralPots,
+}
+
+public enum PlanIncomeCadence
+{
+    Weekly,
+    Fortnightly,
+    Monthly,
+    Quarterly,
+    Yearly,
+}
+
+public enum ExpenseAmountKind
+{
+    Fixed,
+    Variable,
 }
 
 public readonly record struct DateRange(DateOnly Start, DateOnly End);
+
+public readonly record struct PlanIncome(Money EstimatedAmount, PlanIncomeCadence Cadence);
+
+public readonly record struct ExpenseCommitmentInput(
+    BudgetCategoryKind Category,
+    ExpenseCadence Cadence,
+    ExpenseAmountKind AmountKind,
+    Money? FixedAmountPerOccurrence,
+    DateOnly? PaymentAnchorDate,
+    Money? StoredMonthlyEstimate);
 
 public readonly record struct CategoryBudgetInput(
     BudgetCategoryKind Kind,
@@ -72,7 +97,7 @@ public readonly record struct PotBudgetInput(
 
 public readonly record struct CategoryCommitmentInput(
     BudgetCategoryKind Category,
-    Money AmountInPeriod);
+    Money AmountInRange);
 
 public readonly record struct CategoryActualInput(
     BudgetCategoryKind Category,
@@ -80,29 +105,33 @@ public readonly record struct CategoryActualInput(
 
 public readonly record struct BudgetingContext(
     AllocationPreset Preset,
-    DateRange Period,
-    Money BudgetedIncome,
+    PlanIncome? PlanIncome,
+    DateRange ReportRange,
+    DateRange RunwayWindow,
     IReadOnlyList<CategoryBudgetInput> Categories,
     IReadOnlyList<PotBudgetInput> Pots,
     IReadOnlyList<CategoryCommitmentInput> Commitments,
     IReadOnlyList<CategoryActualInput> Actuals,
     Money UncategorisedSpend,
-    DateOnly ForecastHorizonEnd);
+    int ForecastHorizonMonths);
 
 public readonly record struct CategoryHealthLine(
     BudgetCategoryKind Kind,
-    Money Allocation,
+    Money? Allocation,
     Money RecordedFunding,
     Money ActualActivity,
-    Money UnderOver,
-    bool OverAllocationWarning);
+    Money? UnderOver,
+    bool OverAllocationWarning,
+    bool NotSet);
 
 public readonly record struct RequiredIncomeResult(
     IReadOnlyDictionary<BudgetCategoryKind, Money> RequiredByCategory,
     Money RequiredTotal,
     BudgetCategoryKind LimitingCategory,
-    Money Shortfall,
-    bool MeetsRequirement);
+    Money? EstimatedIncomeInRange,
+    Money? Shortfall,
+    bool? MeetsRequirement,
+    bool NotSet);
 
 public readonly record struct RunwayWarning(
     BudgetCategoryKind Category,

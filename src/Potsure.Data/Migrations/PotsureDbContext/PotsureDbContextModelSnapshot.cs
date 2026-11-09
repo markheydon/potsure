@@ -301,45 +301,28 @@ namespace Potsure.Data.Migrations
                     b.ToTable("BudgetCategories", (string)null);
                 });
 
-            modelBuilder.Entity("Potsure.Data.Entities.BudgetPeriodEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("BudgetedIncomeAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("OwnerKey")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BudgetPeriods", (string)null);
-                });
-
             modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("BudgetPeriodId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("ActualIncomeWindowMonths")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(3);
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
+
+                    b.Property<decimal?>("EstimatedIncomeAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("EstimatedIncomeCadence")
+                        .HasColumnType("int");
 
                     b.Property<int>("ForecastHorizonMonths")
                         .HasColumnType("int");
@@ -362,9 +345,6 @@ namespace Potsure.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BudgetPeriodId")
-                        .IsUnique();
 
                     b.HasIndex("MonzoAccountId");
 
@@ -457,10 +437,8 @@ namespace Potsure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AmountKind")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                    b.Property<int>("AmountKind")
+                        .HasColumnType("int");
 
                     b.Property<int>("Cadence")
                         .HasColumnType("int");
@@ -478,14 +456,16 @@ namespace Potsure.Data.Migrations
                     b.Property<Guid?>("MappedPotId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal?>("MonthlyEstimate")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("OwnerKey")
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateOnly?>("PaymentAnchorDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("PaymentAnchorUserOverride")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PaymentType")
                         .IsRequired()
@@ -494,6 +474,10 @@ namespace Potsure.Data.Migrations
 
                     b.Property<int>("State")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("StoredMonthlyEstimate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Tag")
                         .HasMaxLength(128)
@@ -847,18 +831,10 @@ namespace Potsure.Data.Migrations
 
             modelBuilder.Entity("Potsure.Data.Entities.BudgetProfileEntity", b =>
                 {
-                    b.HasOne("Potsure.Data.Entities.BudgetPeriodEntity", "BudgetPeriod")
-                        .WithOne()
-                        .HasForeignKey("Potsure.Data.Entities.BudgetProfileEntity", "BudgetPeriodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Potsure.Data.Entities.MonzoAccountAssociationEntity", "MonzoAccount")
                         .WithMany()
                         .HasForeignKey("MonzoAccountId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("BudgetPeriod");
 
                     b.Navigation("MonzoAccount");
                 });

@@ -5,10 +5,11 @@ using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Web.Resources;
+using Potsure.Web.Services;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
-public partial class OneOffCategorise
+public partial class OneOffCategorise : IDisposable
 {
     [Inject]
     private UncategorisedTransactionQuery TransactionQuery { get; set; } = null!;
@@ -22,6 +23,9 @@ public partial class OneOffCategorise
     [Inject]
     private PotsureDbContext DbContext { get; set; } = null!;
 
+    [Inject]
+    private ReportDateRangeSessionState DateRangeState { get; set; } = null!;
+
     private bool _loading = true;
     private string? _error;
     private string? _statusMessage;
@@ -31,6 +35,7 @@ public partial class OneOffCategorise
 
     protected override async Task OnInitializedAsync()
     {
+        DateRangeState.Changed += OnDateRangeChanged;
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
@@ -47,6 +52,19 @@ public partial class OneOffCategorise
         }
     }
 
+    public void Dispose()
+    {
+        DateRangeState.Changed -= OnDateRangeChanged;
+        GC.SuppressFinalize(this);
+    }
+
+    private async void OnDateRangeChanged() =>
+        await InvokeAsync(async () =>
+        {
+            await ReloadTransactionsAsync();
+            StateHasChanged();
+        });
+
     private string CategoryLabel(Guid categoryId) =>
         _categories.FirstOrDefault(c => c.Id == categoryId) is { } category
             ? BudgetCategoryDisplay.Format(category.Kind)
@@ -54,7 +72,8 @@ public partial class OneOffCategorise
 
     private async Task ReloadTransactionsAsync()
     {
-        _transactions = (await TransactionQuery.ListForWorkingPeriodAsync()).ToList();
+        (DateOnly start, DateOnly end) = DateRangeState.GetRange();
+        _transactions = (await TransactionQuery.ListForReportRangeAsync(start, end)).ToList();
         foreach (UncategorisedTransactionRow row in _transactions)
         {
             if (!_selectedCategoryByTransaction.ContainsKey(row.TransactionId) && _categories.Count > 0)
@@ -120,5 +139,4 @@ public partial class OneOffCategorise
         };
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
-
 }

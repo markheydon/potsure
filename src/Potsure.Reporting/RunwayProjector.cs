@@ -7,10 +7,10 @@ namespace Potsure.Reporting;
 /// </summary>
 public readonly record struct RunwayProjectionInput(
     AllocationPreset Preset,
-    DateOnly PeriodStart,
-    DateOnly PeriodEnd,
+    DateOnly ReportStart,
+    DateOnly ReportEnd,
     int ForecastHorizonMonths,
-    decimal BudgetedIncomeAmount,
+    PlanIncome? PlanIncome,
     IReadOnlyList<CategoryFundingInput> Categories,
     IReadOnlyList<CategoryActualInput> Actuals,
     Money UncategorisedSpend,
@@ -35,13 +35,16 @@ public static class RunwayProjector
     /// </summary>
     public static IReadOnlyList<RunwayProjectionLine> Project(RunwayProjectionInput input)
     {
-        DateOnly horizonEnd = input.PeriodEnd.AddMonths(input.ForecastHorizonMonths);
+        DateRange reportRange = new(input.ReportStart, input.ReportEnd);
+        DateRange runwayWindow = new(
+            reportRange.Start,
+            ProrationCalculator.RunwayWindowEnd(reportRange.End, input.ForecastHorizonMonths));
+
         IReadOnlyList<CategoryCommitmentInput> horizonCommitments = CommitmentProjector.ProjectIntoPeriod(
-            input.PeriodStart,
-            horizonEnd,
+            runwayWindow.Start,
+            runwayWindow.End,
             input.Expenses);
 
-        Money budgetedIncome = Money.FromRaw(input.BudgetedIncomeAmount).RoundForReport();
         List<CategoryBudgetInput> categoryInputs = input.Categories
             .Select(c => new CategoryBudgetInput(
                 c.Kind,
@@ -57,17 +60,18 @@ public static class RunwayProjector
 
         BudgetingContext context = new(
             input.Preset,
-            new DateRange(input.PeriodStart, input.PeriodEnd),
-            budgetedIncome,
+            input.PlanIncome,
+            reportRange,
+            runwayWindow,
             categoryInputs,
             potInputs,
             horizonCommitments,
             input.Actuals,
             input.UncategorisedSpend,
-            horizonEnd);
+            input.ForecastHorizonMonths);
 
         Dictionary<BudgetCategoryKind, Money> projected = horizonCommitments
-            .ToDictionary(c => c.Category, c => c.AmountInPeriod);
+            .ToDictionary(c => c.Category, c => c.AmountInRange);
 
         IReadOnlyList<RunwayWarning> warnings = RunwayCalculator.Calculate(context, projected);
         return warnings

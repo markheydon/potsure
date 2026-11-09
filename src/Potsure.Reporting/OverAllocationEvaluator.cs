@@ -8,15 +8,16 @@ namespace Potsure.Reporting;
 public static class OverAllocationEvaluator
 {
     /// <summary>
-    /// Returns whether each category has mapped-pot slices plus direct recorded funding above its allocation.
+    /// Returns whether each category has mapped-pot slices plus direct recorded funding above its prorated allocation.
     /// </summary>
     public static IReadOnlyDictionary<BudgetCategoryKind, bool> Evaluate(
         AllocationPreset preset,
-        Money budgetedIncome,
+        PlanIncome planIncome,
+        DateRange reportRange,
         IReadOnlyList<CategoryFundingInput> categories)
     {
         IReadOnlyDictionary<BudgetCategoryKind, Money> allocations =
-            AllocationCalculator.Calculate(preset, budgetedIncome);
+            AllocationCalculator.CalculateForReportRange(preset, planIncome, reportRange);
 
         Dictionary<BudgetCategoryKind, bool> results = new();
         foreach (CategoryFundingInput category in categories)

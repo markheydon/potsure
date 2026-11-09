@@ -25,7 +25,7 @@ public static class IncomePaymentSchedule
             }
 
             ExpenseCadence cadence = MapCadence(pattern.Cadence);
-            int occurrences = CommitmentProjector.CountOccurrences(
+            int occurrences = Potsure.Budgeting.CommitmentProjector.CountOccurrences(
                 periodStart,
                 periodEnd,
                 pattern.AnchorDate,

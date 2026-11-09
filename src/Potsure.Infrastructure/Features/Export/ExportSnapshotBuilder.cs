@@ -17,7 +17,6 @@ public sealed class ExportSnapshotBuilder(
     {
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.BudgetPeriod)
             .Include(p => p.Categories)
             .Include(p => p.Pots)
             .Include(p => p.MonzoAccount)
@@ -38,9 +37,10 @@ public sealed class ExportSnapshotBuilder(
             DateTimeOffset.UtcNow,
             profile.SelectedPreset,
             profile.ForecastHorizonMonths,
-            profile.BudgetPeriod.StartDate,
-            profile.BudgetPeriod.EndDate,
-            profile.BudgetPeriod.BudgetedIncomeAmount,
+            profile.ActualIncomeWindowMonths,
+            profile.EstimatedIncomeAmount,
+            profile.EstimatedIncomeCadence,
+            profile.PotMappingMode,
             profile.Categories.Select(c => new CategoryExportRow(
                 c.Kind,
                 c.AllocationAmount,
@@ -73,7 +73,8 @@ public sealed class ExportSnapshotBuilder(
                 e.Cadence,
                 e.AmountKind,
                 e.FixedAmount,
-                e.MonthlyEstimate,
+                e.StoredMonthlyEstimate,
+                e.PaymentAnchorDate,
                 e.Tag,
                 e.State.ToString())).ToList(),
             assignments.Select(a => new AssignmentExportRow(

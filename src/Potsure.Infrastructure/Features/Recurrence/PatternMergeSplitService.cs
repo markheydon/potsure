@@ -83,11 +83,13 @@ public sealed class PatternMergeSplitService(
                 request.Resolution.MappedPotId,
                 request.Cadence,
                 sources[0].PaymentType,
-                request.AmountKind,
+                ExpenseAmountKindParser.Parse(request.AmountKind),
                 request.FixedAmount,
                 request.MonthlyEstimate,
                 request.EstimateCoverageLabel,
                 request.Resolution.Tag,
+                null,
+                false,
                 PatternConfirmationState.Confirmed),
             cancellationToken);
 
@@ -123,11 +125,13 @@ public sealed class PatternMergeSplitService(
                     part.Resolution.MappedPotId,
                     part.Cadence,
                     source.PaymentType,
-                    part.AmountKind,
+                    ExpenseAmountKindParser.Parse(part.AmountKind),
                     part.FixedAmount,
                     part.MonthlyEstimate,
                     part.EstimateCoverageLabel,
                     part.Resolution.Tag,
+                    null,
+                    false,
                     PatternConfirmationState.Confirmed),
                 cancellationToken);
             created.Add(entity);

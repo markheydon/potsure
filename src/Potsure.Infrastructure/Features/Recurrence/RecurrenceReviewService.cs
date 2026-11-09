@@ -127,10 +127,10 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                 false,
                 expense.Cadence,
                 null,
-                string.Equals(expense.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase)
-                    ? expense.MonthlyEstimate ?? expense.FixedAmount
-                    : expense.FixedAmount ?? expense.MonthlyEstimate,
-                string.Equals(expense.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase)
+                expense.AmountKind == ExpenseAmountKind.Variable
+                    ? expense.StoredMonthlyEstimate ?? expense.FixedAmount
+                    : expense.FixedAmount ?? expense.StoredMonthlyEstimate,
+                expense.AmountKind == ExpenseAmountKind.Variable
                     ? DetectedAmountBehaviour.Variable
                     : null,
                 expense.State,

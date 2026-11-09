@@ -13,7 +13,7 @@ public sealed class DeterminismTests
         PeriodSummary first = PeriodSummaryBuilder.Build(input);
         PeriodSummary second = PeriodSummaryBuilder.Build(input);
 
-        Assert.Equal(first.BudgetedIncome, second.BudgetedIncome);
+        Assert.Equal(first.EstimatedIncomeInRange, second.EstimatedIncomeInRange);
         Assert.Equal(first.UncategorisedSpend, second.UncategorisedSpend);
         Assert.Equal(first.Categories.Count, second.Categories.Count);
 
@@ -27,6 +27,7 @@ public sealed class DeterminismTests
             Assert.Equal(a.ActualActivity, b.ActualActivity);
             Assert.Equal(a.UnderOver, b.UnderOver);
             Assert.Equal(a.OverAllocationWarning, b.OverAllocationWarning);
+            Assert.Equal(a.NotSet, b.NotSet);
         }
     }
 
@@ -35,7 +36,7 @@ public sealed class DeterminismTests
             AllocationPreset.FiftyThirtyTwenty,
             new DateOnly(2026, 1, 1),
             new DateOnly(2026, 1, 31),
-            BudgetedIncomeAmount: 2000m,
+            new PlanIncome(Money.FromRaw(2000m), PlanIncomeCadence.Monthly),
             ActualIncomeInPeriod: 2100m,
             ForecastHorizonMonths: 3,
             Categories:

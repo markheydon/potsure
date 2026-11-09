@@ -13,10 +13,8 @@ internal sealed class BudgetProfileConfiguration : IEntityTypeConfiguration<Budg
         builder.Property(e => e.OwnerKey).HasMaxLength(450).IsRequired();
         builder.Property(e => e.Currency).HasMaxLength(3).IsRequired();
         builder.HasIndex(e => e.OwnerKey).IsUnique();
-        builder.HasOne(e => e.BudgetPeriod)
-            .WithOne()
-            .HasForeignKey<BudgetProfileEntity>(e => e.BudgetPeriodId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(e => e.EstimatedIncomeAmount).HasPrecision(18, 2);
+        builder.Property(e => e.ActualIncomeWindowMonths).HasDefaultValue(3);
         builder.HasOne(e => e.MonzoAccount)
             .WithMany()
             .HasForeignKey(e => e.MonzoAccountId)
@@ -27,17 +25,6 @@ internal sealed class BudgetProfileConfiguration : IEntityTypeConfiguration<Budg
         builder.HasMany(e => e.Pots)
             .WithOne(p => p.BudgetProfile)
             .HasForeignKey(p => p.BudgetProfileId);
-    }
-}
-
-internal sealed class BudgetPeriodConfiguration : IEntityTypeConfiguration<BudgetPeriodEntity>
-{
-    public void Configure(EntityTypeBuilder<BudgetPeriodEntity> builder)
-    {
-        builder.ToTable("BudgetPeriods");
-        builder.HasKey(e => e.Id);
-        builder.Property(e => e.OwnerKey).HasMaxLength(450).IsRequired();
-        builder.Property(e => e.BudgetedIncomeAmount).HasPrecision(18, 2);
     }
 }
 
@@ -148,10 +135,9 @@ internal sealed class RecurringExpenseConfiguration : IEntityTypeConfiguration<R
         builder.Property(e => e.OwnerKey).HasMaxLength(450).IsRequired();
         builder.Property(e => e.VendorLabel).HasMaxLength(256).IsRequired();
         builder.Property(e => e.FixedAmount).HasPrecision(18, 2);
-        builder.Property(e => e.MonthlyEstimate).HasPrecision(18, 2);
+        builder.Property(e => e.StoredMonthlyEstimate).HasPrecision(18, 2);
         builder.Property(e => e.Tag).HasMaxLength(128);
         builder.Property(e => e.PaymentType).HasMaxLength(64).IsRequired();
-        builder.Property(e => e.AmountKind).HasMaxLength(64).IsRequired();
         builder.HasOne<BudgetCategoryEntity>()
             .WithMany()
             .HasForeignKey(e => e.CategoryId)

@@ -233,11 +233,13 @@ public partial class DetectionReview
                         potId,
                         cadence,
                         PaymentType: "Card",
-                        AmountKind: treatAsVariable ? "Variable" : "Fixed",
+                        treatAsVariable ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed,
                         fixedAmount,
                         monthlyEstimate,
                         coverageLabel,
                         tag,
+                        PaymentAnchorDate: null,
+                        PaymentAnchorUserOverride: false,
                         PatternConfirmationState.Confirmed));
 
                 await AttributionService.AttributeMatchingDebitsAsync(saved.Id);
@@ -298,11 +300,13 @@ public partial class DetectionReview
                         null,
                         item.ExpenseCadence ?? ExpenseCadence.Monthly,
                         "Card",
-                        variable ? "Variable" : "Fixed",
+                        variable ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed,
                         fixedPart,
                         monthlyPart,
                         coverage,
                         null,
+                        PaymentAnchorDate: null,
+                        PaymentAnchorUserOverride: false,
                         PatternConfirmationState.Rejected));
             }
 
@@ -377,13 +381,12 @@ public partial class DetectionReview
                 .Where(e => ids.Contains(e.Id))
                 .ToListAsync();
 
-            bool anyVariable = entities.Any(e =>
-                string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase));
+            bool anyVariable = entities.Any(e => e.AmountKind == ExpenseAmountKind.Variable);
             decimal? mergedFixed = anyVariable
                 ? null
                 : entities.Sum(e => e.FixedAmount ?? 0m);
             decimal? mergedMonthly = anyVariable
-                ? entities.Sum(e => e.MonthlyEstimate ?? e.FixedAmount ?? 0m)
+                ? entities.Sum(e => e.StoredMonthlyEstimate ?? e.FixedAmount ?? 0m)
                 : null;
 
             await MergeSplitService.MergeAsync(
@@ -433,14 +436,14 @@ public partial class DetectionReview
                 .SingleOrDefaultAsync(e => e.Id == source.PersistedId!.Value);
 
             bool variable = sourceEntity is not null
-                            && string.Equals(sourceEntity.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase);
+                            && sourceEntity.AmountKind == ExpenseAmountKind.Variable;
             decimal? halfFixed = variable
                 ? null
                 : (sourceEntity?.FixedAmount ?? source.TypicalAmount) is decimal f
                     ? f / 2m
                     : null;
             decimal? halfMonthly = variable
-                ? (sourceEntity?.MonthlyEstimate ?? source.TypicalAmount) is decimal m
+                ? (sourceEntity?.StoredMonthlyEstimate ?? source.TypicalAmount) is decimal m
                     ? m / 2m
                     : null
                 : null;

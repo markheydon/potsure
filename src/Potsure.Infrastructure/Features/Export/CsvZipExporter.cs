@@ -59,9 +59,22 @@ public static class CsvZipExporter
         using StreamWriter writer = new(entry.Open(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
         writer.WriteLine("Section,Key,Value");
         WritePlanRow(writer, "preset", "SelectedPreset", snapshot.Preset.ToString());
-        WritePlanRow(writer, "period", "Start", snapshot.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        WritePlanRow(writer, "period", "End", snapshot.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        WritePlanRow(writer, "period", "BudgetedIncome", snapshot.BudgetedIncome.ToString("F2", CultureInfo.InvariantCulture));
+        WritePlanRow(
+            writer,
+            "standingPlan",
+            "EstimatedIncome",
+            snapshot.EstimatedIncomeAmount?.ToString("F2", CultureInfo.InvariantCulture) ?? string.Empty);
+        WritePlanRow(
+            writer,
+            "standingPlan",
+            "EstimatedIncomeCadence",
+            snapshot.EstimatedIncomeCadence?.ToString() ?? string.Empty);
+        WritePlanRow(
+            writer,
+            "standingPlan",
+            "ActualIncomeWindowMonths",
+            snapshot.ActualIncomeWindowMonths.ToString(CultureInfo.InvariantCulture));
+        WritePlanRow(writer, "standingPlan", "PotMappingMode", snapshot.PotMappingMode.ToString());
 
         foreach (CategoryExportRow category in snapshot.Categories)
         {

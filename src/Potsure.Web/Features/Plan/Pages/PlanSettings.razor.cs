@@ -15,7 +15,7 @@ public partial class PlanSettings
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
 
     [Inject]
-    private BudgetPeriodService PeriodService { get; set; } = null!;
+    private StandingPlanIncomeService StandingPlanIncomeService { get; set; } = null!;
 
     [Inject]
     private AllocationPresetService PresetService { get; set; } = null!;
@@ -27,30 +27,35 @@ public partial class PlanSettings
     private BudgetedIncomeSuggestionService SuggestionService { get; set; } = null!;
 
     private readonly PlanSettingsForm _form = new();
-    private BudgetedIncomeSuggestion? _incomeSuggestion;
+    private EstimatedIncomeSuggestion? _incomeSuggestion;
+    private bool _planIncomeComplete;
     private bool _loading = true;
     private bool _saving;
     private string? _error;
     private string? _saveMessage;
-    private decimal? _actualReceiptsInPeriod;
+    private decimal? _actualReceiptsInWindow;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
-            BudgetPeriodReadModel? period = await PeriodService.GetWorkingPeriodAsync();
+            StandingPlanIncomeReadModel? standingPlan = await StandingPlanIncomeService.GetAsync();
             AllocationPreset? preset = await PresetService.GetSelectedPresetAsync();
-            if (period is not null && preset is not null)
+            if (preset is not null)
             {
-                _form.StartDate = period.StartDate.ToDateTime(TimeOnly.MinValue);
-                _form.EndDate = period.EndDate.ToDateTime(TimeOnly.MinValue);
-                _form.BudgetedIncome = period.BudgetedIncomeAmount;
                 _form.Preset = preset.Value;
             }
 
-            PeriodSummary summary = await ReportService.GetPeriodSummaryAsync();
-            _actualReceiptsInPeriod = summary.ActualIncomeInPeriod.Amount;
+            if (standingPlan is not null)
+            {
+                _planIncomeComplete = standingPlan.IsComplete;
+                _form.EstimatedIncomeAmount = standingPlan.EstimatedIncomeAmount ?? 0m;
+                _form.EstimatedIncomeCadence = standingPlan.EstimatedIncomeCadence;
+                _form.ActualIncomeWindowMonths = standingPlan.ActualIncomeWindowMonths;
+            }
+
+            await RefreshActualReceiptsAsync();
             _incomeSuggestion = await SuggestionService.GetSuggestionAsync();
         }
         catch (Exception ex)
@@ -70,16 +75,22 @@ public partial class PlanSettings
         _saveMessage = null;
         try
         {
-            DateOnly start = DateOnly.FromDateTime(_form.StartDate);
-            DateOnly end = DateOnly.FromDateTime(_form.EndDate);
-            await PresetService.SwitchPresetAsync(_form.Preset);
-            await PeriodService.UpdateWorkingPeriodAsync(
-                new UpdateBudgetPeriodRequest(start, end, _form.BudgetedIncome));
+            if (_form.EstimatedIncomeCadence is null)
+            {
+                _error = "Choose an income cadence before saving estimated income.";
+                return;
+            }
 
-            PeriodSummary summary = await ReportService.GetPeriodSummaryAsync();
-            _actualReceiptsInPeriod = summary.ActualIncomeInPeriod.Amount;
-            _saveMessage =
-                $"Your preset, period ({start:dd MMM yyyy} to {end:dd MMM yyyy}), and planned income were updated.";
+            await PresetService.SwitchPresetAsync(_form.Preset);
+            await StandingPlanIncomeService.UpdateAsync(
+                new UpdateStandingPlanIncomeRequest(
+                    _form.EstimatedIncomeAmount,
+                    _form.EstimatedIncomeCadence.Value,
+                    _form.ActualIncomeWindowMonths));
+
+            _planIncomeComplete = true;
+            await RefreshActualReceiptsAsync();
+            _saveMessage = "Your preset, estimated income, and actual receipts window were updated.";
         }
         catch (Exception ex)
         {
@@ -91,12 +102,39 @@ public partial class PlanSettings
         }
     }
 
+    private async Task RefreshActualReceiptsAsync()
+    {
+        (DateOnly start, DateOnly end) = ActualReceiptsWindow(_form.ActualIncomeWindowMonths);
+        PeriodSummary summary = await ReportService.GetPeriodSummaryAsync(start, end);
+        _actualReceiptsInWindow = summary.ActualIncomeInPeriod.Amount;
+    }
+
+    private static (DateOnly Start, DateOnly End) ActualReceiptsWindow(int windowMonths)
+    {
+        int clamped = Math.Clamp(windowMonths, 1, 12);
+        DateOnly end = DateOnly.FromDateTime(DateTime.UtcNow);
+        DateOnly start = end.AddMonths(-(clamped - 1));
+        start = new DateOnly(start.Year, start.Month, 1);
+        return (start, end);
+    }
+
     private static string FormatPreset(AllocationPreset preset) =>
         preset switch
         {
             AllocationPreset.FiftyThirtyTwenty => "50 / 30 / 20",
             AllocationPreset.SeventyFiveFifteenTen => "75 / 15 / 10",
             _ => preset.ToString(),
+        };
+
+    private static string FormatCadence(PlanIncomeCadence cadence) =>
+        cadence switch
+        {
+            PlanIncomeCadence.Weekly => "Weekly",
+            PlanIncomeCadence.Fortnightly => "Fortnightly",
+            PlanIncomeCadence.Monthly => "Monthly",
+            PlanIncomeCadence.Quarterly => "Quarterly",
+            PlanIncomeCadence.Yearly => "Yearly",
+            _ => cadence.ToString(),
         };
 
     private static string FormatDecimal(decimal value) =>
@@ -107,14 +145,22 @@ public partial class PlanSettings
             ? parsed
             : fallback;
 
+    private void OnActualIncomeWindowMonthsChanged(string? value)
+    {
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
+        {
+            _form.ActualIncomeWindowMonths = Math.Clamp(parsed, 1, 12);
+        }
+    }
+
     private sealed class PlanSettingsForm
     {
         public AllocationPreset Preset { get; set; } = AllocationPreset.FiftyThirtyTwenty;
 
-        public DateTime StartDate { get; set; } = DateTime.UtcNow.Date;
+        public decimal EstimatedIncomeAmount { get; set; }
 
-        public DateTime EndDate { get; set; } = DateTime.UtcNow.Date;
+        public PlanIncomeCadence? EstimatedIncomeCadence { get; set; }
 
-        public decimal BudgetedIncome { get; set; }
+        public int ActualIncomeWindowMonths { get; set; } = 3;
     }
 }

@@ -18,8 +18,6 @@ public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<BudgetProfileEntity> BudgetProfiles => Set<BudgetProfileEntity>();
 
-    public DbSet<BudgetPeriodEntity> BudgetPeriods => Set<BudgetPeriodEntity>();
-
     public DbSet<BudgetCategoryEntity> BudgetCategories => Set<BudgetCategoryEntity>();
 
     public DbSet<BankPotEntity> BankPots => Set<BankPotEntity>();
@@ -42,8 +40,6 @@ public sealed class PotsureDbContext : IdentityDbContext<ApplicationUser>
         builder.ApplyConfigurationsFromAssembly(typeof(PotsureDbContext).Assembly);
 
         builder.Entity<BudgetProfileEntity>()
-            .HasQueryFilter(e => e.OwnerKey == ownerAccessor.OwnerKey);
-        builder.Entity<BudgetPeriodEntity>()
             .HasQueryFilter(e => e.OwnerKey == ownerAccessor.OwnerKey);
         builder.Entity<BudgetCategoryEntity>()
             .HasQueryFilter(e => e.OwnerKey == ownerAccessor.OwnerKey);

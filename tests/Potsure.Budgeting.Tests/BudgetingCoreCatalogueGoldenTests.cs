@@ -24,10 +24,12 @@ public sealed class BudgetingCoreCatalogueGoldenTests
     [Fact]
     public void Scenario2_CategoryNamedPots_NoDoubleCountFunding()
     {
+        DateRange period = new(new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
         BudgetingContext context = new(
             AllocationPreset.FiftyThirtyTwenty,
-            new DateRange(new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31)),
-            Money.FromRaw(1000m),
+            BudgetingTestHelpers.MonthlyPlan(1000m),
+            period,
+            period,
             [
                 new(BudgetCategoryKind.Needs, Money.FromRaw(100m)),
                 new(BudgetCategoryKind.Wants, Money.Zero),
@@ -37,22 +39,25 @@ public sealed class BudgetingCoreCatalogueGoldenTests
             [],
             [new(BudgetCategoryKind.Needs, Money.FromRaw(80m))],
             Money.Zero,
-            new DateOnly(2026, 1, 31));
+            3);
 
         CategoryHealthLine needs = CategoryHealthCalculator.Calculate(context)
             .Single(l => l.Kind == BudgetCategoryKind.Needs);
 
         Assert.Equal(150m, needs.RecordedFunding.Amount);
-        Assert.Equal(420m, needs.UnderOver.Amount);
+        decimal allocation = BudgetingTestHelpers.ProratedMonthlyAmount(500m, period.Start, period.End);
+        Assert.Equal(allocation - 80m, needs.UnderOver!.Value.Amount);
     }
 
     [Fact]
     public void Scenario3_ExpenseSpecificPotsSameCategory_AggregateOnce()
     {
+        DateRange period = new(new DateOnly(2026, 2, 1), new DateOnly(2026, 2, 28));
         BudgetingContext context = new(
             AllocationPreset.FiftyThirtyTwenty,
-            new DateRange(new DateOnly(2026, 2, 1), new DateOnly(2026, 2, 28)),
-            Money.FromRaw(1000m),
+            BudgetingTestHelpers.MonthlyPlan(1000m),
+            period,
+            period,
             [
                 new(BudgetCategoryKind.Wants, Money.FromRaw(20m)),
                 new(BudgetCategoryKind.Needs, Money.Zero),
@@ -65,13 +70,14 @@ public sealed class BudgetingCoreCatalogueGoldenTests
             [],
             [new(BudgetCategoryKind.Wants, Money.FromRaw(50m))],
             Money.Zero,
-            new DateOnly(2026, 2, 28));
+            3);
 
         CategoryHealthLine wants = CategoryHealthCalculator.Calculate(context)
             .Single(l => l.Kind == BudgetCategoryKind.Wants);
 
         Assert.Equal(45m, wants.RecordedFunding.Amount);
-        Assert.Equal(250m, wants.UnderOver.Amount);
+        decimal allocation = BudgetingTestHelpers.ProratedMonthlyAmount(300m, period.Start, period.End);
+        Assert.Equal(allocation - 50m, wants.UnderOver!.Value.Amount);
     }
 
     [Fact]
@@ -79,9 +85,9 @@ public sealed class BudgetingCoreCatalogueGoldenTests
     {
         Money income = Money.FromRaw(1000m);
         IReadOnlyDictionary<BudgetCategoryKind, Money> fifty =
-            AllocationCalculator.Calculate(AllocationPreset.FiftyThirtyTwenty, income);
+            AllocationCalculator.CalculateMonthlyEquivalent(AllocationPreset.FiftyThirtyTwenty, income);
         IReadOnlyDictionary<BudgetCategoryKind, Money> seventyFive =
-            AllocationCalculator.Calculate(AllocationPreset.SeventyFiveFifteenTen, income);
+            AllocationCalculator.CalculateMonthlyEquivalent(AllocationPreset.SeventyFiveFifteenTen, income);
 
         Assert.Equal(500m, fifty[BudgetCategoryKind.Needs].Amount);
         Assert.Equal(750m, seventyFive[BudgetCategoryKind.Needs].Amount);
@@ -92,19 +98,24 @@ public sealed class BudgetingCoreCatalogueGoldenTests
     [Fact]
     public void Scenario5_NetRefundsReduceActualActivity()
     {
+        DateRange period = new(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31));
         BudgetingContext context = new(
             AllocationPreset.FiftyThirtyTwenty,
-            new DateRange(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31)),
-            Money.FromRaw(1000m),
+            BudgetingTestHelpers.MonthlyPlan(1000m),
+            period,
+            period,
             Categories(),
             [],
             [],
             [new(BudgetCategoryKind.Needs, Money.FromRaw(120m))],
             Money.Zero,
-            new DateOnly(2026, 3, 31));
+            3);
 
-        Assert.Equal(380m, CategoryHealthCalculator.Calculate(context)
-            .Single(l => l.Kind == BudgetCategoryKind.Needs).UnderOver.Amount);
+        decimal allocation = BudgetingTestHelpers.ProratedMonthlyAmount(500m, period.Start, period.End);
+        Assert.Equal(
+            allocation - 120m,
+            CategoryHealthCalculator.Calculate(context)
+                .Single(l => l.Kind == BudgetCategoryKind.Needs).UnderOver!.Value.Amount);
     }
 
     [Fact]
@@ -158,7 +169,10 @@ public sealed class BudgetingCoreCatalogueGoldenTests
             .Single(w => w.Category == BudgetCategoryKind.Needs);
 
         Assert.True(warning.IsShortfall);
-        Assert.Equal(150m, warning.Threshold.Amount);
+        decimal threshold = BudgetingTestHelpers.ProratedMonthlyAmount(500m, new(2026, 1, 1), new(2026, 1, 31))
+            - 400m
+            + 50m;
+        Assert.Equal(threshold, warning.Threshold.Amount);
     }
 
     private static List<CategoryBudgetInput> Categories() =>
@@ -202,13 +216,14 @@ public sealed class BudgetingCoreCatalogueGoldenTests
 
         return new BudgetingContext(
             preset,
+            BudgetingTestHelpers.MonthlyPlan(budgetedIncome),
             period,
-            Money.FromRaw(budgetedIncome),
+            period,
             categories,
             [],
             commitments,
             actuals,
             Money.Zero,
-            period.End);
+            3);
     }
 }

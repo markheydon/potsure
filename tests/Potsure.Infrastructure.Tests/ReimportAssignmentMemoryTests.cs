@@ -42,7 +42,7 @@ public sealed class ReimportAssignmentMemoryTests
             CategoryId = needs.Id,
             Cadence = ExpenseCadence.Monthly,
             PaymentType = "Card",
-            AmountKind = "Fixed",
+            AmountKind = ExpenseAmountKind.Fixed,
             FixedAmount = 12m,
             State = PatternConfirmationState.Confirmed,
         };
@@ -130,7 +130,7 @@ public sealed class ReimportAssignmentMemoryTests
             CategoryId = needs.Id,
             Cadence = ExpenseCadence.Monthly,
             PaymentType = "Card",
-            AmountKind = "Fixed",
+            AmountKind = ExpenseAmountKind.Fixed,
             FixedAmount = 3.5m,
             State = PatternConfirmationState.Confirmed,
         };
@@ -241,7 +241,7 @@ public sealed class ReimportAssignmentMemoryTests
             CategoryId = needs.Id,
             Cadence = ExpenseCadence.Monthly,
             PaymentType = "Card",
-            AmountKind = "Fixed",
+            AmountKind = ExpenseAmountKind.Fixed,
             FixedAmount = 3.5m,
             State = PatternConfirmationState.Confirmed,
         });

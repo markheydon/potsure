@@ -5,10 +5,11 @@ using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
+using Potsure.Web.Services;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
-public partial class RunwayWarnings
+public partial class RunwayWarnings : IDisposable
 {
     [Inject]
     private RunwayReportService RunwayReportService { get; set; } = null!;
@@ -22,6 +23,9 @@ public partial class RunwayWarnings
     [Inject]
     private RecurringSummaryQuery RecurringSummaryQuery { get; set; } = null!;
 
+    [Inject]
+    private ReportDateRangeSessionState DateRangeState { get; set; } = null!;
+
     private bool _loading = true;
     private string? _error;
     private int _horizonMonths = ForecastHorizonService.DefaultHorizonMonths;
@@ -33,13 +37,14 @@ public partial class RunwayWarnings
 
     protected override async Task OnInitializedAsync()
     {
+        DateRangeState.Changed += OnDateRangeChanged;
         try
         {
             _horizonMonths = await HorizonService.GetHorizonMonthsAsync();
             _potBreakdown = await PotBreakdownQuery.ListAsync();
             RecurringSummaryReadModel summary = await RecurringSummaryQuery.LoadAsync();
             _variableExpenses = summary.ConfirmedExpenses
-                .Where(e => string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase))
+                .Where(e => e.AmountKind == ExpenseAmountKind.Variable)
                 .ToList();
             await LoadRunwayAsync();
         }
@@ -52,6 +57,19 @@ public partial class RunwayWarnings
             _loading = false;
         }
     }
+
+    public void Dispose()
+    {
+        DateRangeState.Changed -= OnDateRangeChanged;
+        GC.SuppressFinalize(this);
+    }
+
+    private async void OnDateRangeChanged() =>
+        await InvokeAsync(async () =>
+        {
+            await LoadRunwayAsync();
+            StateHasChanged();
+        });
 
     private async Task SaveHorizonAsync()
     {
@@ -69,7 +87,9 @@ public partial class RunwayWarnings
 
     private async Task LoadRunwayAsync()
     {
-        (IReadOnlyList<RunwayProjectionLine> lines, UncertaintyFlags flags) = await RunwayReportService.GetRunwayAsync();
+        (DateOnly start, DateOnly end) = DateRangeState.GetRange();
+        (IReadOnlyList<RunwayProjectionLine> lines, UncertaintyFlags flags) =
+            await RunwayReportService.GetRunwayAsync(start, end);
         _lines = lines;
         _runwayTableRows = lines.Select(line => new RunwayTableRow(line)).ToList();
         _flags = flags;

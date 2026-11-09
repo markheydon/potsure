@@ -20,23 +20,15 @@ public sealed record AttributedTransactionRow(
 /// </summary>
 public sealed class AttributedTransactionQuery(PotsureDbContext dbContext)
 {
-    public async Task<IReadOnlyList<AttributedTransactionRow>> ListForWorkingPeriodAsync(
+    public async Task<IReadOnlyList<AttributedTransactionRow>> ListForReportRangeAsync(
+        DateOnly start,
+        DateOnly end,
         CancellationToken cancellationToken = default)
     {
-        BudgetPeriodEntity? period = await dbContext.BudgetPeriods
-            .AsNoTracking()
-            .OrderByDescending(p => p.StartDate)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (period is null)
-        {
-            return [];
-        }
-
         List<TransactionEntity> transactions = await dbContext.Transactions
             .AsNoTracking()
             .Where(t => t.Kind == TransactionKind.ExpenseDebit)
-            .Where(t => t.TransactionDate >= period.StartDate && t.TransactionDate <= period.EndDate)
+            .Where(t => t.TransactionDate >= start && t.TransactionDate <= end)
             .Where(t => t.CategoryId != null)
             .OrderBy(t => t.TransactionDate)
             .ThenBy(t => t.Name)
@@ -52,7 +44,7 @@ public sealed class AttributedTransactionQuery(PotsureDbContext dbContext)
             .Where(a => a.TransactionId != null)
             .ToDictionaryAsync(a => a.TransactionId!.Value, cancellationToken);
 
-        List<AttributedTransactionRow> rows = new(transactions.Count);
+        List<AttributedTransactionRow> rows = new();
         foreach (TransactionEntity transaction in transactions)
         {
             assignments.TryGetValue(transaction.Id, out AssignmentEntity? assignment);

@@ -24,7 +24,7 @@ public readonly record struct BudgetBalanceReportInput(
     AllocationPreset Preset,
     DateOnly StartDate,
     DateOnly EndDate,
-    decimal BudgetedIncomeAmount,
+    PlanIncome? PlanIncome,
     decimal ActualReceiptsInPeriod,
     IReadOnlyList<CommitmentExpenseInput> ConfirmedExpenseCommitments,
     IReadOnlyList<IncomeScheduleInput> ConfirmedIncomeSchedules);
@@ -33,8 +33,9 @@ public readonly record struct BudgetBalanceReportInput(
 /// Budget balance and required income report (FR-M018, FR-M019, FR-M033).
 /// </summary>
 public readonly record struct BudgetBalanceReport(
-    DateRange Period,
-    Money BudgetedIncome,
+    DateRange ReportRange,
+    Money? EstimatedIncomeInRange,
+    bool PlanIncomeNotSet,
     Money ActualReceiptsInPeriod,
     IReadOnlyList<CategoryCommitmentInput> PeriodCommitments,
     RequiredIncomeResult RequiredIncome,

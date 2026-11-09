@@ -13,26 +13,30 @@ public sealed class BudgetBalanceGoldenTests
         CommitmentExpenseInput rent = new(
             BudgetCategoryKind.Needs,
             ExpenseCadence.Monthly,
-            IsVariableAmount: false,
+            ExpenseAmountKind.Fixed,
             FixedAmount: 500m,
-            MonthlyEstimate: null,
+            StoredMonthlyEstimate: null,
             AnchorDate: new DateOnly(2026, 1, 5));
+
+        PlanIncome planIncome = new(Money.FromRaw(2000m), PlanIncomeCadence.Monthly);
 
         BudgetBalanceReport report = BudgetBalanceReportBuilder.Build(new BudgetBalanceReportInput(
             AllocationPreset.FiftyThirtyTwenty,
             start,
             end,
-            BudgetedIncomeAmount: 2000m,
+            planIncome,
             ActualReceiptsInPeriod: 1800m,
             [rent],
             []));
 
-        Assert.Equal(500m, report.PeriodCommitments.Single(c => c.Category == BudgetCategoryKind.Needs).AmountInPeriod.Amount);
+        Assert.Equal(500m, report.PeriodCommitments.Single(c => c.Category == BudgetCategoryKind.Needs).AmountInRange.Amount);
         Assert.Equal(1000m, report.RequiredIncome.RequiredTotal.Amount);
         Assert.Equal(BudgetCategoryKind.Needs, report.RequiredIncome.LimitingCategory);
         Assert.True(report.RequiredIncome.MeetsRequirement);
         Assert.Equal(1800m, report.ActualReceiptsInPeriod.Amount);
-        Assert.Equal(2000m, report.BudgetedIncome.Amount);
+        Assert.Equal(
+            BudgetingTestHelpers.ProratedMonthlyAmount(2000m, start, end),
+            report.EstimatedIncomeInRange!.Value.Amount);
     }
 
     [Fact]
@@ -41,22 +45,28 @@ public sealed class BudgetBalanceGoldenTests
         CommitmentExpenseInput needs = new(
             BudgetCategoryKind.Needs,
             ExpenseCadence.Monthly,
-            false,
+            ExpenseAmountKind.Fixed,
             600m,
             null,
             new DateOnly(2026, 2, 1));
+
+        PlanIncome planIncome = new(Money.FromRaw(1000m), PlanIncomeCadence.Monthly);
 
         BudgetBalanceReport report = BudgetBalanceReportBuilder.Build(new BudgetBalanceReportInput(
             AllocationPreset.FiftyThirtyTwenty,
             new DateOnly(2026, 2, 1),
             new DateOnly(2026, 2, 28),
-            1000m,
+            planIncome,
             0m,
             [needs],
             []));
 
         Assert.Equal(1200m, report.RequiredIncome.RequiredTotal.Amount);
-        Assert.Equal(200m, report.RequiredIncome.Shortfall.Amount);
+        decimal estimated = BudgetingTestHelpers.ProratedMonthlyAmount(
+            1000m,
+            new DateOnly(2026, 2, 1),
+            new DateOnly(2026, 2, 28));
+        Assert.Equal(1200m - estimated, report.RequiredIncome.Shortfall!.Value.Amount);
         Assert.False(report.RequiredIncome.MeetsRequirement);
     }
 
@@ -68,11 +78,13 @@ public sealed class BudgetBalanceGoldenTests
             2500m,
             new DateOnly(2026, 1, 28));
 
+        PlanIncome planIncome = new(Money.FromRaw(2500m), PlanIncomeCadence.Monthly);
+
         BudgetBalanceReport report = BudgetBalanceReportBuilder.Build(new BudgetBalanceReportInput(
             AllocationPreset.FiftyThirtyTwenty,
             new DateOnly(2026, 1, 1),
             new DateOnly(2026, 1, 31),
-            2500m,
+            planIncome,
             0m,
             [],
             [salary]));

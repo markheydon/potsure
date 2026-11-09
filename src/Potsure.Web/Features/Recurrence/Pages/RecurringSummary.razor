@@ -88,7 +88,7 @@ else if (_model is not null)
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="decimal"
                                        Header="Amount">
                         <CellTemplate Context="row">
-                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.MonthlyEstimate ?? 0m)
+                            @UkCurrencyDisplay.Format(row.FixedAmount ?? row.StoredMonthlyEstimate ?? 0m)
                         </CellTemplate>
                     </BbDataTableColumn>
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"

@@ -18,25 +18,14 @@ public sealed record UncategorisedTransactionRow(
 /// </summary>
 public sealed class UncategorisedTransactionQuery(PotsureDbContext dbContext)
 {
-    /// <summary>
-    /// Returns expense debits without category assignment for the working budget period.
-    /// </summary>
-    public async Task<IReadOnlyList<UncategorisedTransactionRow>> ListForWorkingPeriodAsync(
+    public async Task<IReadOnlyList<UncategorisedTransactionRow>> ListForReportRangeAsync(
+        DateOnly start,
+        DateOnly end,
         CancellationToken cancellationToken = default)
     {
-        BudgetPeriodEntity? period = await dbContext.BudgetPeriods
-            .AsNoTracking()
-            .OrderByDescending(p => p.StartDate)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (period is null)
-        {
-            return [];
-        }
-
         List<TransactionEntity> rows = await dbContext.Transactions
             .AsNoTracking()
-            .Where(t => t.TransactionDate >= period.StartDate && t.TransactionDate <= period.EndDate)
+            .Where(t => t.TransactionDate >= start && t.TransactionDate <= end)
             .OrderBy(t => t.TransactionDate)
             .ThenBy(t => t.Name)
             .ToListAsync(cancellationToken);

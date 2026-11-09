@@ -33,7 +33,6 @@ public sealed class UserDataDeletionService(
         await dbContext.BankPots.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BudgetCategories.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BudgetProfiles.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetPeriods.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
         await dbContext.MonzoAccounts.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);

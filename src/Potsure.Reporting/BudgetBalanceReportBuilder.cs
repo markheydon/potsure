@@ -8,13 +8,20 @@ namespace Potsure.Reporting;
 public static class BudgetBalanceReportBuilder
 {
     /// <summary>
-    /// Computes required income, limiting category, and expected income timing for the period.
+    /// Computes required income, limiting category, and expected income timing for the report range.
     /// </summary>
     public static BudgetBalanceReport Build(BudgetBalanceReportInput input)
     {
-        DateRange period = new(input.StartDate, input.EndDate);
-        Money budgetedIncome = Money.FromRaw(input.BudgetedIncomeAmount).RoundForReport();
+        DateRange reportRange = new(input.StartDate, input.EndDate);
         Money actualReceipts = Money.FromRaw(input.ActualReceiptsInPeriod).RoundForReport();
+        bool notSet = input.PlanIncome is null;
+
+        Money? estimatedInRange = notSet
+            ? null
+            : ProrationCalculator.ProrateMonthlyEquivalent(
+                ProrationCalculator.MonthlyEquivalentFromPlan(input.PlanIncome!.Value),
+                reportRange.Start,
+                reportRange.End);
 
         IReadOnlyList<CategoryCommitmentInput> commitments = CommitmentProjector.ProjectIntoPeriod(
             input.StartDate,
@@ -28,16 +35,21 @@ public static class BudgetBalanceReportBuilder
             new(BudgetCategoryKind.SavingsAndDebt, Money.Zero),
         ];
 
+        DateRange runwayWindow = new(
+            reportRange.Start,
+            ProrationCalculator.RunwayWindowEnd(reportRange.End, 3));
+
         BudgetingContext context = new(
             input.Preset,
-            period,
-            budgetedIncome,
+            input.PlanIncome,
+            reportRange,
+            runwayWindow,
             categories,
             [],
             commitments,
             [],
             Money.Zero,
-            period.End);
+            3);
 
         RequiredIncomeResult requiredIncome = RequiredIncomeCalculator.Calculate(context);
         IReadOnlyList<ExpectedIncomePayment> expectedPayments = IncomePaymentSchedule.ListExpectedPayments(
@@ -46,8 +58,9 @@ public static class BudgetBalanceReportBuilder
             input.ConfirmedIncomeSchedules);
 
         return new BudgetBalanceReport(
-            period,
-            budgetedIncome,
+            reportRange,
+            estimatedInRange,
+            notSet,
             actualReceipts,
             commitments,
             requiredIncome,

@@ -34,7 +34,7 @@ public readonly record struct PeriodSummaryInput(
     AllocationPreset Preset,
     DateOnly StartDate,
     DateOnly EndDate,
-    decimal BudgetedIncomeAmount,
+    PlanIncome? PlanIncome,
     decimal ActualIncomeInPeriod,
     int ForecastHorizonMonths,
     IReadOnlyList<CategoryFundingInput> Categories,
@@ -46,18 +46,20 @@ public readonly record struct PeriodSummaryInput(
 /// </summary>
 public readonly record struct CategoryPeriodSummary(
     BudgetCategoryKind Kind,
-    Money Allocation,
+    Money? Allocation,
     Money RecordedFunding,
     Money ActualActivity,
-    Money UnderOver,
-    bool OverAllocationWarning);
+    Money? UnderOver,
+    bool OverAllocationWarning,
+    bool NotSet);
 
 /// <summary>
 /// Computed period report DTO (not persisted).
 /// </summary>
 public readonly record struct PeriodSummary(
-    DateRange Period,
-    Money BudgetedIncome,
+    DateRange ReportRange,
+    Money? EstimatedIncomeInRange,
+    bool PlanIncomeNotSet,
     Money ActualIncomeInPeriod,
     IReadOnlyList<CategoryPeriodSummary> Categories,
     Money UncategorisedSpend,

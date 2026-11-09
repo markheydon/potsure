@@ -12,9 +12,16 @@ public static class PeriodSummaryBuilder
     /// </summary>
     public static PeriodSummary Build(PeriodSummaryInput input)
     {
-        DateRange period = new(input.StartDate, input.EndDate);
-        Money budgetedIncome = Money.FromRaw(input.BudgetedIncomeAmount).RoundForReport();
+        DateRange reportRange = new(input.StartDate, input.EndDate);
         Money actualIncome = Money.FromRaw(input.ActualIncomeInPeriod).RoundForReport();
+        bool notSet = input.PlanIncome is null;
+
+        Money? estimatedInRange = notSet
+            ? null
+            : ProrationCalculator.ProrateMonthlyEquivalent(
+                ProrationCalculator.MonthlyEquivalentFromPlan(input.PlanIncome!.Value),
+                reportRange.Start,
+                reportRange.End);
 
         IReadOnlyList<CategoryActualInput> actuals = ActualActivityCalculator.Calculate(
             input.StartDate,
@@ -25,8 +32,13 @@ public static class PeriodSummaryBuilder
             input.EndDate,
             input.Transactions);
 
-        IReadOnlyDictionary<BudgetCategoryKind, bool> overAllocation =
-            OverAllocationEvaluator.Evaluate(input.Preset, budgetedIncome, input.Categories);
+        IReadOnlyDictionary<BudgetCategoryKind, bool> overAllocation = notSet
+            ? new Dictionary<BudgetCategoryKind, bool>()
+            : OverAllocationEvaluator.Evaluate(
+                input.Preset,
+                input.PlanIncome!.Value,
+                reportRange,
+                input.Categories);
 
         List<CategoryBudgetInput> categoryInputs = input.Categories
             .Select(c => new CategoryBudgetInput(
@@ -41,18 +53,21 @@ public static class PeriodSummaryBuilder
                 p.AllocationToPot is null ? null : Money.FromRaw(p.AllocationToPot.Value).RoundForReport())))
             .ToList();
 
-        DateOnly forecastEnd = input.EndDate.AddMonths(input.ForecastHorizonMonths);
+        DateRange runwayWindow = new(
+            reportRange.Start,
+            ProrationCalculator.RunwayWindowEnd(reportRange.End, input.ForecastHorizonMonths));
 
         BudgetingContext context = new(
             input.Preset,
-            period,
-            budgetedIncome,
+            input.PlanIncome,
+            reportRange,
+            runwayWindow,
             categoryInputs,
             potInputs,
             input.Commitments,
             actuals,
             uncategorised,
-            forecastEnd);
+            input.ForecastHorizonMonths);
 
         IReadOnlyList<CategoryHealthLine> healthLines = CategoryHealthCalculator.Calculate(context);
 
@@ -63,12 +78,14 @@ public static class PeriodSummaryBuilder
                 line.RecordedFunding,
                 line.ActualActivity,
                 line.UnderOver,
-                overAllocation.TryGetValue(line.Kind, out bool over) ? over : line.OverAllocationWarning))
+                overAllocation.TryGetValue(line.Kind, out bool over) ? over : line.OverAllocationWarning,
+                line.NotSet))
             .ToList();
 
         return new PeriodSummary(
-            period,
-            budgetedIncome,
+            reportRange,
+            estimatedInRange,
+            notSet,
             actualIncome,
             categories,
             uncategorised,

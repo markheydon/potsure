@@ -6,10 +6,11 @@ using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
+using Potsure.Web.Services;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
-public partial class CategoryHealth
+public partial class CategoryHealth : IDisposable
 {
     [Inject]
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
@@ -19,6 +20,9 @@ public partial class CategoryHealth
 
     [Inject]
     private CategoryPotBreakdownQuery PotBreakdownQuery { get; set; } = null!;
+
+    [Inject]
+    private ReportDateRangeSessionState DateRangeState { get; set; } = null!;
 
     private PeriodSummary? _summary;
     private IReadOnlyList<CategoryPotBreakdownLine> _potBreakdown = [];
@@ -34,15 +38,38 @@ public partial class CategoryHealth
     private string CategoryTableAriaLabel =>
         _summary is null
             ? "Category measures"
-            : $"Category measures for {_summary.Value.Period.Start} to {_summary.Value.Period.End}";
+            : $"Category measures for {_summary.Value.ReportRange.Start} to {_summary.Value.ReportRange.End}";
 
     protected override async Task OnInitializedAsync()
+    {
+        DateRangeState.Changed += OnDateRangeChanged;
+        await LoadReportAsync();
+    }
+
+    public void Dispose()
+    {
+        DateRangeState.Changed -= OnDateRangeChanged;
+        GC.SuppressFinalize(this);
+    }
+
+    private async void OnDateRangeChanged() =>
+        await InvokeAsync(async () =>
+        {
+            _loading = true;
+            await LoadReportAsync();
+            _loading = false;
+            StateHasChanged();
+        });
+
+    private async Task LoadReportAsync()
     {
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
-            PeriodSummary summary = await ReportService.GetPeriodSummaryAsync();
+            (DateOnly start, DateOnly end) = DateRangeState.GetRange();
+            PeriodSummary summary = await ReportService.GetPeriodSummaryAsync(start, end);
             _summary = summary;
+            _error = null;
             _potBreakdown = await PotBreakdownQuery.ListAsync();
             _categoryTableRows = summary.Categories
                 .Select(row => new CategoryPeriodTableRow(row))
@@ -50,7 +77,7 @@ public partial class CategoryHealth
             _categoryChartRows = summary.Categories
                 .Select(row => new CategoryHealthChartRow(
                     FormatKind(row.Kind),
-                    (double)row.Allocation.Amount,
+                    (double)(row.Allocation?.Amount ?? 0m),
                     (double)row.RecordedFunding.Amount,
                     (double)row.ActualActivity.Amount))
                 .ToList();
@@ -58,10 +85,6 @@ public partial class CategoryHealth
         catch (Exception ex)
         {
             _error = ex.Message;
-        }
-        finally
-        {
-            _loading = false;
         }
     }
 

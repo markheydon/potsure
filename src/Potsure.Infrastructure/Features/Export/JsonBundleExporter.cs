@@ -27,11 +27,14 @@ public static class JsonBundleExporter
             {
                 preset = snapshot.Preset.ToString(),
                 forecastHorizonMonths = snapshot.ForecastHorizonMonths,
-                period = new
+                standingPlan = new
                 {
-                    start = snapshot.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                    end = snapshot.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                    budgetedIncome = RoundMoney(snapshot.BudgetedIncome),
+                    estimatedIncomeAmount = snapshot.EstimatedIncomeAmount.HasValue
+                        ? RoundMoney(snapshot.EstimatedIncomeAmount.Value)
+                        : (decimal?)null,
+                    estimatedIncomeCadence = snapshot.EstimatedIncomeCadence?.ToString(),
+                    actualIncomeWindowMonths = snapshot.ActualIncomeWindowMonths,
+                    potMappingMode = snapshot.PotMappingMode.ToString(),
                 },
                 categories = snapshot.Categories.Select(c => new
                 {

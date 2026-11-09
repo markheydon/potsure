@@ -18,6 +18,8 @@ else if (_error is not null)
 }
 else if (_report is not null)
 {
+    <ReportDateRangePicker />
+
     <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["role"] = "note" })">@ReportCopy.ForecastDisclaimer</BbTypographyMuted>
 
     <section aria-labelledby="balance-income-chart">
@@ -40,7 +42,16 @@ else if (_report is not null)
             <BbItem>
                 <BbItemContent>
                     <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
-                    <BbItemDescription>@UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount)</BbItemDescription>
+                    <BbItemDescription>
+                        @if (_report.Value.PlanIncomeNotSet)
+                        {
+                            <text>Not set</text>
+                        }
+                        else
+                        {
+                            @UkCurrencyDisplay.Format(_report.Value.EstimatedIncomeInRange?.Amount ?? 0m)
+                        }
+                    </BbItemDescription>
                 </BbItemContent>
             </BbItem>
             <BbItem>
@@ -57,7 +68,7 @@ else if (_report is not null)
             @foreach (CategoryCommitmentInput commitment in _report.Value.PeriodCommitments)
             {
                 <BbItem>
-                    <BbItemTitle>@FormatKind(commitment.Category): @UkCurrencyDisplay.Format(commitment.AmountInPeriod.Amount)</BbItemTitle>
+                    <BbItemTitle>@FormatKind(commitment.Category): @UkCurrencyDisplay.Format(commitment.AmountInRange.Amount)</BbItemTitle>
                 </BbItem>
             }
         </BbItemGroup>
@@ -89,12 +100,12 @@ else if (_report is not null)
                 </BbCollapsibleContent>
             </BbCollapsible>
         }
-        @if (_report.Value.RequiredIncome.Shortfall.Amount > 0m)
+        @if (_report.Value.RequiredIncome.Shortfall is { } shortfall && shortfall.Amount > 0m)
         {
             <BbAlert Variant="AlertVariant.Warning">
                 <BbAlertTitle>Shortfall</BbAlertTitle>
                 <BbAlertDescription>
-                    Planned income is @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.Shortfall.Amount) below the required amount.
+                    Planned income is @UkCurrencyDisplay.Format(shortfall.Amount) below the required amount.
                     Balance conclusion: No.
                 </BbAlertDescription>
             </BbAlert>
@@ -124,7 +135,7 @@ else if (_report is not null)
 
     <BbTypographyMuted Class="bb:mt-4"
                        AdditionalAttributes="@(new Dictionary<string, object> { ["id"] = "balance-text-summary" })">
-        Textual summary: planned income @UkCurrencyDisplay.Format(_report.Value.BudgetedIncome.Amount);
+        Textual summary: planned income @(_report.Value.PlanIncomeNotSet ? "not set" : UkCurrencyDisplay.Format(_report.Value.EstimatedIncomeInRange?.Amount ?? 0m));
         actual receipts @UkCurrencyDisplay.Format(_report.Value.ActualReceiptsInPeriod.Amount);
         required total @UkCurrencyDisplay.Format(_report.Value.RequiredIncome.RequiredTotal.Amount).
     </BbTypographyMuted>

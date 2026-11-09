@@ -57,6 +57,10 @@ dotnet ef database update \
 
 Design-time factories in `src/Potsure.Data/DesignTime/` resolve the `potsure` connection from configuration/environment only.
 
+### Standing plan migration (`StandingPlanAndRecurringAnchors`)
+
+Copies `BudgetPeriods.BudgetedIncomeAmount` into `BudgetProfiles.EstimatedIncomeAmount` (cadence **Monthly** when income was non-zero), drops `BudgetPeriods`, and stores recurring `AmountKind` as an integer enum. Rolling back recreates an empty `BudgetPeriods` table; restore period dates and budgeted income manually if needed.
+
 ## Local Aspire (automatic schema apply)
 
 When you run the AppHost locally (`aspire run` or F5 on `Potsure.AppHost`):

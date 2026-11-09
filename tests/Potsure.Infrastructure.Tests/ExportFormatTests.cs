@@ -17,8 +17,12 @@ public sealed class ExportFormatTests
         Assert.Equal("1.0", document.RootElement.GetProperty("exportVersion").GetString());
         Assert.Equal("GBP", document.RootElement.GetProperty("currency").GetString());
         Assert.Equal(
-            snapshot.BudgetedIncome,
-            document.RootElement.GetProperty("budgetProfile").GetProperty("period").GetProperty("budgetedIncome").GetDecimal());
+            snapshot.EstimatedIncomeAmount,
+            document.RootElement
+                .GetProperty("budgetProfile")
+                .GetProperty("standingPlan")
+                .GetProperty("estimatedIncomeAmount")
+                .GetDecimal());
     }
 
     [Fact]
@@ -44,9 +48,10 @@ public sealed class ExportFormatTests
             DateTimeOffset.Parse("2026-11-02T12:00:00Z", CultureInfo.InvariantCulture),
             AllocationPreset.FiftyThirtyTwenty,
             3,
-            new DateOnly(2026, 10, 1),
-            new DateOnly(2026, 10, 31),
+            3,
             2500m,
+            PlanIncomeCadence.Monthly,
+            PotMappingMode.CategoryOnly,
             [
                 new CategoryExportRow(BudgetCategoryKind.Needs, 1250m, 0m, 0m),
                 new CategoryExportRow(BudgetCategoryKind.Wants, 750m, 0m, 0m),

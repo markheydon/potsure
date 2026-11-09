@@ -9,17 +9,17 @@ public static class PotMappingModeDisplay
 {
     public static readonly PotMappingMode[] OptionsInDisplayOrder =
     [
-        PotMappingMode.None,
-        PotMappingMode.CategoryNamedPots,
-        PotMappingMode.ExpenseSpecificPots,
+        PotMappingMode.CategoryOnly,
+        PotMappingMode.ThreePots,
+        PotMappingMode.SeveralPots,
     ];
 
     public static string Format(PotMappingMode mode) =>
         mode switch
         {
-            PotMappingMode.None => "Budget by category only (no Monzo pots)",
-            PotMappingMode.CategoryNamedPots => "Three pots named after categories",
-            PotMappingMode.ExpenseSpecificPots => "Separate pot per expense",
+            PotMappingMode.CategoryOnly => "Budget by category only (no Monzo pots)",
+            PotMappingMode.ThreePots => "Three pots named after categories",
+            PotMappingMode.SeveralPots => "Separate pot per expense",
             _ => mode.ToString(),
         };
 }

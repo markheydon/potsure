@@ -47,6 +47,7 @@ else if (deployment.Mode == DeploymentMode.Hosted)
     builder.Services.AddHostedIdentity(builder.Configuration);
 }
 
+builder.Services.AddScoped<ReportDateRangeSessionState>();
 builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<PasswordReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Features.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();

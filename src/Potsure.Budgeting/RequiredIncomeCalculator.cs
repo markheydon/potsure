@@ -1,7 +1,7 @@
 namespace Potsure.Budgeting;
 
 /// <summary>
-/// Required income from confirmed recurring commitments and preset ratios.
+/// Required income from confirmed recurring commitments and preset ratios (max-of-ratios).
 /// </summary>
 public static class RequiredIncomeCalculator
 {
@@ -12,7 +12,7 @@ public static class RequiredIncomeCalculator
         {
             Money commitments = context.Commitments
                 .Where(c => c.Category == kind)
-                .Aggregate(Money.Zero, (sum, c) => sum + c.AmountInPeriod)
+                .Aggregate(Money.Zero, (sum, c) => sum + c.AmountInRange)
                 .RoundForReport();
             decimal percent = PresetPercentages.For(kind, context.Preset);
             requiredByCategory[kind] = percent == 0m
@@ -33,16 +33,37 @@ public static class RequiredIncomeCalculator
         }
 
         Money requiredTotal = maxRequired.RoundForReport();
-        Money shortfall = (requiredTotal - context.BudgetedIncome).Amount > 0m
-            ? (requiredTotal - context.BudgetedIncome).RoundForReport()
+
+        if (context.PlanIncome is null)
+        {
+            return new RequiredIncomeResult(
+                requiredByCategory,
+                requiredTotal,
+                limiting,
+                null,
+                null,
+                null,
+                true);
+        }
+
+        Money monthlyEquivalent = ProrationCalculator.MonthlyEquivalentFromPlan(context.PlanIncome.Value);
+        Money estimatedInRange = ProrationCalculator.ProrateMonthlyEquivalent(
+            monthlyEquivalent,
+            context.ReportRange.Start,
+            context.ReportRange.End);
+
+        Money shortfall = estimatedInRange < requiredTotal
+            ? (requiredTotal - estimatedInRange).RoundForReport()
             : Money.Zero;
-        bool meets = context.BudgetedIncome >= requiredTotal;
+        bool meets = estimatedInRange >= requiredTotal;
 
         return new RequiredIncomeResult(
             requiredByCategory,
             requiredTotal,
             limiting,
+            estimatedInRange,
             shortfall,
-            meets);
+            meets,
+            false);
     }
 }

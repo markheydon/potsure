@@ -26,7 +26,7 @@ public static class DependencyInjection
         services.AddScoped<PatternMergeSplitService>();
         services.AddScoped<TransactionAttributionService>();
         services.AddScoped<BudgetProfileSeeder>();
-        services.AddScoped<BudgetPeriodService>();
+        services.AddScoped<StandingPlanIncomeService>();
         services.AddScoped<AllocationPresetService>();
         services.AddScoped<BudgetedIncomeSuggestionService>();
         services.AddScoped<BankPotService>();

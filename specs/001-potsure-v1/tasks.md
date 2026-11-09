@@ -559,36 +559,36 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 ### Data model and EF (standing plan)
 
-- [ ] T159 [US3] Add `EstimatedIncomeAmount`, `EstimatedIncomeCadence` (`PlanIncomeCadence`), `ActualIncomeWindowMonths` (**1–12**; default **3** per data-model **FR-M019**), and derived incomplete-income handling on `BudgetProfileEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` and `src/Potsure.Data/Configurations/PotsureEntityConfigurations.cs`; remove `BudgetPeriodId` / `BudgetPeriodEntity` after data migration
-- [ ] T160 [US3] Create EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/` migrating existing `BudgetPeriod.BudgetedIncomeAmount` into profile estimated income (default cadence **Monthly** where needed) and dropping `BudgetPeriod` table; document rollback notes in `docs/deployment-database.md`
-- [ ] T161 [P] [US3] Replace `BudgetPeriodService` with `StandingPlanIncomeService` in `src/Potsure.Infrastructure/Features/Plan/` exposing estimated income + cadence CRUD; update `CategoryAllocationSync` to use monthly-equivalent income factors (weekly × 52÷12, fortnightly × 26÷12, monthly × 1, quarterly ÷ 3, yearly ÷ 12 per **FR-M031**)
-- [ ] T162 [US3] Retire `src/Potsure.Infrastructure/Features/Plan/BudgetPeriodService.cs` and `PeriodScope` period-from-profile usage; remove `BudgetPeriod` includes from `src/Potsure.Infrastructure/Features/Reports/` query paths
+- [X] T159 [US3] Add `EstimatedIncomeAmount`, `EstimatedIncomeCadence` (`PlanIncomeCadence`), `ActualIncomeWindowMonths` (**1–12**; default **3** per data-model **FR-M019**), and derived incomplete-income handling on `BudgetProfileEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` and `src/Potsure.Data/Configurations/PotsureEntityConfigurations.cs`; remove `BudgetPeriodId` / `BudgetPeriodEntity` after data migration
+- [X] T160 [US3] Create EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/` migrating existing `BudgetPeriod.BudgetedIncomeAmount` into profile estimated income (default cadence **Monthly** where needed) and dropping `BudgetPeriod` table; document rollback notes in `docs/deployment-database.md`
+- [X] T161 [P] [US3] Replace `BudgetPeriodService` with `StandingPlanIncomeService` in `src/Potsure.Infrastructure/Features/Plan/` exposing estimated income + cadence CRUD; update `CategoryAllocationSync` to use monthly-equivalent income factors (weekly × 52÷12, fortnightly × 26÷12, monthly × 1, quarterly ÷ 3, yearly ÷ 12 per **FR-M031**)
+- [X] T162 [US3] Retire `src/Potsure.Infrastructure/Features/Plan/BudgetPeriodService.cs` and `PeriodScope` period-from-profile usage; remove `BudgetPeriod` includes from `src/Potsure.Infrastructure/Features/Reports/` query paths
 
 ### Budgeting core (30.4375, plan income, commitments)
 
-- [ ] T163 [P] Implement `AverageMonthDays` (**30.4375**) proration helper and `PlanIncomeCadence` monthly-equivalent factors in `src/Potsure.Budgeting/ProrationCalculator.cs` per contracts/budgeting-core.md
-- [ ] T164 [P] Refactor `AllocationCalculator`, `CategoryHealthCalculator`, `RequiredIncomeCalculator`, and `RunwayCalculator` in `src/Potsure.Budgeting/` to accept `ReportRange`, optional `PlanIncome`, commitment DTOs with **payment anchors**, and emit banker's 2dp at boundaries per **FR-M036**
-- [ ] T165 Implement fixed expense **occurrence count** projection from stored `PaymentAnchorDate` with cadence stepping (monthly calendar-month steps + last-day clamp; weekly/fortnightly day intervals; annual yearly steps) in `src/Potsure.Budgeting/CommitmentProjector.cs` per contracts/budgeting-core.md
-- [ ] T166 Implement variable expense commitment as `StoredMonthlyEstimate × (inclusiveDayCount ÷ 30.4375)` in `src/Potsure.Budgeting/CommitmentProjector.cs` (**no** calendar-month overlap apportionment)
-- [ ] T167 [P] Extend golden fixtures in `tests/Potsure.Budgeting.Tests/` for contract catalogue scenarios **2**, **4**, **7**, **8**, and **6** (plan income incomplete → **not set**) with independently verified expected results (**SC-004**)
+- [X] T163 [P] Implement `AverageMonthDays` (**30.4375**) proration helper and `PlanIncomeCadence` monthly-equivalent factors in `src/Potsure.Budgeting/ProrationCalculator.cs` per contracts/budgeting-core.md
+- [X] T164 [P] Refactor `AllocationCalculator`, `CategoryHealthCalculator`, `RequiredIncomeCalculator`, and `RunwayCalculator` in `src/Potsure.Budgeting/` to accept `ReportRange`, optional `PlanIncome`, commitment DTOs with **payment anchors**, and emit banker's 2dp at boundaries per **FR-M036**
+- [X] T165 Implement fixed expense **occurrence count** projection from stored `PaymentAnchorDate` with cadence stepping (monthly calendar-month steps + last-day clamp; weekly/fortnightly day intervals; annual yearly steps) in `src/Potsure.Budgeting/CommitmentProjector.cs` per contracts/budgeting-core.md
+- [X] T166 Implement variable expense commitment as `StoredMonthlyEstimate × (inclusiveDayCount ÷ 30.4375)` in `src/Potsure.Budgeting/CommitmentProjector.cs` (**no** calendar-month overlap apportionment)
+- [X] T167 [P] Extend golden fixtures in `tests/Potsure.Budgeting.Tests/` for contract catalogue scenarios **2**, **4**, **7**, **8**, and **6** (plan income incomplete → **not set**) with independently verified expected results (**SC-004**)
 
 ### Report date range (FR-M031a)
 
-- [ ] T168 [P] [US6] Implement tab-scoped `ReportDateRange` session state (default **current calendar month** when unset; **not** persisted per **FR-X006**) in `src/Potsure.Web/Services/ReportDateRangeSessionState.cs`
-- [ ] T169 [US6] Add shared report range picker component in `src/Potsure.Web/Features/Reports/Components/ReportDateRangePicker.razor` wired into `CategoryHealth.razor`, `BudgetBalance.razor`, and `RunwayWarnings.razor` so one tab shares one inclusive range (**FR-M031a**)
-- [ ] T170 [US6] [US7] [US8] Refactor `PeriodReportService`, `RunwayReportService`, and `PeriodSummaryBuilder` in `src/Potsure.Reporting/` and `src/Potsure.Infrastructure/Features/Reports/` to accept caller-supplied `ReportRange` instead of `BudgetPeriod` dates; runway end = report end + **N** whole calendar months with last-day clamp per **FR-M020**/**FR-M035**
+- [X] T168 [P] [US6] Implement tab-scoped `ReportDateRange` session state (default **current calendar month** when unset; **not** persisted per **FR-X006**) in `src/Potsure.Web/Services/ReportDateRangeSessionState.cs`
+- [X] T169 [US6] Add shared report range picker component in `src/Potsure.Web/Features/Reports/Components/ReportDateRangePicker.razor` wired into `CategoryHealth.razor`, `BudgetBalance.razor`, and `RunwayWarnings.razor` so one tab shares one inclusive range (**FR-M031a**)
+- [X] T170 [US6] [US7] [US8] Refactor `PeriodReportService`, `RunwayReportService`, and `PeriodSummaryBuilder` in `src/Potsure.Reporting/` and `src/Potsure.Infrastructure/Features/Reports/` to accept caller-supplied `ReportRange` instead of `BudgetPeriod` dates; runway end = report end + **N** whole calendar months with last-day clamp per **FR-M020**/**FR-M035**
 
 ### Plan settings UI (US3)
 
-- [ ] T171 [US3] Replace period date and budgeted income fields in `src/Potsure.Web/Features/Plan/Pages/PlanSettings.razor` with estimated income amount, income cadence selector (`PlanIncomeCadence`: Weekly, Fortnightly, Monthly, Quarterly, Yearly), and `ActualIncomeWindowMonths` (**1–12**); show **not set** until both amount and cadence saved (**FR-M031**)
-- [ ] T172 [P] [US3] Wire `BudgetedIncomeSuggestionService` in `src/Potsure.Infrastructure/Features/Plan/BudgetedIncomeSuggestionService.cs` to suggest estimated income from confirmed income patterns without auto-apply; refresh only on explicit user confirm in plan UI
+- [X] T171 [US3] Replace period date and budgeted income fields in `src/Potsure.Web/Features/Plan/Pages/PlanSettings.razor` with estimated income amount, income cadence selector (`PlanIncomeCadence`: Weekly, Fortnightly, Monthly, Quarterly, Yearly), and `ActualIncomeWindowMonths` (**1–12**); show **not set** until both amount and cadence saved (**FR-M031**)
+- [X] T172 [P] [US3] Wire `BudgetedIncomeSuggestionService` in `src/Potsure.Infrastructure/Features/Plan/BudgetedIncomeSuggestionService.cs` to suggest estimated income from confirmed income patterns without auto-apply; refresh only on explicit user confirm in plan UI
 
 ### Recurring lifecycle (FR-M008c, FR-M008d)
 
-- [ ] T173 [US2] [US9] Add `PaymentAnchorDate`, `PaymentAnchorUserOverride`, and rename or map `StoredMonthlyEstimate` on `RecurringExpenseEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` with EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/`
-- [ ] T174 [US2] Persist payment anchors on confirm/edit in `ExpensePatternService` and `CommitmentPaymentAnchorResolver` in `src/Potsure.Infrastructure/Features/Recurrence/` and `src/Potsure.Infrastructure/Features/Reports/`; re-import may advance anchor only when `PaymentAnchorUserOverride` is false per data-model
+- [X] T173 [US2] [US9] Add `PaymentAnchorDate`, `PaymentAnchorUserOverride`, and rename or map `StoredMonthlyEstimate` on `RecurringExpenseEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` with EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/`
+- [X] T174 [US2] Persist payment anchors on confirm/edit in `ExpensePatternService` and `CommitmentPaymentAnchorResolver` in `src/Potsure.Infrastructure/Features/Recurrence/` and `src/Potsure.Infrastructure/Features/Reports/`; re-import may advance anchor only when `PaymentAnchorUserOverride` is false per data-model
 - [ ] T175 [US2] [US9] Implement edit and delete confirmed recurring flows in `IncomePatternService`, `ExpensePatternService`, and `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` / `RecurringSummary.razor` per **FR-M008c** (delete removes commitment projection; transactions remain)
-- [ ] T176 [US2] Enforce user-authoritative `ExpenseAmountKind` (fixed vs variable) on confirm, merge, split, and edit in `ExpensePatternService` and detection UI per **FR-M008d**; variable commitments use **stored** monthly estimate only (not live **FR-M034** average)
+- [X] T176 [US2] Enforce user-authoritative `ExpenseAmountKind` (fixed vs variable) on confirm, merge, split, and edit in `ExpensePatternService` and detection UI per **FR-M008d**; variable commitments use **stored** monthly estimate only (not live **FR-M034** average)
 
 ### Pot mapping modes (US4)
 
@@ -598,15 +598,15 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 ### Reports and not-set UX (US6, US7)
 
-- [ ] T180 [US6] [US7] Surface explicit **not set** (not £0) for category allocations and budget balance when estimated income or cadence missing in `PeriodSummaryBuilder` and report Razor pages per **FR-M031**
-- [ ] T181 [US6] Compute **ActualIncomeMonthlyMean** over stored **N**-month window ending **today** on plan settings and over **N** months ending report range **end** on period reports in `src/Potsure.Reporting/ActualIncomeCalculator.cs` per **FR-M019**
-- [ ] T182 [US7] Ensure `RequiredIncomeCalculator` uses **max-of-ratios** (not sum) and range-prorated estimated income in `src/Potsure.Reporting/BudgetBalanceReportBuilder.cs` per **FR-M018**
+- [X] T180 [US6] [US7] Surface explicit **not set** (not £0) for category allocations and budget balance when estimated income or cadence missing in `PeriodSummaryBuilder` and report Razor pages per **FR-M031**
+- [X] T181 [US6] Compute **ActualIncomeMonthlyMean** over stored **N**-month window ending **today** on plan settings and over **N** months ending report range **end** on period reports in `src/Potsure.Reporting/ActualIncomeCalculator.cs` per **FR-M019**
+- [X] T182 [US7] Ensure `RequiredIncomeCalculator` uses **max-of-ratios** (not sum) and range-prorated estimated income in `src/Potsure.Reporting/BudgetBalanceReportBuilder.cs` per **FR-M018**
 
 ### Export and tests
 
-- [ ] T183 [P] [US10] Update `ExportSnapshotBuilder` in `src/Potsure.Infrastructure/Features/Export/ExportSnapshotBuilder.cs` and contracts/export-formats.md alignment for standing plan fields (no budget period dates; estimated income + cadence)
-- [ ] T184 [P] Update `DeterminismTests` and reporting integration tests in `tests/Potsure.Reporting.Tests/` for **30.4375** proration and unchanged-input repeat viewing (**FR-M036**)
+- [X] T183 [P] [US10] Update `ExportSnapshotBuilder` in `src/Potsure.Infrastructure/Features/Export/ExportSnapshotBuilder.cs` and contracts/export-formats.md alignment for standing plan fields (no budget period dates; estimated income + cadence)
+- [X] T184 [P] Update `DeterminismTests` and reporting integration tests in `tests/Potsure.Reporting.Tests/` for **30.4375** proration and unchanged-input repeat viewing (**FR-M036**)
 - [ ] T185 [P] Refresh quickstart validation log Scenarios **3**, **4b**, **5**, and **7** in `specs/001-potsure-v1/quickstart.md` after Phase 27 checkpoint
-- [ ] T186 [P] Align `docs/deployment-database.md`, `docs/self-host.md`, and quickstart Scenario 8c notes with canonical `dotnet ef` `--project src/Potsure.Data` and AppHost `WithMigrationsProject` → Data (artifact audit **2026-11-09**); pair with **T158** Aspire ef-tool fix
+- [X] T186 [P] Align `docs/deployment-database.md`, `docs/self-host.md`, and quickstart Scenario 8c notes with canonical `dotnet ef` `--project src/Potsure.Data` and AppHost `WithMigrationsProject` → Data (artifact audit **2026-11-09**); pair with **T158** Aspire ef-tool fix
 
 **Checkpoint**: Standing plan saves without period dates; report range shared per tab; category health and budget balance prorate with **30.4375**; pot modes enforce **FR-M013**; recurring edit/delete and anchors persist; budgeting golden tests cover new catalogue items.

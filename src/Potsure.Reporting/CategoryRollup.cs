@@ -18,16 +18,14 @@ public readonly record struct CategoryRollupLine(
 /// </summary>
 public static class CategoryRollup
 {
-    /// <summary>
-    /// Combines direct and pot recorded funding for each category line.
-    /// </summary>
     public static IReadOnlyList<CategoryRollupLine> RollUp(
         AllocationPreset preset,
-        Money budgetedIncome,
+        PlanIncome planIncome,
         IReadOnlyList<CategoryFundingInput> categories)
     {
+        Money monthlyEquivalent = ProrationCalculator.MonthlyEquivalentFromPlan(planIncome);
         IReadOnlyDictionary<BudgetCategoryKind, Money> allocations =
-            AllocationCalculator.Calculate(preset, budgetedIncome);
+            AllocationCalculator.CalculateMonthlyEquivalent(preset, monthlyEquivalent);
 
         List<CategoryRollupLine> lines = new();
         BudgetCategoryKind[] order =

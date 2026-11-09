@@ -5,10 +5,11 @@ using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Web.Resources;
+using Potsure.Web.Services;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
-public partial class TransactionAttributionReview
+public partial class TransactionAttributionReview : IDisposable
 {
     [Inject]
     private AttributedTransactionQuery AttributionQuery { get; set; } = null!;
@@ -25,6 +26,9 @@ public partial class TransactionAttributionReview
     [Inject]
     private PotsureDbContext DbContext { get; set; } = null!;
 
+    [Inject]
+    private ReportDateRangeSessionState DateRangeState { get; set; } = null!;
+
     private bool _loading = true;
     private string? _error;
     private string? _statusMessage;
@@ -39,6 +43,7 @@ public partial class TransactionAttributionReview
 
     protected override async Task OnInitializedAsync()
     {
+        DateRangeState.Changed += OnDateRangeChanged;
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
@@ -54,6 +59,19 @@ public partial class TransactionAttributionReview
             _loading = false;
         }
     }
+
+    public void Dispose()
+    {
+        DateRangeState.Changed -= OnDateRangeChanged;
+        GC.SuppressFinalize(this);
+    }
+
+    private async void OnDateRangeChanged() =>
+        await InvokeAsync(async () =>
+        {
+            await ReloadAsync();
+            StateHasChanged();
+        });
 
     private async Task LoadLookupsAsync()
     {
@@ -76,7 +94,8 @@ public partial class TransactionAttributionReview
 
     private async Task ReloadAsync()
     {
-        _transactions = (await AttributionQuery.ListForWorkingPeriodAsync()).ToList();
+        (DateOnly start, DateOnly end) = DateRangeState.GetRange();
+        _transactions = (await AttributionQuery.ListForReportRangeAsync(start, end)).ToList();
         foreach (AttributedTransactionRow row in _transactions)
         {
             if (!_categoryByTransaction.ContainsKey(row.TransactionId))

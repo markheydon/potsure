@@ -25,6 +25,7 @@ var dataProtectionMigrations = web.AddEFMigrations(
         "Potsure.Data.PotsureDataProtectionDbContext")
     .WithReference(database)
     .WaitFor(database)
+    .WithEnvironment("ASPNETCORE_URLS", "http://127.0.0.1:0")
     .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();
@@ -37,6 +38,7 @@ var migrations = web.AddEFMigrations(
     .WithReference(database)
     .WaitFor(database)
     .WaitForCompletion(dataProtectionMigrations)
+    .WithEnvironment("ASPNETCORE_URLS", "http://127.0.0.1:0")
     .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();

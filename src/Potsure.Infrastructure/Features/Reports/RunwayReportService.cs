@@ -3,6 +3,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Features.Plan;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -14,52 +15,51 @@ public sealed class RunwayReportService(
     PotsureDbContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
-    /// <summary>
-    /// Builds runway lines and uncertainty flags for the working period.
-    /// </summary>
     public async Task<(IReadOnlyList<RunwayProjectionLine> Lines, UncertaintyFlags Flags)> GetRunwayAsync(
+        DateOnly reportStart,
+        DateOnly reportEnd,
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.BudgetPeriod)
             .Include(p => p.Categories)
             .Include(p => p.Pots)
             .SingleAsync(cancellationToken);
         EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
 
-        BudgetPeriodEntity period = profile.BudgetPeriod;
         Dictionary<Guid, BudgetCategoryKind> categoryKinds = profile.Categories
             .ToDictionary(c => c.Id, c => c.Kind);
 
         IReadOnlyList<CommitmentExpenseInput> expenses = await LoadConfirmedExpenseCommitmentsAsync(
-            period.StartDate,
+            reportStart,
             categoryKinds,
             cancellationToken);
 
         IReadOnlyList<CategoryFundingInput> funding = BuildFundingInputs(profile);
 
         IReadOnlyList<PeriodTransactionInput> transactions = await LoadPeriodTransactionsAsync(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             categoryKinds,
             cancellationToken);
 
         IReadOnlyList<CategoryActualInput> actuals = ActualActivityCalculator.Calculate(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             transactions);
         Money uncategorised = UncategorisedSpendCalculator.Calculate(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             transactions);
+
+        PlanIncome? planIncome = StandingPlanIncomeService.ToPlanIncome(profile);
 
         RunwayProjectionInput input = new(
             profile.SelectedPreset,
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             profile.ForecastHorizonMonths,
-            period.BudgetedIncomeAmount,
+            planIncome,
             funding,
             actuals,
             uncategorised,
@@ -74,12 +74,12 @@ public sealed class RunwayReportService(
             .ToListAsync(cancellationToken);
 
         IReadOnlyList<IncomeScheduleInput> incomeSchedules = await LoadConfirmedIncomeSchedulesAsync(
-            period.StartDate,
+            reportStart,
             cancellationToken);
 
         UncertaintyFlags flags = UncertaintyFlagsBuilder.Build(
-            period.StartDate,
-            period.EndDate,
+            reportStart,
+            reportEnd,
             coverageDays,
             incomeSchedules);
 
@@ -122,10 +122,11 @@ public sealed class RunwayReportService(
             .Select(e => new CommitmentExpenseInput(
                 categoryKinds[e.CategoryId],
                 e.Cadence,
-                string.Equals(e.AmountKind, "Variable", StringComparison.OrdinalIgnoreCase),
+                e.AmountKind,
                 e.FixedAmount,
-                e.MonthlyEstimate,
-                anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback))
+                e.StoredMonthlyEstimate,
+                e.PaymentAnchorDate
+                    ?? (anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback)))
             .ToList();
     }
 

@@ -25,11 +25,6 @@ public sealed class BudgetedIncomeSuggestionTests
         BudgetedIncomeSuggestionService sut = scope.ServiceProvider.GetRequiredService<BudgetedIncomeSuggestionService>();
 
         await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
-        BudgetProfileEntity profile = await db.BudgetProfiles.Include(p => p.BudgetPeriod).SingleAsync(
-            TestContext.Current.CancellationToken);
-        profile.BudgetPeriod.StartDate = new DateOnly(2026, 1, 1);
-        profile.BudgetPeriod.EndDate = new DateOnly(2026, 3, 31);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         IncomeSourceEntity monthly = new()
         {
@@ -71,12 +66,12 @@ public sealed class BudgetedIncomeSuggestionTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        BudgetedIncomeSuggestion? result = await sut.GetSuggestionAsync(TestContext.Current.CancellationToken);
+        EstimatedIncomeSuggestion? result = await sut.GetSuggestionAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
-        Assert.Equal(3000m, result!.SuggestedAmount);
-        Assert.Contains("01/01/2026", result.Rationale);
-        Assert.Contains("31/03/2026", result.Rationale);
+        Assert.Equal(1000m, result!.SuggestedAmount);
+        Assert.Equal(PlanIncomeCadence.Monthly, result.SuggestedCadence);
+        Assert.Contains("confirmed income pattern", result.Rationale, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ServiceProvider BuildProvider(string ownerKey)
