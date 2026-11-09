@@ -622,3 +622,12 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [ ] T189 [P] Re-run quickstart Scenario **8c** after `Potsure.MigrationsHost` wiring (`aspire run`: database healthy → `ef-migrations` finished → web healthy) and set Scenario 8c validation log to **Pass** or document a blocking defect per constitution 1.2.0 Scenario 8c and plan EF orchestration (partial)
 - [ ] T190 [P] [US11] Extend `HostedIdentityHttpTests` (or adjacent `WebApplicationFactory` coverage) to POST register and password sign-in and assert an authenticated session cookie  -  not GET-only antiforgery token checks per **SC-005** and partial **T155**
 - [X] T191 [P] Update quickstart validation log Scenario **2** (assignment memory / re-import) to reflect `ReimportAssignmentMemoryTests` release evidence per **SC-003** and partial **T151** (complements open **T185** for Scenarios 3, 4b, 5, 7)
+
+---
+
+## Phase 29: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-09, post Phase 28) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T192 [US2] Allow rejected recurring patterns to appear again as **suggested** after later detection or re-import (persist reject for audit but do not bind `RecurrenceReviewService` merged state to `Rejected` when fresh detection matches the label) per spec Session 2026-11-09 reject clarification and **FR-M008** (contradicts)
+- [X] T193 [US2] Add user-selectable **fixed vs variable** amount behaviour on expense confirm, merge, and split in `DetectionReview` (not inference-only `ExpenseIsVariableAmount()`), wired through `SaveRecurringExpenseRequest` / `ExpensePatternService` per **FR-M008d** and US2/AC12 (partial)

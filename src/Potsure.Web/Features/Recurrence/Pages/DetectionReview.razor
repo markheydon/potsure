@@ -136,7 +136,23 @@ else
                                 }
                                 <BbLabel>Tag (optional)</BbLabel>
                                 <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
-                                @if (item.ExpenseIsVariableAmount())
+                                <BbLabel>Amount behaviour</BbLabel>
+                                <BbSelect TValue="ExpenseAmountKind"
+                                          Value="@GetExpenseAmountKind(item)"
+                                          ValueChanged="@(kind => SetExpenseAmountKind(item.Label, kind))">
+                                    <BbSelectTrigger>
+                                        <BbSelectValue Placeholder="Fixed or variable">
+                                            <ChildContent Context="ignored">
+                                                @ExpenseAmountKindLabel(GetExpenseAmountKind(item))
+                                            </ChildContent>
+                                        </BbSelectValue>
+                                    </BbSelectTrigger>
+                                    <BbSelectContent>
+                                        <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Fixed" Text="Fixed per payment" />
+                                        <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
+                                    </BbSelectContent>
+                                </BbSelect>
+                                @if (ExpenseTreatAsVariable(item))
                                 {
                                     <BbLabel>Monthly estimate (£)</BbLabel>
                                     <BbInput Type="InputType.Number"
@@ -258,6 +274,20 @@ else
         }
         <BbLabel>Tag (optional)</BbLabel>
         <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
+        <BbLabel>Merged amount behaviour</BbLabel>
+        <BbSelect TValue="ExpenseAmountKind" @bind-Value="MergeAmountKindSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Fixed or variable">
+                    <ChildContent Context="ignored">
+                        @ExpenseAmountKindLabel(MergeAmountKindSelection)
+                    </ChildContent>
+                </BbSelectValue>
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Fixed" Text="Fixed per payment" />
+                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
+            </BbSelectContent>
+        </BbSelect>
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
     </PotsureSection>
 
@@ -279,10 +309,24 @@ else
                 }
             </BbSelectContent>
         </BbSelect>
+        <BbLabel>Split amount behaviour (both parts)</BbLabel>
+        <BbSelect TValue="ExpenseAmountKind" @bind-Value="SplitAmountKindSelection">
+            <BbSelectTrigger>
+                <BbSelectValue Placeholder="Fixed or variable">
+                    <ChildContent Context="ignored">
+                        @ExpenseAmountKindLabel(SplitAmountKindSelection)
+                    </ChildContent>
+                </BbSelectValue>
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Fixed" Text="Fixed per payment" />
+                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
+            </BbSelectContent>
+        </BbSelect>
         @if (SplitSourceReviewItem is { } splitSource)
         {
             <BbTypographyMuted Class="bb:text-sm bb:leading-snug">
-                @if (splitSource.ExpenseIsVariableAmount())
+                @if (SplitAmountKindSelection == ExpenseAmountKind.Variable)
                 {
                     <span>
                         Each part keeps half of the source <strong>monthly estimate</strong> when the source is variable.

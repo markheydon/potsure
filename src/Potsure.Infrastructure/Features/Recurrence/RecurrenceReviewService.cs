@@ -64,8 +64,10 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                         StringComparison.Ordinal));
                 if (match is not null)
                 {
-                    state = match.State;
                     id = match.Id;
+                    state = match.State == PatternConfirmationState.Rejected
+                        ? PatternConfirmationState.Suggested
+                        : match.State;
                 }
             }
             else
@@ -77,8 +79,10 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
                         StringComparison.Ordinal));
                 if (match is not null)
                 {
-                    state = match.State;
                     id = match.Id;
+                    state = match.State == PatternConfirmationState.Rejected
+                        ? PatternConfirmationState.Suggested
+                        : match.State;
                 }
             }
 

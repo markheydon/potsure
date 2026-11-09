@@ -56,13 +56,16 @@ public partial class DetectionReview
     private Dictionary<string, IncomeCadence> _incomeCadenceByLabel = [];
     private Dictionary<string, decimal> _incomeAmountByLabel = [];
     private Dictionary<string, decimal> _expenseAmountByLabel = [];
+    private Dictionary<string, ExpenseAmountKind> _expenseAmountKindByLabel = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
     private Guid? _mergePotId;
     private string? _mergeTag;
     private bool _mergeRequiresExplicitResolution;
+    private ExpenseAmountKind? _mergeAmountKind;
     private string? _splitSourceLabel;
+    private ExpenseAmountKind? _splitAmountKind;
 
     /// <summary>
     /// Confirmed expense row selected in Split expense pattern (if any).
@@ -152,9 +155,33 @@ public partial class DetectionReview
             else
             {
                 _expenseAmountByLabel[item.Label] = item.TypicalAmount ?? 0m;
+                EnsureExpenseAmountKindDefault(item);
             }
         }
     }
+
+    private void EnsureExpenseAmountKindDefault(RecurrenceReviewItem item)
+    {
+        if (item.IsIncome || _expenseAmountKindByLabel.ContainsKey(item.Label))
+        {
+            return;
+        }
+
+        _expenseAmountKindByLabel[item.Label] = item.ExpenseIsVariableAmount()
+            ? ExpenseAmountKind.Variable
+            : ExpenseAmountKind.Fixed;
+    }
+
+    private ExpenseAmountKind GetExpenseAmountKind(RecurrenceReviewItem item) =>
+        _expenseAmountKindByLabel.GetValueOrDefault(
+            item.Label,
+            item.ExpenseIsVariableAmount() ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed);
+
+    private bool ExpenseTreatAsVariable(RecurrenceReviewItem item) =>
+        GetExpenseAmountKind(item) == ExpenseAmountKind.Variable;
+
+    private void SetExpenseAmountKind(string label, ExpenseAmountKind kind) =>
+        _expenseAmountKindByLabel[label] = kind;
 
     private async Task LoadCategoriesAsync()
     {
@@ -212,7 +239,7 @@ public partial class DetectionReview
                 Guid? potId = _expensePotByLabel[item.Label];
                 string? tag = NullIfWhiteSpace(_expenseTagByLabel[item.Label]);
                 ExpenseCadence cadence = item.ExpenseCadence ?? ExpenseCadence.Monthly;
-                bool treatAsVariable = item.ExpenseIsVariableAmount();
+                bool treatAsVariable = ExpenseTreatAsVariable(item);
                 VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
                 decimal entered = _expenseAmountByLabel.GetValueOrDefault(item.Label);
                 decimal? monthlyEstimate = null;
@@ -322,7 +349,7 @@ public partial class DetectionReview
             else
             {
                 Guid categoryId = _expenseCategoryByLabel[item.Label];
-                bool variable = item.ExpenseIsVariableAmount();
+                bool variable = ExpenseTreatAsVariable(item);
                 decimal amount = _expenseAmountByLabel.GetValueOrDefault(item.Label);
                 decimal? fixedPart = variable ? null : (item.TypicalAmount ?? amount);
                 decimal? monthlyPart = variable ? (item.TypicalAmount ?? amount) : null;
@@ -375,6 +402,11 @@ public partial class DetectionReview
     {
         List<RecurringExpenseEntity> selected = GetSelectedMergeSources();
         _mergeRequiresExplicitResolution = PatternMergeSplitService.SourcesHaveAssignmentConflict(selected);
+        _mergeAmountKind = selected.Count == 0
+            ? null
+            : selected.Any(e => e.AmountKind == ExpenseAmountKind.Variable)
+                ? ExpenseAmountKind.Variable
+                : ExpenseAmountKind.Fixed;
     }
 
     private List<RecurringExpenseEntity> GetSelectedMergeSources()
@@ -423,7 +455,7 @@ public partial class DetectionReview
                 .Where(e => ids.Contains(e.Id))
                 .ToListAsync();
 
-            bool anyVariable = entities.Any(e => e.AmountKind == ExpenseAmountKind.Variable);
+            bool anyVariable = (_mergeAmountKind ?? ExpenseAmountKind.Fixed) == ExpenseAmountKind.Variable;
             decimal? mergedFixed = anyVariable
                 ? null
                 : entities.Sum(e => e.FixedAmount ?? 0m);
@@ -477,8 +509,7 @@ public partial class DetectionReview
                 .AsNoTracking()
                 .SingleOrDefaultAsync(e => e.Id == source.PersistedId!.Value);
 
-            bool variable = sourceEntity is not null
-                            && sourceEntity.AmountKind == ExpenseAmountKind.Variable;
+            bool variable = (_splitAmountKind ?? ExpenseAmountKind.Fixed) == ExpenseAmountKind.Variable;
             decimal? halfFixed = variable
                 ? null
                 : (sourceEntity?.FixedAmount ?? source.TypicalAmount) is decimal f
@@ -610,8 +641,35 @@ public partial class DetectionReview
     private string SplitSourceSelection
     {
         get => _splitSourceLabel ?? string.Empty;
-        set => _splitSourceLabel = string.IsNullOrEmpty(value) ? null : value;
+        set
+        {
+            _splitSourceLabel = string.IsNullOrEmpty(value) ? null : value;
+            RefreshSplitAmountKindDefault();
+        }
     }
+
+    private void RefreshSplitAmountKindDefault()
+    {
+        RecurrenceReviewItem? source = SplitSourceReviewItem;
+        _splitAmountKind = source is null
+            ? null
+            : source.ExpenseIsVariableAmount() ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed;
+    }
+
+    private ExpenseAmountKind MergeAmountKindSelection
+    {
+        get => _mergeAmountKind ?? ExpenseAmountKind.Fixed;
+        set => _mergeAmountKind = value;
+    }
+
+    private ExpenseAmountKind SplitAmountKindSelection
+    {
+        get => _splitAmountKind ?? ExpenseAmountKind.Fixed;
+        set => _splitAmountKind = value;
+    }
+
+    private static string ExpenseAmountKindLabel(ExpenseAmountKind kind) =>
+        kind == ExpenseAmountKind.Variable ? "Variable (monthly estimate)" : "Fixed per payment";
 
     private Guid SplitPartOnePotSelection
     {
