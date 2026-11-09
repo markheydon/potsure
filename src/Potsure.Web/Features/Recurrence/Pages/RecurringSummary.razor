@@ -18,6 +18,13 @@ else if (_error is not null)
 }
 else if (_model is not null)
 {
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <BbAlert Variant="AlertVariant.Default">
+            <BbAlertDescription>@_statusMessage</BbAlertDescription>
+        </BbAlert>
+    }
+
     <PotsureSection Title="Confirmed income">
         @if (_model.ConfirmedIncome.Count == 0)
         {
@@ -50,6 +57,19 @@ else if (_model is not null)
                                        Header="Splits (Needs / Wants / Savings)">
                         <CellTemplate Context="row">
                             @row.SplitNeedsPercent% / @row.SplitWantsPercent% / @row.SplitSavingsDebtPercent%
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="ConfirmedIncomeSummaryRow" TValue="string"
+                                       Header="Actions">
+                        <CellTemplate Context="row">
+                            <div class="bb:flex bb:flex-wrap bb:gap-2">
+                                <BbLink Href="/recurrence/review">Edit on review</BbLink>
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="ButtonVariant.Outline"
+                                          OnClick="@(() => DeleteIncomeAsync(row.Id))">
+                                    Delete
+                                </BbButton>
+                            </div>
                         </CellTemplate>
                     </BbDataTableColumn>
                 </Columns>
@@ -97,6 +117,19 @@ else if (_model is not null)
                     <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
                                        Header="Tag"
                                        Property="@(row => row.Tag ?? "-")" />
+                    <BbDataTableColumn TData="ConfirmedExpenseSummaryRow" TValue="string"
+                                       Header="Actions">
+                        <CellTemplate Context="row">
+                            <div class="bb:flex bb:flex-wrap bb:gap-2">
+                                <BbLink Href="/recurrence/review">Edit on review</BbLink>
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="ButtonVariant.Outline"
+                                          OnClick="@(() => DeleteExpenseAsync(row.Id))">
+                                    Delete
+                                </BbButton>
+                            </div>
+                        </CellTemplate>
+                    </BbDataTableColumn>
                 </Columns>
             </BbDataTable>
         }

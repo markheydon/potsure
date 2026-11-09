@@ -24,6 +24,17 @@ public sealed record UpdateBankPotRequest(
     decimal? AllocationToPotAmount,
     decimal? PlannedFutureFundingAmount);
 
+public enum BankPotFundingDisposition
+{
+    NotApplicable,
+    RollToCategory,
+    Discard,
+}
+
+public sealed record DeleteBankPotRequest(
+    Guid PotId,
+    BankPotFundingDisposition FundingDisposition = BankPotFundingDisposition.NotApplicable);
+
 /// <summary>
 /// CRUD for bank pots mapped exactly one category each (FR-M013).
 /// </summary>
@@ -52,8 +63,12 @@ public sealed class BankPotService(
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
+        EnsurePotCrudAllowed(profile.PotMappingMode);
+
         BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == request.CategoryId);
         EntityOwnershipValidator.EnsureOwnedBy(category.OwnerKey, ownerAccessor.OwnerKey);
+
+        ValidatePotInventoryForMode(profile, additionalPot: true, targetCategoryId: request.CategoryId);
 
         BankPotEntity entity = new()
         {
@@ -78,8 +93,19 @@ public sealed class BankPotService(
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
+        EnsurePotCrudAllowed(profile.PotMappingMode);
+
         BankPotEntity entity = profile.Pots.Single(p => p.Id == request.Id);
         BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == request.CategoryId);
+
+        if (entity.CategoryId != request.CategoryId)
+        {
+            ValidatePotInventoryForMode(
+                profile,
+                additionalPot: false,
+                targetCategoryId: request.CategoryId,
+                excludingPotId: entity.Id);
+        }
 
         entity.Name = request.Name.Trim();
         entity.CategoryId = category.Id;
@@ -92,12 +118,31 @@ public sealed class BankPotService(
     }
 
     /// <summary>
-    /// Removes a pot without affecting imported transactions.
+    /// Removes a pot without affecting imported transactions (FR-M013c).
     /// </summary>
-    public async Task DeleteAsync(Guid potId, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(DeleteBankPotRequest request, CancellationToken cancellationToken = default)
     {
-        BankPotEntity entity = await dbContext.BankPots.SingleAsync(p => p.Id == potId, cancellationToken);
+        BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
+        BankPotEntity entity = profile.Pots.Single(p => p.Id == request.PotId);
         EntityOwnershipValidator.EnsureOwnedBy(entity.OwnerKey, ownerAccessor.OwnerKey);
+
+        if (entity.RecordedFundingAmount > 0m)
+        {
+            if (request.FundingDisposition is BankPotFundingDisposition.NotApplicable)
+            {
+                throw new InvalidOperationException(
+                    "This pot has recorded funding. Choose roll-up to the parent category or discard before deleting.");
+            }
+
+            if (request.FundingDisposition == BankPotFundingDisposition.RollToCategory)
+            {
+                BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == entity.CategoryId);
+                category.RecordedFundingDirectAmount += entity.RecordedFundingAmount;
+            }
+        }
+
+        await ClearPotReferencesAsync(request.PotId, cancellationToken);
+
         dbContext.BankPots.Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
@@ -110,8 +155,88 @@ public sealed class BankPotService(
         CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
+        if (profile.PotMappingMode == mode)
+        {
+            return;
+        }
+
+        if (mode == PotMappingMode.CategoryOnly && profile.Pots.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "Delete all mapped pots (including recorded funding roll-up or discard) before switching to category-only mode.");
+        }
+
+        if (mode == PotMappingMode.ThreePots)
+        {
+            ValidateThreePotModeInvariants(profile.Pots);
+        }
+
         profile.PotMappingMode = mode;
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    internal static void EnsurePotCrudAllowed(PotMappingMode mode)
+    {
+        if (mode == PotMappingMode.CategoryOnly)
+        {
+            throw new InvalidOperationException("Mapped pots are not available in category-only mode.");
+        }
+    }
+
+    internal static void ValidateThreePotModeInvariants(IReadOnlyCollection<BankPotEntity> pots)
+    {
+        if (pots.Count > 3)
+        {
+            throw new InvalidOperationException("Three pots mode allows at most three mapped pots. Remove surplus pots first.");
+        }
+
+        if (pots.GroupBy(p => p.CategoryId).Any(g => g.Count() > 1))
+        {
+            throw new InvalidOperationException("Three pots mode allows at most one pot per category. Remove surplus mappings first.");
+        }
+    }
+
+    internal static void ValidatePotInventoryForMode(
+        BudgetProfileEntity profile,
+        bool additionalPot,
+        Guid targetCategoryId,
+        Guid? excludingPotId = null)
+    {
+        if (profile.PotMappingMode != PotMappingMode.ThreePots)
+        {
+            return;
+        }
+
+        int potCount = profile.Pots.Count(p => excludingPotId is null || p.Id != excludingPotId);
+        if (additionalPot && potCount >= 3)
+        {
+            throw new InvalidOperationException("Three pots mode allows at most three mapped pots.");
+        }
+
+        if (profile.Pots.Any(p =>
+                (excludingPotId is null || p.Id != excludingPotId) && p.CategoryId == targetCategoryId))
+        {
+            throw new InvalidOperationException("Three pots mode allows at most one pot per category.");
+        }
+    }
+
+    private async Task ClearPotReferencesAsync(Guid potId, CancellationToken cancellationToken)
+    {
+        List<RecurringExpenseEntity> expenses = await dbContext.RecurringExpenses
+            .Where(e => e.MappedPotId == potId)
+            .ToListAsync(cancellationToken);
+        foreach (RecurringExpenseEntity expense in expenses)
+        {
+            expense.MappedPotId = null;
+        }
+
+        List<TransactionEntity> transactions = await dbContext.Transactions
+            .Where(t => t.MappedPotId == potId)
+            .ToListAsync(cancellationToken);
+        foreach (TransactionEntity transaction in transactions)
+        {
+            transaction.MappedPotId = null;
+        }
     }
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)

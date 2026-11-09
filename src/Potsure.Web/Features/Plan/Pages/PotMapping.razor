@@ -86,6 +86,18 @@ else
                                 @UkCurrencyDisplay.Format(pot.RecordedFundingAmount)
                             </CellTemplate>
                         </BbDataTableColumn>
+                        <BbDataTableColumn TData="BankPotReadModel" TValue="string"
+                                           Header="Actions">
+                            <CellTemplate Context="pot">
+                                <div class="bb:flex bb:flex-wrap bb:gap-2">
+                                    <BbButton Size="ButtonSize.Small"
+                                              Variant="ButtonVariant.Outline"
+                                              OnClick="@(() => PromptDeletePot(pot))">
+                                        Delete
+                                    </BbButton>
+                                </div>
+                            </CellTemplate>
+                        </BbDataTableColumn>
                     </Columns>
                 </BbDataTable>
             }
@@ -122,6 +134,30 @@ else
                 <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
             </Footer>
         </PotsureSection>
+
+        @if (_showFundingDispositionDialog)
+        {
+            <BbAlert Variant="AlertVariant.Warning">
+                <BbAlertTitle>Recorded funding on this pot</BbAlertTitle>
+                <BbAlertDescription>
+                    This pot has @UkCurrencyDisplay.Format(_pendingDeleteFunding) recorded funding.
+                    Roll it into the parent category funding, or discard it when deleting the pot.
+                </BbAlertDescription>
+            </BbAlert>
+            <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-2">
+                <BbButton OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.RollToCategory))">
+                    Roll into category funding
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline"
+                          OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.Discard))">
+                    Discard funding
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Ghost"
+                          OnClick="@(() => _showFundingDispositionDialog = false)">
+                    Cancel
+                </BbButton>
+            </div>
+        }
     }
     else
     {

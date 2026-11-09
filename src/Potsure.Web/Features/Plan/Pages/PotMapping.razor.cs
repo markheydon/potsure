@@ -27,14 +27,24 @@ public partial class PotMapping
         get => _mode;
         set
         {
+            if (_mode == value)
+            {
+                return;
+            }
+
+            PotMappingMode previous = _mode;
             _mode = value;
-            _ = PersistModeAsync();
+            _ = PersistModeAsync(previous);
         }
     }
+
     private List<BankPotReadModel> _pots = [];
     private List<CategoryOption> _categories = [];
     private string _newPotName = string.Empty;
     private Guid _newPotCategoryId;
+    private Guid? _pendingDeletePotId;
+    private decimal _pendingDeleteFunding;
+    private bool _showFundingDispositionDialog;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,11 +82,53 @@ public partial class PotMapping
         _pots = (await PotService.ListAsync()).ToList();
     }
 
-    private async Task PersistModeAsync()
+    private async Task PersistModeAsync(PotMappingMode revertOnFailure)
     {
         try
         {
+            _error = null;
             await PotService.SetPotMappingModeAsync(_mode);
+        }
+        catch (Exception ex)
+        {
+            _mode = revertOnFailure;
+            _error = ex.Message;
+        }
+    }
+
+    private void PromptDeletePot(BankPotReadModel pot)
+    {
+        if (pot.RecordedFundingAmount > 0m)
+        {
+            _pendingDeletePotId = pot.Id;
+            _pendingDeleteFunding = pot.RecordedFundingAmount;
+            _showFundingDispositionDialog = true;
+            return;
+        }
+
+        _ = DeletePotAsync(pot.Id, BankPotFundingDisposition.NotApplicable);
+    }
+
+    private async Task ConfirmFundingDispositionAsync(BankPotFundingDisposition disposition)
+    {
+        if (_pendingDeletePotId is not Guid potId)
+        {
+            return;
+        }
+
+        _showFundingDispositionDialog = false;
+        await DeletePotAsync(potId, disposition);
+        _pendingDeletePotId = null;
+        _pendingDeleteFunding = 0m;
+    }
+
+    private async Task DeletePotAsync(Guid potId, BankPotFundingDisposition disposition)
+    {
+        try
+        {
+            _error = null;
+            await PotService.DeleteAsync(new DeleteBankPotRequest(potId, disposition));
+            await LoadAsync();
         }
         catch (Exception ex)
         {

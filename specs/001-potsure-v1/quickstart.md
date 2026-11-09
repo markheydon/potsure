@@ -126,7 +126,7 @@ dotnet test Potsure.slnx -c Release
 
 **Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with `--project src/Potsure.Data/Potsure.Data.csproj` and Web startup per plan (**T186** aligns operator docs).
 
-**Known defect (2026-11-04 re-smoke, T154/T157)**: AppHost logs show `Could not perform substitution for environment variable ASPNETCORE_URLS` on `ef-tool-ef-migrations` with `portForServing "web"`  -  the migration executable does not produce the `/web` service endpoint. Until fixed upstream or in AppHost wiring, Scenario 8c remains **Partial** despite **T115** pass on 2026-11-03.
+**T158 fix (2026-11-09)**: `AddEFMigrations` attaches to `Potsure.MigrationsHost` (`schema-host`) instead of Blazor `web`, avoiding `portForServing "web"` on the EF tool. Re-run Scenario 8c steps after `aspire run` to confirm **Pass** in the validation log.
 
 ## Scenario 9  -  Accessibility smoke (US12)
 
@@ -162,10 +162,10 @@ Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `P
 | 7  -  Determinism | Pass | `DeterminismTests` in Release |
 | 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
 | 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c  -  EF migration ordering | Partial | **T115** Pass 2026-11-03; **T154**/**T157** 2026-11-04 `aspire run`  -  `ef-tool-*` cannot substitute `ASPNETCORE_URLS` (`portForServing "web"`  -  service `/web` not produced by migration executable); AppHost switched to `AddProject<Projects.Potsure_Web>` (**T157** fix attempt)  -  re-smoke still blocked until Aspire EF tool wiring resolves |
+| 8c  -  EF migration ordering | Partial | **T158**: `schema-host` (`Potsure.MigrationsHost`) hosts `AddEFMigrations`; local `aspire run` re-smoke pending in this environment |
 | 9  -  Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
-| Hosted Identity (Aspire local) | Pass | **T153** 2026-11-04: `HostedIdentityFunctionalTests` + manual path in bootstrap section (**SC-005** / **T148**) |
+| Hosted Identity (Aspire local) | Pass | **T153**/**T155**: `HostedIdentityFunctionalTests` (DI) + `HostedIdentityHttpTests` (`WebApplicationFactory` GET `/Account/Register` and `/Account/Login`) (**SC-005** / **T148**) |
 | Hosted stage smoke | Not run | Requires deployed ACA; hosted Register/sign-in validation |
 
 Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test`  -  see Phase 15 task T101.

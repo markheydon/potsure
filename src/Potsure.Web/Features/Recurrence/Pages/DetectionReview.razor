@@ -95,7 +95,9 @@ else
                         {
                             <div>
                                 <BbLabel>Category</BbLabel>
-                                <BbSelect TValue="Guid" @bind-Value="_expenseCategoryByLabel[item.Label]">
+                                <BbSelect TValue="Guid"
+                                          Value="@_expenseCategoryByLabel[item.Label]"
+                                          ValueChanged="@(id => SetExpenseCategory(item.Label, id))">
                                     <BbSelectTrigger>
                                         <BbSelectValue Placeholder="Category">
                                             <ChildContent Context="ignored">
@@ -110,25 +112,28 @@ else
                                         }
                                     </BbSelectContent>
                                 </BbSelect>
-                                <BbLabel>Mapped pot (optional)</BbLabel>
-                                <BbSelect TValue="Guid"
-                                          Value="@GetExpensePotSelection(item.Label)"
-                                          ValueChanged="@(id => SetExpensePotSelection(item.Label, id))">
-                                    <BbSelectTrigger>
-                                        <BbSelectValue Placeholder="None">
-                                            <ChildContent Context="ignored">
-                                                @PotSelectionLabel(GetExpensePotSelection(item.Label))
-                                            </ChildContent>
-                                        </BbSelectValue>
-                                    </BbSelectTrigger>
-                                    <BbSelectContent>
-                                        <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
-                                        @foreach (PotOption pot in PotsForCategory(_expenseCategoryByLabel[item.Label]))
-                                        {
-                                            <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
-                                        }
-                                    </BbSelectContent>
-                                </BbSelect>
+                                @if (ShowPotUi)
+                                {
+                                    <BbLabel>Mapped pot (optional)</BbLabel>
+                                    <BbSelect TValue="Guid"
+                                              Value="@GetExpensePotSelection(item.Label)"
+                                              ValueChanged="@(id => SetExpensePotSelection(item.Label, id))">
+                                        <BbSelectTrigger>
+                                            <BbSelectValue Placeholder="None">
+                                                <ChildContent Context="ignored">
+                                                    @PotSelectionLabel(GetExpensePotSelection(item.Label))
+                                                </ChildContent>
+                                            </BbSelectValue>
+                                        </BbSelectTrigger>
+                                        <BbSelectContent>
+                                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                                            @foreach (PotOption pot in PotsForCategory(_expenseCategoryByLabel[item.Label]))
+                                            {
+                                                <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                                            }
+                                        </BbSelectContent>
+                                    </BbSelect>
+                                }
                                 <BbLabel>Tag (optional)</BbLabel>
                                 <BbInput @bind-Value="_expenseTagByLabel[item.Label]" Placeholder="Display label" />
                                 @if (item.ExpenseIsVariableAmount())
@@ -170,6 +175,16 @@ else
                             <strong class="bb:font-semibold">@item.Label</strong>
                             <span class="bb:text-muted-foreground">· @item.State · @FormatCadence(item)</span>
                         </div>
+                        @if (item.State == PatternConfirmationState.Confirmed)
+                        {
+                            <div class="bb:flex bb:flex-wrap bb:gap-2 bb:pt-2">
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="ButtonVariant.Outline"
+                                          OnClick="() => DeleteConfirmedAsync(item)">
+                                    Delete
+                                </BbButton>
+                            </div>
+                        }
                         @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
                         {
                             <div class="bb:flex bb:items-start bb:gap-3 bb:border-t bb:border-border bb:pt-3">
@@ -221,23 +236,26 @@ else
                 }
             </BbSelectContent>
         </BbSelect>
-        <BbLabel>Mapped pot (optional)</BbLabel>
-        <BbSelect TValue="Guid" @bind-Value="MergePotSelection">
-            <BbSelectTrigger>
-                <BbSelectValue Placeholder="None">
-                    <ChildContent Context="ignored">
-                        @PotSelectionLabel(MergePotSelection)
-                    </ChildContent>
-                </BbSelectValue>
-            </BbSelectTrigger>
-            <BbSelectContent>
-                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
-                @foreach (PotOption pot in PotsForCategory(_mergeCategoryId))
-                {
-                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
-                }
-            </BbSelectContent>
-        </BbSelect>
+        @if (ShowPotUi)
+        {
+            <BbLabel>Mapped pot (optional)</BbLabel>
+            <BbSelect TValue="Guid" @bind-Value="MergePotSelection">
+                <BbSelectTrigger>
+                    <BbSelectValue Placeholder="None">
+                        <ChildContent Context="ignored">
+                            @PotSelectionLabel(MergePotSelection)
+                        </ChildContent>
+                    </BbSelectValue>
+                </BbSelectTrigger>
+                <BbSelectContent>
+                    <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                    @foreach (PotOption pot in PotsForCategory(_mergeCategoryId))
+                    {
+                        <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                    }
+                </BbSelectContent>
+            </BbSelect>
+        }
         <BbLabel>Tag (optional)</BbLabel>
         <BbInput @bind-Value="_mergeTag" Placeholder="Display label" />
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>

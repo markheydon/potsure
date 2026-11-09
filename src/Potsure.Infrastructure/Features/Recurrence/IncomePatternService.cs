@@ -64,6 +64,23 @@ public sealed class IncomePatternService(
         return entity;
     }
 
+    /// <summary>
+    /// Removes a confirmed income pattern without deleting statement transactions (FR-M008c).
+    /// </summary>
+    public async Task DeleteConfirmedAsync(Guid incomeSourceId, CancellationToken cancellationToken = default)
+    {
+        IncomeSourceEntity entity = await dbContext.IncomeSources
+            .SingleAsync(s => s.Id == incomeSourceId, cancellationToken);
+        EntityOwnershipValidator.EnsureOwnedBy(entity.OwnerKey, ownerAccessor.OwnerKey);
+        if (entity.State != PatternConfirmationState.Confirmed)
+        {
+            throw new InvalidOperationException("Only confirmed patterns can be deleted.");
+        }
+
+        dbContext.IncomeSources.Remove(entity);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     internal static void ValidateSplits(decimal needs, decimal wants, decimal savingsDebt)
     {
         decimal total = needs + wants + savingsDebt;

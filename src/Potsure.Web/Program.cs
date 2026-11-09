@@ -161,3 +161,5 @@ if (deployment.Mode == DeploymentMode.LocalOnly && !deployment.BindPublicEndpoin
 }
 
 app.Run();
+
+public partial class Program;

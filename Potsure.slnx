@@ -9,6 +9,7 @@
     <Project Path="src/Potsure.Budgeting/Potsure.Budgeting.csproj" />
     <Project Path="src/Potsure.Data/Potsure.Data.csproj" />
     <Project Path="src/Potsure.Infrastructure/Potsure.Infrastructure.csproj" />
+    <Project Path="src/Potsure.MigrationsHost/Potsure.MigrationsHost.csproj" />
     <Project Path="src/Potsure.Recurrence/Potsure.Recurrence.csproj" />
     <Project Path="src/Potsure.Reporting/Potsure.Reporting.csproj" />
     <Project Path="src/Potsure.ServiceDefaults/Potsure.ServiceDefaults.csproj" />

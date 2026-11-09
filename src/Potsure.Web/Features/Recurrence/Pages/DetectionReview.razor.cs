@@ -48,6 +48,7 @@ public partial class DetectionReview
     private List<RecurrenceReviewItem> _confirmedOrRejected = [];
     private List<CategoryOption> _categories = [];
     private List<PotOption> _pots = [];
+    private PotMappingMode _potMappingMode = PotMappingMode.CategoryOnly;
     private Dictionary<string, Guid> _expenseCategoryByLabel = [];
     private Dictionary<string, Guid?> _expensePotByLabel = [];
     private Dictionary<string, string?> _expenseTagByLabel = [];
@@ -88,6 +89,7 @@ public partial class DetectionReview
         {
             await ProfileSeeder.EnsureProfileAsync();
             await LoadCategoriesAsync();
+            await LoadPotMappingModeAsync();
             await LoadPotsAsync();
             await ReloadAsync();
         }
@@ -101,11 +103,21 @@ public partial class DetectionReview
         }
     }
 
+    private async Task LoadPotMappingModeAsync()
+    {
+        _potMappingMode = await DbContext.BudgetProfiles
+            .AsNoTracking()
+            .Select(p => p.PotMappingMode)
+            .SingleAsync();
+    }
+
     private async Task LoadPotsAsync()
     {
         IReadOnlyList<BankPotReadModel> pots = await PotService.ListAsync();
-        _pots = pots.Select(p => new PotOption(p.Id, p.Name, p.CategoryKind)).ToList();
+        _pots = pots.Select(p => new PotOption(p.Id, p.Name, p.CategoryId, p.CategoryKind)).ToList();
     }
+
+    private bool ShowPotUi => _potMappingMode != PotMappingMode.CategoryOnly;
 
     private async Task ReloadAsync()
     {
@@ -117,8 +129,9 @@ public partial class DetectionReview
         {
             if (!item.IsIncome && !_expenseCategoryByLabel.ContainsKey(item.Label) && _categories.Count > 0)
             {
-                _expenseCategoryByLabel[item.Label] = _categories[0].Id;
-                _expensePotByLabel[item.Label] = null;
+                Guid defaultCategory = _categories[0].Id;
+                _expenseCategoryByLabel[item.Label] = defaultCategory;
+                ApplyDefaultPotSelection(item.Label, defaultCategory);
                 _expenseTagByLabel[item.Label] = null;
             }
 
@@ -246,6 +259,35 @@ public partial class DetectionReview
             }
 
             _statusMessage = $"Confirmed {item.Label}.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = ex.Message;
+        }
+    }
+
+    private async Task DeleteConfirmedAsync(RecurrenceReviewItem item)
+    {
+        if (item.State != PatternConfirmationState.Confirmed || item.PersistedId is not Guid id)
+        {
+            _statusMessage = "Only saved confirmed patterns can be deleted.";
+            return;
+        }
+
+        _statusMessage = null;
+        try
+        {
+            if (item.IsIncome)
+            {
+                await IncomeService.DeleteConfirmedAsync(id);
+            }
+            else
+            {
+                await ExpenseService.DeleteConfirmedAsync(id);
+            }
+
+            _statusMessage = $"Deleted {item.Label}.";
             await ReloadAsync();
         }
         catch (Exception ex)
@@ -492,13 +534,37 @@ public partial class DetectionReview
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
 
-    private sealed record PotOption(Guid Id, string Name, BudgetCategoryKind CategoryKind);
+    private sealed record PotOption(Guid Id, string Name, Guid CategoryId, BudgetCategoryKind CategoryKind);
 
     private static string? NullIfWhiteSpace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
-        _pots.Where(p => _categories.FirstOrDefault(c => c.Id == categoryId)?.Kind == p.CategoryKind);
+        _pots.Where(p => p.CategoryId == categoryId);
+
+    private void SetExpenseCategory(string label, Guid categoryId)
+    {
+        _expenseCategoryByLabel[label] = categoryId;
+        ApplyDefaultPotSelection(label, categoryId);
+    }
+
+    private void ApplyDefaultPotSelection(string label, Guid categoryId)
+    {
+        if (!ShowPotUi)
+        {
+            _expensePotByLabel[label] = null;
+            return;
+        }
+
+        List<PotOption> potsForCategory = PotsForCategory(categoryId).ToList();
+        Guid? defaultPot = _potMappingMode switch
+        {
+            PotMappingMode.ThreePots => potsForCategory.Count > 0 ? potsForCategory[0].Id : null,
+            PotMappingMode.SeveralPots => potsForCategory.Count == 1 ? potsForCategory[0].Id : null,
+            _ => null,
+        };
+        _expensePotByLabel[label] = defaultPot;
+    }
 
     private string CategoryLabel(Guid categoryId) =>
         _categories.FirstOrDefault(c => c.Id == categoryId) is { } category

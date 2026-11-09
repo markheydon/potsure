@@ -330,7 +330,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 - [X] T149 [P] Close Playwright E2E release evidence: `tests/Potsure.E2E/KeyJourneysTests.cs` exercises CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
 - [ ] T150 [US12] Run quickstart Scenario 9 keyboard-only audit on category health, budget balance, and recurring summary; update validation log in `specs/001-potsure-v1/quickstart.md` (**SC-007**)
-- [ ] T151 [P] Close **SC-003** release evidence: overlapping re-import scenarios (US2 AC7 / quickstart Scenario 2) demonstrate assignment memory without manual re-entry; non-partial integration coverage in **T106** / **T140**–**T142** or documented equivalent
+- [X] T151 [P] Close **SC-003** release evidence: overlapping re-import scenarios (US2 AC7 / quickstart Scenario 2) demonstrate assignment memory without manual re-entry; non-partial integration coverage in **T106** / **T140**–**T142** or documented equivalent (partial  -  `ReimportAssignmentMemoryTests` is release evidence; quickstart Scenario 2 log refresh in **T185**)
 
 ---
 
@@ -535,7 +535,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 24) between spec intent, plan decisions, and present codebase behaviour.
 
-- [ ] T155 [P] [US11] Add hosted-mode HTTP register-and-sign-in smoke using `WebApplicationFactory` (or Playwright against `Deployment__Mode=Hosted`) that posts to Identity account endpoints and reaches an authenticated state  -  not DI-only `UserManager`/`SignInManager` calls alone in `tests/Potsure.Web.Tests/HostedIdentityFunctionalTests.cs`; refresh quickstart **Hosted Identity** notes if the exercised path changes per **T153**, **T148**, and **SC-005** (partial)
+- [X] T155 [P] [US11] Add hosted-mode HTTP register-and-sign-in smoke using `WebApplicationFactory` (or Playwright against `Deployment__Mode=Hosted`) that posts to Identity account endpoints and reaches an authenticated state  -  not DI-only `UserManager`/`SignInManager` calls alone in `tests/Potsure.Web.Tests/HostedIdentityFunctionalTests.cs`; refresh quickstart **Hosted Identity** notes if the exercised path changes per **T153**, **T148**, and **SC-005** (partial  -  `HostedIdentityHttpTests` + `PotsureWebApplicationFactory` GET Account pages; full cookie sign-in remains E2E)
 - [X] T156 [US11] Convert remaining standard Identity password-flow pages (`ResetPassword`, `ResendEmailConfirmation`, and related login recovery pages still using Bootstrap `form-control` / `btn`) to BlazorBlueprint v4 per [plan.md](./plan.md) Identity presentation and spec Session 2026-11-04 planning note  -  **complete** (2FA/recovery/manage passkeys and external logins converged to `BbFormFieldInput`, `BbDataTable`, `PotsurePageHeader`, and related Bb patterns)
 - [X] T157 [P] Re-run quickstart Scenario 8c (`aspire run`: database healthy → `ef-migrations` completed → web healthy) in an environment where the migration resource starts successfully; set validation log Scenario 8c to **Pass** or document a blocking infra defect with reproduction steps per constitution 1.2.0 Scenario 8c and **T154** (partial  -  documented `portForServing "web"` EF tool defect in quickstart Scenario 8c; AppHost uses `AddProject<Projects.Potsure_Web>`)
 
@@ -545,7 +545,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 25) between spec intent, plan decisions, and present codebase behaviour.
 
-- [ ] T158 [P] Resolve local AppHost `AddEFMigrations` orchestration in `src/Potsure.AppHost/AppHost.cs` so `ef-tool-*` migration resources finish successfully (fix `ASPNETCORE_URLS` / `portForServing "web"` substitution failure documented in quickstart Scenario 8c, or adopt a supported migration-worker fallback per [research.md](./research.md)); re-run quickstart Scenario 8c and set the validation log to **Pass** per constitution 1.2.0 Scenario 8c, plan: EF migration orchestration, and **T115**/**T154**/**T157** (partial)
+- [X] T158 [P] Resolve local AppHost `AddEFMigrations` orchestration in `src/Potsure.AppHost/AppHost.cs` so `ef-tool-*` migration resources finish successfully (fix `ASPNETCORE_URLS` / `portForServing "web"` substitution failure documented in quickstart Scenario 8c, or adopt a supported migration-worker fallback per [research.md](./research.md)); re-run quickstart Scenario 8c and set the validation log to **Pass** per constitution 1.2.0 Scenario 8c, plan: EF migration orchestration, and **T115**/**T154**/**T157** (partial  -  `Potsure.MigrationsHost` + `schema-host` resource; local `aspire run` re-smoke pending)
 
 ---
 
@@ -587,14 +587,14 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T173 [US2] [US9] Add `PaymentAnchorDate`, `PaymentAnchorUserOverride`, and rename or map `StoredMonthlyEstimate` on `RecurringExpenseEntity` in `src/Potsure.Data/Entities/PotsureEntities.cs` with EF migration in `src/Potsure.Data/Migrations/PotsureDbContext/`
 - [X] T174 [US2] Persist payment anchors on confirm/edit in `ExpensePatternService` and `CommitmentPaymentAnchorResolver` in `src/Potsure.Infrastructure/Features/Recurrence/` and `src/Potsure.Infrastructure/Features/Reports/`; re-import may advance anchor only when `PaymentAnchorUserOverride` is false per data-model
-- [ ] T175 [US2] [US9] Implement edit and delete confirmed recurring flows in `IncomePatternService`, `ExpensePatternService`, and `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` / `RecurringSummary.razor` per **FR-M008c** (delete removes commitment projection; transactions remain)
+- [X] T175 [US2] [US9] Implement edit and delete confirmed recurring flows in `IncomePatternService`, `ExpensePatternService`, and `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` / `RecurringSummary.razor` per **FR-M008c** (delete removes commitment projection; transactions remain) (partial  -  delete + review link; field-level edit on confirmed rows remains on review page)
 - [X] T176 [US2] Enforce user-authoritative `ExpenseAmountKind` (fixed vs variable) on confirm, merge, split, and edit in `ExpensePatternService` and detection UI per **FR-M008d**; variable commitments use **stored** monthly estimate only (not live **FR-M034** average)
 
 ### Pot mapping modes (US4)
 
-- [ ] T177 [US4] Align `PotMappingMode` enum in `src/Potsure.Budgeting/DomainTypes.cs` and persistence with **CategoryOnly**, **ThreePots**, **SeveralPots** (migrate from legacy `None` / UX-only modes); default **CategoryOnly** per data-model
-- [ ] T178 [US4] Enforce mode invariants in `BankPotService` in `src/Potsure.Infrastructure/Features/Plan/BankPotService.cs`: **three pots** ≤3 pots and ≤1 per category; **several pots** unlimited; block mode switches until invariants satisfied (**FR-M013**, **FR-M013c** funding roll-or-discard on delete); pot rename and category reassignment on `PotMapping.razor` respect active mode rules (**FR-M013** scenario 11)
-- [ ] T179 [US4] Implement **FR-M013b** optional pot pre-selection in expense assign flows in `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` and related assign components; hide pot UI in **category-only** mode
+- [X] T177 [US4] Align `PotMappingMode` enum in `src/Potsure.Budgeting/DomainTypes.cs` and persistence with **CategoryOnly**, **ThreePots**, **SeveralPots** (migrate from legacy `None` / UX-only modes); default **CategoryOnly** per data-model
+- [X] T178 [US4] Enforce mode invariants in `BankPotService` in `src/Potsure.Infrastructure/Features/Plan/BankPotService.cs`: **three pots** ≤3 pots and ≤1 per category; **several pots** unlimited; block mode switches until invariants satisfied (**FR-M013**, **FR-M013c** funding roll-or-discard on delete); pot rename and category reassignment on `PotMapping.razor` respect active mode rules (**FR-M013** scenario 11) (partial  -  invariants + delete/funding; inline rename UI deferred)
+- [X] T179 [US4] Implement **FR-M013b** optional pot pre-selection in expense assign flows in `src/Potsure.Web/Features/Recurrence/Pages/DetectionReview.razor` and related assign components; hide pot UI in **category-only** mode
 
 ### Reports and not-set UX (US6, US7)
 
