@@ -165,6 +165,12 @@ else
                                     <BbInput Type="InputType.Number"
                                              Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
                                              ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                    <BbLabel>Payment anchor (first counted payment)</BbLabel>
+                                    <BbTypographyMuted Class="bb:text-sm">
+                                        Defaults to the latest matching debit on your imports. Change this if your real payment date differs.
+                                    </BbTypographyMuted>
+                                    <BbDatePicker Value="@GetExpenseAnchorPickerValue(item.Label)"
+                                                  ValueChanged="@(v => SetExpenseAnchorFromPickerAsync(item.Label, v))" />
                                 }
                             </div>
                         }
@@ -207,7 +213,7 @@ else
                                 <BbCheckbox Id="@MergeCheckboxDomId(item)"
                                             Class="bb:shrink-0 bb:mt-0.5"
                                             Checked="@_mergeSelection.Contains(item.Label)"
-                                            CheckedChanged="@(selected => SetMergeIncluded(item.Label, selected))" />
+                                            CheckedChanged="@(selected => SetMergeIncludedAsync(item.Label, selected))" />
                                 <div class="bb:flex bb:min-w-0 bb:flex-1 bb:flex-col bb:gap-1">
                                     <BbLabel For="@MergeCheckboxDomId(item)" Class="bb:mb-0 bb:font-normal bb:leading-snug">
                                         Select for merge
@@ -235,7 +241,9 @@ else
                 </BbAlertDescription>
             </BbAlert>
         }
-        <BbInput @bind-Value="_mergeLabel" Placeholder="Merged vendor label (optional)" />
+        <BbInput Value="@_mergeLabel"
+                 ValueChanged="OnMergeLabelChangedAsync"
+                 Placeholder="Merged vendor label (optional)" />
         <BbLabel>Category</BbLabel>
         <BbSelect TValue="Guid" @bind-Value="_mergeCategoryId">
             <BbSelectTrigger>
@@ -288,13 +296,21 @@ else
                 <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
             </BbSelectContent>
         </BbSelect>
+        @if (MergeAmountKindSelection == ExpenseAmountKind.Fixed)
+        {
+            <BbLabel>Payment anchor for merged pattern</BbLabel>
+            <BbDatePicker Value="@(_mergePaymentAnchor?.ToDateTime(TimeOnly.MinValue))"
+                          ValueChanged="SetMergePaymentAnchorFromPickerAsync" />
+        }
         <BbButton OnClick="MergeSelectedAsync">Merge selected</BbButton>
     </PotsureSection>
 
     <PotsureSection Title="Split expense pattern"
                     Description="Turn one confirmed recurring expense into two separate recurring lines (for example when the same merchant name mixes two kinds of spend). This does not split a single bank payment across categories; it replaces the source pattern with two new ones. Each part keeps the same cadence as the source and uses half of the source typical fixed amount until we add custom splits.">
         <BbLabel>Source pattern</BbLabel>
-        <BbSelect TValue="string" @bind-Value="SplitSourceSelection">
+        <BbSelect TValue="string"
+                  Value="@SplitSourceSelection"
+                  ValueChanged="OnSplitSourceChangedAsync">
             <BbSelectTrigger>
                 <BbSelectValue Placeholder="Select…">
                     <ChildContent Context="ignored">
@@ -323,6 +339,12 @@ else
                 <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
             </BbSelectContent>
         </BbSelect>
+        @if (SplitAmountKindSelection == ExpenseAmountKind.Fixed)
+        {
+            <BbLabel>Payment anchor for both split parts</BbLabel>
+            <BbDatePicker Value="@(_splitPaymentAnchor?.ToDateTime(TimeOnly.MinValue))"
+                          ValueChanged="SetSplitPaymentAnchorFromPickerAsync" />
+        }
         @if (SplitSourceReviewItem is { } splitSource)
         {
             <BbTypographyMuted Class="bb:text-sm bb:leading-snug">

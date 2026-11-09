@@ -20,7 +20,9 @@ public sealed record MergeRecurringExpensesRequest(
     decimal? FixedAmount,
     decimal? MonthlyEstimate,
     string? EstimateCoverageLabel,
-    bool UserResolvedAssignments);
+    bool UserResolvedAssignments,
+    DateOnly? PaymentAnchorDate,
+    bool PaymentAnchorUserOverride);
 
 public sealed record SplitRecurringExpenseRequest(
     Guid SourceExpenseId,
@@ -33,7 +35,9 @@ public sealed record SplitExpensePart(
     string AmountKind,
     decimal? FixedAmount,
     decimal? MonthlyEstimate,
-    string? EstimateCoverageLabel);
+    string? EstimateCoverageLabel,
+    DateOnly? PaymentAnchorDate,
+    bool PaymentAnchorUserOverride);
 
 /// <summary>
 /// Merge and split workflows with explicit category, pot, and tag resolution (FR-M008).
@@ -88,8 +92,8 @@ public sealed class PatternMergeSplitService(
                 request.MonthlyEstimate,
                 request.EstimateCoverageLabel,
                 request.Resolution.Tag,
-                null,
-                false,
+                request.PaymentAnchorDate,
+                request.PaymentAnchorUserOverride,
                 PatternConfirmationState.Confirmed),
             cancellationToken);
 
@@ -130,8 +134,8 @@ public sealed class PatternMergeSplitService(
                     part.MonthlyEstimate,
                     part.EstimateCoverageLabel,
                     part.Resolution.Tag,
-                    null,
-                    false,
+                    part.PaymentAnchorDate,
+                    part.PaymentAnchorUserOverride,
                     PatternConfirmationState.Confirmed),
                 cancellationToken);
             created.Add(entity);

@@ -57,6 +57,8 @@ public partial class DetectionReview
     private Dictionary<string, decimal> _incomeAmountByLabel = [];
     private Dictionary<string, decimal> _expenseAmountByLabel = [];
     private Dictionary<string, ExpenseAmountKind> _expenseAmountKindByLabel = [];
+    private Dictionary<string, DateOnly> _expensePaymentAnchorByLabel = [];
+    private Dictionary<string, bool> _expensePaymentAnchorOverrideByLabel = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
@@ -64,8 +66,12 @@ public partial class DetectionReview
     private string? _mergeTag;
     private bool _mergeRequiresExplicitResolution;
     private ExpenseAmountKind? _mergeAmountKind;
+    private DateOnly? _mergePaymentAnchor;
+    private bool _mergePaymentAnchorOverride;
     private string? _splitSourceLabel;
     private ExpenseAmountKind? _splitAmountKind;
+    private DateOnly? _splitPaymentAnchor;
+    private bool _splitPaymentAnchorOverride;
 
     /// <summary>
     /// Confirmed expense row selected in Split expense pattern (if any).
@@ -156,8 +162,66 @@ public partial class DetectionReview
             {
                 _expenseAmountByLabel[item.Label] = item.TypicalAmount ?? 0m;
                 EnsureExpenseAmountKindDefault(item);
+                await EnsureExpensePaymentAnchorDefaultAsync(item);
             }
         }
+    }
+
+    private async Task EnsureExpensePaymentAnchorDefaultAsync(RecurrenceReviewItem item)
+    {
+        if (item.IsIncome || _expensePaymentAnchorByLabel.ContainsKey(item.Label))
+        {
+            return;
+        }
+
+        _expensePaymentAnchorByLabel[item.Label] = await SuggestPaymentAnchorAsync(item.Label);
+        _expensePaymentAnchorOverrideByLabel[item.Label] = false;
+    }
+
+    private async Task<DateOnly> SuggestPaymentAnchorAsync(string vendorLabel)
+    {
+        string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
+        List<TransactionEntity> transactions = await DbContext.Transactions.AsNoTracking().ToListAsync();
+        DateOnly? latest = transactions
+            .Where(t => t.Kind == TransactionKind.ExpenseDebit)
+            .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
+            .Select(t => t.TransactionDate)
+            .MaxBy(d => d);
+
+        return latest ?? DateOnly.FromDateTime(DateTime.UtcNow);
+    }
+
+    private (DateOnly? Anchor, bool UserOverride) GetExpensePaymentAnchorForSave(RecurrenceReviewItem item)
+    {
+        if (ExpenseTreatAsVariable(item))
+        {
+            return (null, false);
+        }
+
+        if (!_expensePaymentAnchorByLabel.TryGetValue(item.Label, out DateOnly anchor))
+        {
+            return (null, false);
+        }
+
+        bool userOverride = _expensePaymentAnchorOverrideByLabel.GetValueOrDefault(item.Label);
+        return (anchor, userOverride);
+    }
+
+    private DateTime? GetExpenseAnchorPickerValue(string label) =>
+        _expensePaymentAnchorByLabel.TryGetValue(label, out DateOnly anchor)
+            ? anchor.ToDateTime(TimeOnly.MinValue)
+            : null;
+
+    private Task SetExpenseAnchorFromPickerAsync(string label, DateTime? value)
+    {
+        if (value is not DateTime picked)
+        {
+            return Task.CompletedTask;
+        }
+
+        _expensePaymentAnchorByLabel[label] = DateOnly.FromDateTime(picked);
+        _expensePaymentAnchorOverrideByLabel[label] = true;
+        return Task.CompletedTask;
     }
 
     private void EnsureExpenseAmountKindDefault(RecurrenceReviewItem item)
@@ -265,6 +329,8 @@ public partial class DetectionReview
                     }
                 }
 
+                (DateOnly? paymentAnchor, bool paymentAnchorOverride) = GetExpensePaymentAnchorForSave(item);
+
                 RecurringExpenseEntity saved = await ExpenseService.SaveAsync(
                     new SaveRecurringExpenseRequest(
                         item.PersistedId,
@@ -278,8 +344,8 @@ public partial class DetectionReview
                         monthlyEstimate,
                         coverageLabel,
                         tag,
-                        PaymentAnchorDate: null,
-                        PaymentAnchorUserOverride: false,
+                        paymentAnchor,
+                        paymentAnchorOverride,
                         PatternConfirmationState.Confirmed));
 
                 await AttributionService.AttributeMatchingDebitsAsync(saved.Id);
@@ -388,7 +454,7 @@ public partial class DetectionReview
         }
     }
 
-    private void ToggleMergeSelection(string label)
+    private async Task ToggleMergeSelectionAsync(string label)
     {
         if (!_mergeSelection.Remove(label))
         {
@@ -396,6 +462,7 @@ public partial class DetectionReview
         }
 
         UpdateMergeConflictState();
+        await RefreshMergePaymentAnchorDefaultAsync();
     }
 
     private void UpdateMergeConflictState()
@@ -463,6 +530,14 @@ public partial class DetectionReview
                 ? entities.Sum(e => e.StoredMonthlyEstimate ?? e.FixedAmount ?? 0m)
                 : null;
 
+            if (!anyVariable && _mergePaymentAnchor is null)
+            {
+                await RefreshMergePaymentAnchorDefaultAsync();
+            }
+
+            DateOnly? mergeAnchor = anyVariable ? null : _mergePaymentAnchor;
+            bool mergeAnchorOverride = !anyVariable && _mergePaymentAnchorOverride;
+
             await MergeSplitService.MergeAsync(
                 new MergeRecurringExpensesRequest(
                     ids,
@@ -473,7 +548,9 @@ public partial class DetectionReview
                     mergedFixed,
                     mergedMonthly,
                     anyVariable ? "Merged from selected patterns." : null,
-                    UserResolvedAssignments: true));
+                    UserResolvedAssignments: true,
+                    mergeAnchor,
+                    mergeAnchorOverride));
 
             _mergeSelection.Clear();
             _statusMessage = $"Merged patterns into {mergedLabel}.";
@@ -521,6 +598,14 @@ public partial class DetectionReview
                     : null
                 : null;
 
+            if (!variable && _splitPaymentAnchor is null)
+            {
+                await RefreshSplitPaymentAnchorDefaultAsync();
+            }
+
+            DateOnly? splitAnchor = variable ? null : _splitPaymentAnchor;
+            bool splitAnchorOverride = !variable && _splitPaymentAnchorOverride;
+
             await MergeSplitService.SplitAsync(
                 new SplitRecurringExpenseRequest(
                     source.PersistedId!.Value,
@@ -535,7 +620,9 @@ public partial class DetectionReview
                             variable ? "Variable" : "Fixed",
                             halfFixed,
                             halfMonthly,
-                            variable ? "Split from variable pattern." : null),
+                            variable ? "Split from variable pattern." : null,
+                            splitAnchor,
+                            splitAnchorOverride),
                         new SplitExpensePart(
                             _splitPartTwoLabel.Trim(),
                             new PatternResolution(
@@ -546,7 +633,9 @@ public partial class DetectionReview
                             variable ? "Variable" : "Fixed",
                             halfFixed,
                             halfMonthly,
-                            variable ? "Split from variable pattern." : null),
+                            variable ? "Split from variable pattern." : null,
+                            splitAnchor,
+                            splitAnchorOverride),
                     ]));
 
             _statusMessage = $"Split {source.Label} into two patterns.";
@@ -614,7 +703,7 @@ public partial class DetectionReview
             _ => cadence.ToString(),
         };
 
-    private void SetMergeIncluded(string label, bool included)
+    private async Task SetMergeIncludedAsync(string label, bool included)
     {
         if (included)
         {
@@ -624,6 +713,41 @@ public partial class DetectionReview
         {
             _mergeSelection.Remove(label);
         }
+
+        UpdateMergeConflictState();
+        await RefreshMergePaymentAnchorDefaultAsync();
+    }
+
+    private async Task RefreshMergePaymentAnchorDefaultAsync()
+    {
+        if (_mergeSelection.Count == 0)
+        {
+            _mergePaymentAnchor = null;
+            _mergePaymentAnchorOverride = false;
+            return;
+        }
+
+        if (_mergePaymentAnchorOverride)
+        {
+            return;
+        }
+
+        string label = string.IsNullOrWhiteSpace(_mergeLabel)
+            ? _confirmedOrRejected.First(i => _mergeSelection.Contains(i.Label)).Label
+            : _mergeLabel.Trim();
+        _mergePaymentAnchor = await SuggestPaymentAnchorAsync(label);
+    }
+
+    private Task SetMergePaymentAnchorFromPickerAsync(DateTime? value)
+    {
+        if (value is not DateTime picked)
+        {
+            return Task.CompletedTask;
+        }
+
+        _mergePaymentAnchor = DateOnly.FromDateTime(picked);
+        _mergePaymentAnchorOverride = true;
+        return Task.CompletedTask;
     }
 
     private Guid GetExpensePotSelection(string label) =>
@@ -641,11 +765,14 @@ public partial class DetectionReview
     private string SplitSourceSelection
     {
         get => _splitSourceLabel ?? string.Empty;
-        set
-        {
-            _splitSourceLabel = string.IsNullOrEmpty(value) ? null : value;
-            RefreshSplitAmountKindDefault();
-        }
+        set => _splitSourceLabel = string.IsNullOrEmpty(value) ? null : value;
+    }
+
+    private async Task OnSplitSourceChangedAsync(string value)
+    {
+        SplitSourceSelection = value;
+        RefreshSplitAmountKindDefault();
+        await RefreshSplitPaymentAnchorDefaultAsync();
     }
 
     private void RefreshSplitAmountKindDefault()
@@ -654,6 +781,42 @@ public partial class DetectionReview
         _splitAmountKind = source is null
             ? null
             : source.ExpenseIsVariableAmount() ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed;
+    }
+
+    private async Task RefreshSplitPaymentAnchorDefaultAsync()
+    {
+        RecurrenceReviewItem? source = SplitSourceReviewItem;
+        if (source is null)
+        {
+            _splitPaymentAnchor = null;
+            _splitPaymentAnchorOverride = false;
+            return;
+        }
+
+        if (_splitPaymentAnchorOverride)
+        {
+            return;
+        }
+
+        _splitPaymentAnchor = await SuggestPaymentAnchorAsync(source.Label);
+    }
+
+    private Task SetSplitPaymentAnchorFromPickerAsync(DateTime? value)
+    {
+        if (value is not DateTime picked)
+        {
+            return Task.CompletedTask;
+        }
+
+        _splitPaymentAnchor = DateOnly.FromDateTime(picked);
+        _splitPaymentAnchorOverride = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnMergeLabelChangedAsync(string? value)
+    {
+        _mergeLabel = value;
+        await RefreshMergePaymentAnchorDefaultAsync();
     }
 
     private ExpenseAmountKind MergeAmountKindSelection

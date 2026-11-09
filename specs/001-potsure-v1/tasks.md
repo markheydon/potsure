@@ -631,3 +631,11 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T192 [US2] Allow rejected recurring patterns to appear again as **suggested** after later detection or re-import (persist reject for audit but do not bind `RecurrenceReviewService` merged state to `Rejected` when fresh detection matches the label) per spec Session 2026-11-09 reject clarification and **FR-M008** (contradicts)
 - [X] T193 [US2] Add user-selectable **fixed vs variable** amount behaviour on expense confirm, merge, and split in `DetectionReview` (not inference-only `ExpenseIsVariableAmount()`), wired through `SaveRecurringExpenseRequest` / `ExpensePatternService` per **FR-M008d** and US2/AC12 (partial)
+
+---
+
+## Phase 30: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-09, post Phase 29) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T194 [US2] Expose optional payment anchor date override on `DetectionReview` expense **confirm**, **merge**, and **split** flows (surface derived default; persist `PaymentAnchorDate` and `PaymentAnchorUserOverride` via `SaveRecurringExpenseRequest` / `ExpensePatternService`) per **FR-M008c** and spec Session 2026-11-09 payment-anchor clarifications (partial)
