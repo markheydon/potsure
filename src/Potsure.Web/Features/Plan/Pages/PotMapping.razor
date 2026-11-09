@@ -92,6 +92,11 @@ else
                                 <div class="bb:flex bb:flex-wrap bb:gap-2">
                                     <BbButton Size="ButtonSize.Small"
                                               Variant="ButtonVariant.Outline"
+                                              OnClick="@(() => BeginEditPot(pot))">
+                                        Edit
+                                    </BbButton>
+                                    <BbButton Size="ButtonSize.Small"
+                                              Variant="ButtonVariant.Outline"
                                               OnClick="@(() => PromptDeletePot(pot))">
                                         Delete
                                     </BbButton>
@@ -134,6 +139,34 @@ else
                 <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
             </Footer>
         </PotsureSection>
+
+        @if (_editingPotId is Guid editingId && _pots.FirstOrDefault(p => p.Id == editingId) is not null)
+        {
+            <PotsureSection Title="Edit pot" Class="bb:w-full bb:max-w-4xl">
+                <BbInput @bind-Value="_editPotName" Placeholder="Pot name" />
+                <BbSelect TValue="Guid" @bind-Value="_editPotCategoryId">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Category">
+                            <ChildContent Context="ignored">
+                                @(_categories.FirstOrDefault(c => c.Id == _editPotCategoryId) is { } cat
+                                    ? BudgetCategoryDisplay.Format(cat.Kind)
+                                    : "Category")
+                            </ChildContent>
+                        </BbSelectValue>
+                    </BbSelectTrigger>
+                    <BbSelectContent>
+                        @foreach (CategoryOption option in _categories)
+                        {
+                            <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
+                        }
+                    </BbSelectContent>
+                </BbSelect>
+                <div class="bb:flex bb:gap-2 bb:mt-2">
+                    <BbButton OnClick="SaveEditPotAsync">Save</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _editingPotId = null)">Cancel</BbButton>
+                </div>
+            </PotsureSection>
+        }
 
         @if (_showFundingDispositionDialog)
         {

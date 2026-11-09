@@ -610,3 +610,15 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T186 [P] Align `docs/deployment-database.md`, `docs/self-host.md`, and quickstart Scenario 8c notes with canonical `dotnet ef` `--project src/Potsure.Data` and AppHost `WithMigrationsProject` → Data (artifact audit **2026-11-09**); pair with **T158** Aspire ef-tool fix
 
 **Checkpoint**: Standing plan saves without period dates; report range shared per tab; category health and budget balance prorate with **30.4375**; pot modes enforce **FR-M013**; recurring edit/delete and anchors persist; budgeting golden tests cover new catalogue items.
+
+---
+
+## Phase 28: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-09, post commit 1751be1 / Phase 27 implement) between spec intent, plan decisions, and present codebase behaviour.
+
+- [ ] T187 [US2] [US9] Add field-level **edit** flows for confirmed recurring income and expense rows on `DetectionReview.razor` and `RecurringSummary.razor` (label, cadence, fixed/variable amounts, payment anchor, pot/tag, income splits) wired to `IncomePatternService` / `ExpensePatternService` `SaveAsync`; verify reports refresh after save per **FR-M008c**, **FR-M021**, and US2/AC3 (partial)
+- [X] T188 [US4] Expose mapped-pot **edit** (display name and category reassignment within mode invariants) on `PotMapping.razor` via `BankPotService.UpdateAsync`; add UI tests or service coverage for category moves blocked under **three pots** rules per **FR-M013c** and US4/AC11 (partial  -  PotMapping edit UI; extra UI test deferred)
+- [ ] T189 [P] Re-run quickstart Scenario **8c** after `Potsure.MigrationsHost` wiring (`aspire run`: database healthy → `ef-migrations` finished → web healthy) and set Scenario 8c validation log to **Pass** or document a blocking defect per constitution 1.2.0 Scenario 8c and plan EF orchestration (partial)
+- [ ] T190 [P] [US11] Extend `HostedIdentityHttpTests` (or adjacent `WebApplicationFactory` coverage) to POST register and password sign-in and assert an authenticated session cookie  -  not GET-only antiforgery token checks per **SC-005** and partial **T155**
+- [X] T191 [P] Update quickstart validation log Scenario **2** (assignment memory / re-import) to reflect `ReimportAssignmentMemoryTests` release evidence per **SC-003** and partial **T151** (complements open **T185** for Scenarios 3, 4b, 5, 7)

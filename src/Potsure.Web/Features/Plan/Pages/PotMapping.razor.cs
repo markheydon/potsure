@@ -45,6 +45,9 @@ public partial class PotMapping
     private Guid? _pendingDeletePotId;
     private decimal _pendingDeleteFunding;
     private bool _showFundingDispositionDialog;
+    private Guid? _editingPotId;
+    private string _editPotName = string.Empty;
+    private Guid _editPotCategoryId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -128,6 +131,45 @@ public partial class PotMapping
         {
             _error = null;
             await PotService.DeleteAsync(new DeleteBankPotRequest(potId, disposition));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void BeginEditPot(BankPotReadModel pot)
+    {
+        _editingPotId = pot.Id;
+        _editPotName = pot.Name;
+        _editPotCategoryId = pot.CategoryId;
+    }
+
+    private async Task SaveEditPotAsync()
+    {
+        if (_editingPotId is not Guid potId)
+        {
+            return;
+        }
+
+        BankPotReadModel? pot = _pots.FirstOrDefault(p => p.Id == potId);
+        if (pot is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _error = null;
+            await PotService.UpdateAsync(
+                new UpdateBankPotRequest(
+                    potId,
+                    _editPotName,
+                    _editPotCategoryId,
+                    pot.AllocationToPotAmount,
+                    pot.PlannedFutureFundingAmount));
+            _editingPotId = null;
             await LoadAsync();
         }
         catch (Exception ex)

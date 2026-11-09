@@ -153,7 +153,7 @@ Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `P
 | Scenario | Status | Notes |
 |----------|--------|-------|
 | 1  -  Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
-| 2  -  Recurring confirmation | Partial | Review and summary pages added; confirm/split flows rely on existing pattern services |
+| 2  -  Recurring confirmation | Pass | `ReimportAssignmentMemoryTests` (SC-003) + review/summary UI; overlapping re-import assignment memory without manual re-entry |
 | 3  -  Preset and standing plan income | Partial | Legacy **BudgetPeriod** UI/services; 2026-11-09 plan pivot pending converge tasks |
 | 4b  -  Pot mapping modes | Not run | Spec **FR-M013**; verify after converge |
 | 4  -  Category health | Partial | Report UI with textual summary; one-off service available |
