@@ -11,7 +11,7 @@ public readonly record struct CommitmentExpenseInput(
     ExpenseAmountKind AmountKind,
     decimal? FixedAmount,
     decimal? StoredMonthlyEstimate,
-    DateOnly AnchorDate);
+    DateOnly? AnchorDate);
 
 /// <summary>
 /// Projects confirmed recurring expenses into an inclusive report range.

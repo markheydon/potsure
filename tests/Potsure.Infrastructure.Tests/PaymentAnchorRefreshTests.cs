@@ -22,10 +22,9 @@ public sealed class PaymentAnchorRefreshTests
             PaymentAnchorUserOverride = false,
         };
 
-        DateOnly effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
+        DateOnly? effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
             expense,
-            new DateOnly(2026, 3, 10),
-            new DateOnly(2026, 1, 1));
+            new DateOnly(2026, 3, 10));
 
         Assert.Equal(new DateOnly(2026, 3, 10), effective);
     }
@@ -39,12 +38,25 @@ public sealed class PaymentAnchorRefreshTests
             PaymentAnchorUserOverride = true,
         };
 
-        DateOnly effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
+        DateOnly? effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
             expense,
-            new DateOnly(2026, 3, 10),
-            new DateOnly(2026, 1, 1));
+            new DateOnly(2026, 3, 10));
 
         Assert.Equal(new DateOnly(2026, 1, 15), effective);
+    }
+
+    [Fact]
+    public void ResolveEffectiveExpenseAnchor_WhenNoHistoryOrStored_ReturnsNull()
+    {
+        RecurringExpenseEntity expense = new()
+        {
+            PaymentAnchorDate = null,
+            PaymentAnchorUserOverride = false,
+        };
+
+        DateOnly? effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(expense, null);
+
+        Assert.Null(effective);
     }
 
     [Fact]

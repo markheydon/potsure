@@ -148,24 +148,24 @@ After deploy to dev/test ACA + Azure SQL free tier:
 
 ## Validation log
 
-Last run: 2026-11-04 (Release build/test; hosted Identity functional smoke in `Potsure.Web.Tests`; Scenario 8c re-smoke after Phase 23 Identity wiring  -  see table). **T100** records this log; **T148** / **T153** cite `HostedIdentityFunctionalTests`; **Scenario 8c** first closed under **T115** after **T113**; **Scenario 8b** re-run with **T110** when **T111** adds packages.
+Last run: 2026-11-09 (Release build/test; Phase 27 standing plan + convergence; `HostedIdentityHttpTests` POST register/sign-in cookie smoke per **T190**). **T100** records this log; **T185** refreshes Scenarios 3, 4b, 5, 7; **T150** Scenario 9 code-review pass; **T189** local `aspire run` re-smoke (see Scenario 8c row).
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
 | 1  -  Monzo import | Partial | Parser/import pipeline and UI present; full manual CSV walkthrough not run in this session |
 | 2  -  Recurring confirmation | Pass | `ReimportAssignmentMemoryTests` (SC-003) + review/summary UI; overlapping re-import assignment memory without manual re-entry |
-| 3  -  Preset and standing plan income | Partial | Legacy **BudgetPeriod** UI/services; 2026-11-09 plan pivot pending converge tasks |
-| 4b  -  Pot mapping modes | Not run | Spec **FR-M013**; verify after converge |
+| 3  -  Preset and standing plan income | Pass | Phase 27 (**T159**–**T171**): standing estimated income + cadence; **not set** until complete; plan settings UI (`PlanSettings.razor`) |
+| 4b  -  Pot mapping modes | Pass | **T177**–**T179**: CategoryOnly / ThreePots / SeveralPots invariants; pot pre-selection (**FR-M013b**); `PotMapping.razor` edit (**T188**) |
 | 4  -  Category health | Partial | Report UI with textual summary; one-off service available |
-| 5  -  Budget balance | Partial | Report UI with separated income measures |
+| 5  -  Budget balance | Pass | **T182** max-of-ratios + report range proration; `BudgetBalanceReportBuilder`; golden **T078** |
 | 6  -  Export and delete | Partial | Export/delete UI and contract tests pass in CI |
 | 7  -  Determinism | Pass | `DeterminismTests` in Release |
 | 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
 | 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c  -  EF migration ordering | Partial | **T158**: `schema-host` (`Potsure.MigrationsHost`) hosts `AddEFMigrations`; local `aspire run` re-smoke pending in this environment |
-| 9  -  Accessibility smoke | Partial | Focus styles and textual table summaries added; keyboard-only audit not run |
+| 8c  -  EF migration ordering | Partial | **T189** (2026-11-09): `aspire run` started sql + schema-host; `schema-host` reported **FailedToStart** before ef-migrations finished within 180s in this devcontainer; graph wiring **T158** unchanged  -  re-smoke on a host with stable schema-host startup |
+| 9  -  Accessibility smoke | Pass | **T150** code audit: import wizard + recurring + report focus/keyboard fixes (**T091**–**T094**); textual chart equivalents on category health and budget balance |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
-| Hosted Identity (Aspire local) | Pass | **T153**/**T155**: `HostedIdentityFunctionalTests` (DI) + `HostedIdentityHttpTests` (`WebApplicationFactory` GET `/Account/Register` and `/Account/Login`) (**SC-005** / **T148**) |
+| Hosted Identity (Aspire local) | Pass | **T190**: `HostedIdentityHttpTests` POST register + password sign-in with session cookie; **T153**/**T155** DI + GET page smoke (**SC-005** / **T148**) |
 | Hosted stage smoke | Not run | Requires deployed ACA; hosted Register/sign-in validation |
 
 Release gate commands (2026-11-03): `dotnet format --verify-no-changes`, Release build `-warnaserror`, full `dotnet test`  -  see Phase 15 task T101.

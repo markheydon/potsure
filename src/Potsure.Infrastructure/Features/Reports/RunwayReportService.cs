@@ -31,7 +31,6 @@ public sealed class RunwayReportService(
             .ToDictionary(c => c.Id, c => c.Kind);
 
         IReadOnlyList<CommitmentExpenseInput> expenses = await LoadConfirmedExpenseCommitmentsAsync(
-            reportStart,
             categoryKinds,
             cancellationToken);
 
@@ -103,7 +102,6 @@ public sealed class RunwayReportService(
     }
 
     private async Task<IReadOnlyList<CommitmentExpenseInput>> LoadConfirmedExpenseCommitmentsAsync(
-        DateOnly anchorFallback,
         Dictionary<Guid, BudgetCategoryKind> categoryKinds,
         CancellationToken cancellationToken)
     {
@@ -121,11 +119,10 @@ public sealed class RunwayReportService(
             .Where(e => categoryKinds.ContainsKey(e.CategoryId))
             .Select(e =>
             {
-                anchors.TryGetValue(e.Id, out DateOnly historyAnchor);
-                DateOnly effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
+                DateOnly? historyAnchor = anchors.TryGetValue(e.Id, out DateOnly history) ? history : null;
+                DateOnly? effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
                     e,
-                    historyAnchor,
-                    anchorFallback);
+                    historyAnchor);
                 return new CommitmentExpenseInput(
                     categoryKinds[e.CategoryId],
                     e.Cadence,

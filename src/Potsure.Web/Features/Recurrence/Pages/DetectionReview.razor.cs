@@ -404,21 +404,23 @@ public partial class DetectionReview
             return;
         }
 
-        _expensePaymentAnchorByLabel[item.Label] = await SuggestPaymentAnchorAsync(item.Label);
-        _expensePaymentAnchorOverrideByLabel[item.Label] = false;
+        DateOnly? suggested = await SuggestPaymentAnchorAsync(item.Label);
+        if (suggested is DateOnly anchor)
+        {
+            _expensePaymentAnchorByLabel[item.Label] = anchor;
+            _expensePaymentAnchorOverrideByLabel[item.Label] = false;
+        }
     }
 
-    private async Task<DateOnly> SuggestPaymentAnchorAsync(string vendorLabel)
+    private async Task<DateOnly?> SuggestPaymentAnchorAsync(string vendorLabel)
     {
         string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
         List<TransactionEntity> transactions = await DbContext.Transactions.AsNoTracking().ToListAsync();
-        DateOnly? latest = transactions
+        return transactions
             .Where(t => t.Kind == TransactionKind.ExpenseDebit)
             .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
             .Select(t => t.TransactionDate)
             .MaxBy(d => d);
-
-        return latest ?? DateOnly.FromDateTime(DateTime.UtcNow);
     }
 
     private (DateOnly? Anchor, bool UserOverride) GetExpensePaymentAnchorForSave(RecurrenceReviewItem item)

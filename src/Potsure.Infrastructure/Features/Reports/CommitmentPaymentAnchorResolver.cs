@@ -76,10 +76,9 @@ public static class CommitmentPaymentAnchorResolver
     /// <summary>
     /// Picks the commitment occurrence anchor for a fixed expense, honouring user overrides (FR-M008c).
     /// </summary>
-    public static DateOnly ResolveEffectiveExpenseAnchor(
+    public static DateOnly? ResolveEffectiveExpenseAnchor(
         RecurringExpenseEntity expense,
-        DateOnly? historyAnchor,
-        DateOnly anchorFallback)
+        DateOnly? historyAnchor)
     {
         if (expense.PaymentAnchorUserOverride && expense.PaymentAnchorDate is DateOnly userAnchor)
         {
@@ -96,7 +95,7 @@ public static class CommitmentPaymentAnchorResolver
             return history;
         }
 
-        return expense.PaymentAnchorDate ?? anchorFallback;
+        return expense.PaymentAnchorDate;
     }
 
     public static async Task<IReadOnlyDictionary<Guid, DateOnly>> ResolveIncomeAnchorsAsync(

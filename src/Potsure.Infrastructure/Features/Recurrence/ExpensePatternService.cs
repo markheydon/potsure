@@ -100,10 +100,10 @@ public sealed class ExpensePatternService(
             entity.PaymentAnchorDate = anchor;
             entity.PaymentAnchorUserOverride = request.PaymentAnchorUserOverride;
         }
-        else if (entity.PaymentAnchorDate is null && request.State == PatternConfirmationState.Confirmed)
+        else
         {
-            DateOnly resolved = await ResolveAnchorFromHistoryAsync(entity.VendorLabel, cancellationToken);
-            entity.PaymentAnchorDate = resolved;
+            entity.PaymentAnchorDate = null;
+            entity.PaymentAnchorUserOverride = false;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -197,21 +197,4 @@ public sealed class ExpensePatternService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<DateOnly> ResolveAnchorFromHistoryAsync(
-        string vendorLabel,
-        CancellationToken cancellationToken)
-    {
-        List<TransactionEntity> debits = await dbContext.Transactions
-            .AsNoTracking()
-            .Where(t => t.Kind == TransactionKind.ExpenseDebit)
-            .ToListAsync(cancellationToken);
-
-        string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
-        DateOnly? latest = debits
-            .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
-            .Select(t => t.TransactionDate)
-            .MaxBy(d => d);
-
-        return latest ?? DateOnly.FromDateTime(DateTime.UtcNow);
-    }
 }

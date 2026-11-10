@@ -661,3 +661,21 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T200 [US4] [US2] Recompute **FR-M013b** default pot when category changes on `TransactionAttributionReview`, `DetectionReview` merge (`_mergeCategoryId`), and split part category selectors (mirror `ApplyDefaultPotSelection` used on confirm) per **FR-M013b** (partial)
 - [X] T201 [US2] [US3] Implement **FR-M010b** income credit auto-attribution to confirmed income patterns on import, persisted override UI for income credits, and restrict **FR-M019** actual-income displays to attributed credits using `ActualIncomeCalculator.MeanMonthlyReceipts` (not all `IncomeCredit` rows) on plan settings and period reports per **FR-M010b**, **FR-M019**, and US2/AC8 (contradicts)
 - [X] T202 [US8] When merging confirmed expenses as **variable**, compute **FR-M034** monthly estimate and coverage via `ExpensePatternService.EstimateVariableMonthlyAsync` (or merged-label history) instead of placeholder coverage text in `MergeSelectedAsync` per **FR-M034** and US8/AC1 (partial)
+
+---
+
+## Phase 33: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-10, post Phase 32) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T203 [US2] [US7] [US8] Omit fixed expense **payment anchor** until attributed or vendor-matched debit history exists (do not default to `DateTime.UtcNow`, report range start, or picker pre-fill without a match): keep `PaymentAnchorDate` null in `ExpensePatternService.SaveAsync`, `DetectionReview` suggest/default flows, and `CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor`; use nullable anchor in `CommitmentExpenseInput` / reporting loaders so `CommitmentProjector` emits **zero** fixed commitments until anchor or override per **FR-M008c** and spec Session 2026-11-09 (contradicts)
+- [X] T204 [P] [US11] Extend `tests/Potsure.Web.Tests/HostedIdentityHttpTests.cs` to POST register and password sign-in through `PotsureWebApplicationFactory` and assert an authenticated Identity session cookie, not GET-only antiforgery smoke per **SC-005**, **T190**, and constitution II hosted acceptance (partial)
+
+---
+
+## Phase 34: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-10, pass 2 post Phase 33) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T205 [P] [US11] Extend `tests/Potsure.Web.Tests/HostedIdentityHttpTests.cs` to assert hosted **fallback auth** gates financial routes: unauthenticated GET to `/import` (or equivalent Blazor report page) challenges to sign-in, and a client with the session cookie from POST login can load that route successfully per **SC-005**, **Constitution IV**, and partial **T204** (partial)
+- [X] T206 [US2] In `ExpensePatternService.SaveAsync`, persist nullable payment anchors on update: when `PaymentAnchorDate` is null (including variable saves), clear `PaymentAnchorDate` and reset `PaymentAnchorUserOverride` instead of leaving stale fixed anchors on the entity per **FR-M008c**, data-model **PaymentAnchorDate**, and **T203** (partial)
