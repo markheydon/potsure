@@ -33,6 +33,45 @@ public sealed class PeriodReportService(
         return BudgetBalanceReportBuilder.Build(input);
     }
 
+    /// <summary>
+    /// Monthly mean of attributed income credits over the FR-M019 rolling window.
+    /// </summary>
+    public async Task<decimal> GetActualIncomeMonthlyMeanAsync(
+        DateOnly windowEnd,
+        int windowMonths,
+        CancellationToken cancellationToken = default)
+    {
+        if (windowMonths is < 1 or > 12)
+        {
+            throw new ArgumentOutOfRangeException(nameof(windowMonths));
+        }
+
+        BudgetProfileEntity profile = await dbContext.BudgetProfiles
+            .AsNoTracking()
+            .Include(p => p.Categories)
+            .SingleAsync(cancellationToken);
+
+        EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
+
+        Dictionary<Guid, BudgetCategoryKind> categoryKinds = profile.Categories
+            .ToDictionary(c => c.Id, c => c.Kind);
+
+        DateOnly windowStart = ActualIncomeCalculator.WindowStart(windowEnd, windowMonths);
+        IReadOnlyList<PeriodTransactionInput> windowTransactions = await LoadPeriodTransactionsAsync(
+            windowStart,
+            windowEnd,
+            categoryKinds,
+            cancellationToken);
+
+        HashSet<Guid> attributed = await LoadIncomeAttributedTransactionIdsAsync(cancellationToken);
+
+        return ActualIncomeCalculator.MeanMonthlyReceipts(
+            windowTransactions,
+            windowEnd,
+            windowMonths,
+            attributed);
+    }
+
     private async Task<PeriodSummaryInput> BuildPeriodSummaryInputAsync(
         DateOnly reportStart,
         DateOnly reportEnd,
@@ -55,9 +94,10 @@ public sealed class PeriodReportService(
             categoryKinds,
             cancellationToken);
 
-        decimal actualIncome = transactions
-            .Where(t => t.Kind == TransactionKind.IncomeCredit)
-            .Sum(t => Math.Abs(t.SignedAmount));
+        decimal actualIncome = await GetActualIncomeMonthlyMeanAsync(
+            reportEnd,
+            profile.ActualIncomeWindowMonths,
+            cancellationToken);
 
         IReadOnlyList<CategoryFundingInput> funding = BuildFundingInputs(profile);
         IReadOnlyList<CategoryCommitmentInput> commitments = await LoadCommitmentsAsync(
@@ -95,15 +135,10 @@ public sealed class PeriodReportService(
         Dictionary<Guid, BudgetCategoryKind> categoryKinds = profile.Categories
             .ToDictionary(c => c.Id, c => c.Kind);
 
-        IReadOnlyList<PeriodTransactionInput> transactions = await LoadPeriodTransactionsAsync(
-            reportStart,
+        decimal actualReceipts = await GetActualIncomeMonthlyMeanAsync(
             reportEnd,
-            categoryKinds,
+            profile.ActualIncomeWindowMonths,
             cancellationToken);
-
-        decimal actualReceipts = transactions
-            .Where(t => t.Kind == TransactionKind.IncomeCredit)
-            .Sum(t => Math.Abs(t.SignedAmount));
 
         IReadOnlyList<CommitmentExpenseInput> expenses = await LoadConfirmedExpenseCommitmentsAsync(
             reportStart,
@@ -240,5 +275,17 @@ public sealed class PeriodReportService(
                 i.FixedAmount ?? i.EstimateAmount,
                 anchors.TryGetValue(i.Id, out DateOnly anchor) ? anchor : anchorFallback))
             .ToList();
+    }
+
+    private async Task<HashSet<Guid>> LoadIncomeAttributedTransactionIdsAsync(
+        CancellationToken cancellationToken)
+    {
+        List<Guid> ids = await dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.IsIncomeAttribution && a.TransactionId != null)
+            .Select(a => a.TransactionId!.Value)
+            .ToListAsync(cancellationToken);
+
+        return ids.ToHashSet();
     }
 }

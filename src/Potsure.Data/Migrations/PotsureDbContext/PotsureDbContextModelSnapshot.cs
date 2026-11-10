@@ -182,11 +182,17 @@ namespace Potsure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("ConfirmedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("IncomeSourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsIncomeAttribution")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("MappedPotId")
                         .HasColumnType("uniqueidentifier");
@@ -209,6 +215,8 @@ namespace Potsure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("IncomeSourceId");
 
                     b.HasIndex("RecurringExpenseId");
 
@@ -785,8 +793,12 @@ namespace Potsure.Data.Migrations
                     b.HasOne("Potsure.Data.Entities.BudgetCategoryEntity", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Potsure.Data.Entities.IncomeSourceEntity", null)
+                        .WithMany()
+                        .HasForeignKey("IncomeSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Potsure.Data.Entities.RecurringExpenseEntity", null)
                         .WithMany()

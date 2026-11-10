@@ -227,7 +227,7 @@ public partial class RecurringSummary
                 ? _incomeEdit.Amount
                 : null;
 
-            await IncomeService.SaveAsync(
+            IncomeSourceEntity savedIncome = await IncomeService.SaveAsync(
                 new SaveIncomeSourceRequest(
                     id,
                     _incomeEdit.SourceLabel.Trim(),
@@ -238,6 +238,8 @@ public partial class RecurringSummary
                     _incomeEdit.Wants,
                     _incomeEdit.SavingsDebt,
                     PatternConfirmationState.Confirmed));
+
+            await AttributionService.AttributeMatchingCreditsAsync(savedIncome.Id);
 
             _editingIncomeId = null;
             _statusMessage = "Income pattern saved.";

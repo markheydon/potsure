@@ -161,6 +161,10 @@ internal sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignm
             .WithMany()
             .HasForeignKey(e => e.RecurringExpenseId)
             .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<IncomeSourceEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.IncomeSourceId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<BudgetCategoryEntity>()
             .WithMany()
             .HasForeignKey(e => e.CategoryId)

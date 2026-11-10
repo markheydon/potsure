@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<RecurrenceReviewService>();
         services.AddScoped<UncategorisedTransactionQuery>();
         services.AddScoped<AttributedTransactionQuery>();
+        services.AddScoped<IncomeAttributedTransactionQuery>();
         services.AddScoped<CategoryPotBreakdownQuery>();
         services.AddScoped<RecurringSummaryQuery>();
         services.AddScoped<PeriodReportService>();

@@ -189,7 +189,11 @@ public sealed class AssignmentEntity
 
     public Guid? RecurringExpenseId { get; set; }
 
-    public Guid CategoryId { get; set; }
+    public Guid? IncomeSourceId { get; set; }
+
+    public bool IsIncomeAttribution { get; set; }
+
+    public Guid? CategoryId { get; set; }
 
     public Guid? MappedPotId { get; set; }
 

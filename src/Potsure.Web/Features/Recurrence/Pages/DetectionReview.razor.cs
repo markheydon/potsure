@@ -315,7 +315,7 @@ public partial class DetectionReview
                 decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : amount;
                 decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? amount : null;
 
-                await IncomeService.SaveAsync(
+                IncomeSourceEntity savedIncome = await IncomeService.SaveAsync(
                     new SaveIncomeSourceRequest(
                         id,
                         savedLabel,
@@ -326,6 +326,8 @@ public partial class DetectionReview
                         splits.Wants,
                         splits.SavingsDebt,
                         PatternConfirmationState.Confirmed));
+
+                await AttributionService.AttributeMatchingCreditsAsync(savedIncome.Id);
             }
             else
             {
@@ -513,7 +515,7 @@ public partial class DetectionReview
                 decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : amount;
                 decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? amount : null;
 
-                await IncomeService.SaveAsync(
+                IncomeSourceEntity savedIncome = await IncomeService.SaveAsync(
                     new SaveIncomeSourceRequest(
                         item.PersistedId,
                         item.SourceOrVendorLabel(),
@@ -524,6 +526,8 @@ public partial class DetectionReview
                         splits.Wants,
                         splits.SavingsDebt,
                         PatternConfirmationState.Confirmed));
+
+                await AttributionService.AttributeMatchingCreditsAsync(savedIncome.Id);
             }
             else
             {

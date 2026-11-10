@@ -15,6 +15,9 @@ public partial class TransactionAttributionReview : IDisposable
     private AttributedTransactionQuery AttributionQuery { get; set; } = null!;
 
     [Inject]
+    private IncomeAttributedTransactionQuery IncomeAttributionQuery { get; set; } = null!;
+
+    [Inject]
     private TransactionAttributionService AttributionService { get; set; } = null!;
 
     [Inject]
@@ -33,14 +36,17 @@ public partial class TransactionAttributionReview : IDisposable
     private string? _error;
     private string? _statusMessage;
     private List<AttributedTransactionRow> _transactions = [];
+    private List<IncomeAttributedTransactionRow> _incomeCredits = [];
     private List<CategoryOption> _categories = [];
     private List<PotOption> _pots = [];
     private List<PatternOption> _patterns = [];
+    private List<IncomePatternOption> _incomePatterns = [];
     private PotMappingMode _potMappingMode = PotMappingMode.CategoryOnly;
     private Dictionary<Guid, Guid> _categoryByTransaction = [];
     private Dictionary<Guid, Guid?> _potByTransaction = [];
     private Dictionary<Guid, Guid?> _patternByTransaction = [];
     private Dictionary<Guid, string?> _tagByTransaction = [];
+    private Dictionary<Guid, Guid?> _incomeSourceByTransaction = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,6 +108,13 @@ public partial class TransactionAttributionReview : IDisposable
             .OrderBy(e => e.VendorLabel)
             .Select(e => new PatternOption(e.Id, e.VendorLabel))
             .ToListAsync();
+
+        _incomePatterns = await DbContext.IncomeSources
+            .AsNoTracking()
+            .Where(i => i.State == PatternConfirmationState.Confirmed)
+            .OrderBy(i => i.SourceLabel)
+            .Select(i => new IncomePatternOption(i.Id, i.SourceLabel))
+            .ToListAsync();
     }
 
     private async Task ReloadAsync()
@@ -116,6 +129,15 @@ public partial class TransactionAttributionReview : IDisposable
                 _potByTransaction[row.TransactionId] = row.MappedPotId;
                 _patternByTransaction[row.TransactionId] = row.RecurringExpenseId;
                 _tagByTransaction[row.TransactionId] = row.Tag;
+            }
+        }
+
+        _incomeCredits = (await IncomeAttributionQuery.ListForReportRangeAsync(start, end)).ToList();
+        foreach (IncomeAttributedTransactionRow row in _incomeCredits)
+        {
+            if (!_incomeSourceByTransaction.ContainsKey(row.TransactionId))
+            {
+                _incomeSourceByTransaction[row.TransactionId] = row.IncomeSourceId;
             }
         }
     }
@@ -137,6 +159,23 @@ public partial class TransactionAttributionReview : IDisposable
                 _patternByTransaction[transactionId],
                 NullIfWhiteSpace(_tagByTransaction[transactionId]));
             _statusMessage = "Override saved.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = ex.Message;
+        }
+    }
+
+    private async Task SaveIncomeOverrideAsync(Guid transactionId)
+    {
+        _statusMessage = null;
+        _incomeSourceByTransaction.TryGetValue(transactionId, out Guid? sourceId);
+
+        try
+        {
+            await AttributionService.OverrideIncomeAttributionAsync(transactionId, sourceId);
+            _statusMessage = "Income attribution saved.";
             await ReloadAsync();
         }
         catch (Exception ex)
@@ -210,6 +249,26 @@ public partial class TransactionAttributionReview : IDisposable
     private void SetPatternSelection(Guid transactionId, Guid value) =>
         _patternByTransaction[transactionId] = value == Guid.Empty ? null : value;
 
+    private Guid GetIncomeSourceSelection(Guid transactionId) =>
+        _incomeSourceByTransaction.TryGetValue(transactionId, out Guid? source) && source is Guid id
+            ? id
+            : Guid.Empty;
+
+    private void SetIncomeSourceSelection(Guid transactionId, Guid value) =>
+        _incomeSourceByTransaction[transactionId] = value == Guid.Empty ? null : value;
+
+    private string IncomeSourceSelectionLabel(Guid transactionId)
+    {
+        if (!_incomeSourceByTransaction.TryGetValue(transactionId, out Guid? source)
+            || source is not Guid id
+            || id == Guid.Empty)
+        {
+            return "Not attributed";
+        }
+
+        return _incomePatterns.FirstOrDefault(p => p.Id == id)?.Label ?? "Income pattern";
+    }
+
     private static string? NullIfWhiteSpace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
@@ -218,5 +277,7 @@ public partial class TransactionAttributionReview : IDisposable
     private sealed record PotOption(Guid Id, string Name, BudgetCategoryKind CategoryKind);
 
     private sealed record PatternOption(Guid Id, string Label);
+
+    private sealed record IncomePatternOption(Guid Id, string Label);
 
 }

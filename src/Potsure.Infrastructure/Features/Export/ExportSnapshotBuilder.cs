@@ -81,7 +81,11 @@ public sealed class ExportSnapshotBuilder(
                 a.Id,
                 a.TransactionId,
                 a.RecurringExpenseId,
-                categoryKinds[a.CategoryId],
+                a.IncomeSourceId,
+                a.IsIncomeAttribution,
+                a.CategoryId is Guid categoryId && categoryKinds.TryGetValue(categoryId, out BudgetCategoryKind kind)
+                    ? kind
+                    : null,
                 a.Tag,
                 a.ConfirmedAt)).ToList(),
             transactions.Select(t => new TransactionExportRow(

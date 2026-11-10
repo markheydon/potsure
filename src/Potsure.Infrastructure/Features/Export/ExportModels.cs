@@ -70,7 +70,9 @@ public sealed record AssignmentExportRow(
     Guid Id,
     Guid? TransactionId,
     Guid? RecurringExpenseId,
-    BudgetCategoryKind CategoryKind,
+    Guid? IncomeSourceId,
+    bool IsIncomeAttribution,
+    BudgetCategoryKind? CategoryKind,
     string? Tag,
     DateTimeOffset ConfirmedAt);
 

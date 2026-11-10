@@ -276,6 +276,7 @@ public sealed class StatementImportService(
             try
             {
                 await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
+                await attributionService.AttributeAllConfirmedIncomeAsync(cancellationToken);
                 await expensePatternService.RefreshNonOverriddenPaymentAnchorsAfterImportAsync(cancellationToken);
             }
             catch (Exception ex)

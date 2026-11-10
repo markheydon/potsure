@@ -104,9 +104,10 @@ public partial class PlanSettings
 
     private async Task RefreshActualReceiptsAsync()
     {
-        (DateOnly start, DateOnly end) = ActualReceiptsWindow(_form.ActualIncomeWindowMonths);
-        PeriodSummary summary = await ReportService.GetPeriodSummaryAsync(start, end);
-        _actualReceiptsInWindow = summary.ActualIncomeInPeriod.Amount;
+        DateOnly end = DateOnly.FromDateTime(DateTime.UtcNow);
+        _actualReceiptsInWindow = await ReportService.GetActualIncomeMonthlyMeanAsync(
+            end,
+            _form.ActualIncomeWindowMonths);
     }
 
     private static (DateOnly Start, DateOnly End) ActualReceiptsWindow(int windowMonths)
