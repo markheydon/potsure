@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
+using BankPotReadModel = Potsure.Infrastructure.Features.Plan.BankPotReadModel;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Web.Resources;
 using Potsure.Web.Services;
@@ -21,6 +22,9 @@ public partial class OneOffCategorise : IDisposable
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
 
     [Inject]
+    private BankPotService PotService { get; set; } = null!;
+
+    [Inject]
     private PotsureDbContext DbContext { get; set; } = null!;
 
     [Inject]
@@ -31,7 +35,10 @@ public partial class OneOffCategorise : IDisposable
     private string? _statusMessage;
     private List<UncategorisedTransactionRow> _transactions = [];
     private List<CategoryOption> _categories = [];
+    private List<PotOption> _pots = [];
+    private PotMappingMode _potMappingMode = PotMappingMode.CategoryOnly;
     private Dictionary<Guid, Guid> _selectedCategoryByTransaction = [];
+    private Dictionary<Guid, Guid?> _selectedPotByTransaction = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,7 +46,9 @@ public partial class OneOffCategorise : IDisposable
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
+            await LoadPotMappingModeAsync();
             await LoadCategoriesAsync();
+            await LoadPotsAsync();
             await ReloadTransactionsAsync();
         }
         catch (Exception ex)
@@ -65,10 +74,42 @@ public partial class OneOffCategorise : IDisposable
             StateHasChanged();
         });
 
+    private async Task LoadPotMappingModeAsync()
+    {
+        _potMappingMode = await DbContext.BudgetProfiles
+            .AsNoTracking()
+            .Select(p => p.PotMappingMode)
+            .SingleAsync();
+    }
+
+    private async Task LoadPotsAsync()
+    {
+        IReadOnlyList<BankPotReadModel> pots = await PotService.ListAsync();
+        _pots = pots.Select(p => new PotOption(p.Id, p.Name, p.CategoryId)).ToList();
+    }
+
+    private bool ShowPotUi => _potMappingMode != PotMappingMode.CategoryOnly;
+
     private string CategoryLabel(Guid categoryId) =>
         _categories.FirstOrDefault(c => c.Id == categoryId) is { } category
             ? BudgetCategoryDisplay.Format(category.Kind)
             : "Category";
+
+    private string PotSelectionLabel(Guid transactionId)
+    {
+        if (!_selectedPotByTransaction.TryGetValue(transactionId, out Guid? pot) || pot is not Guid id || id == Guid.Empty)
+        {
+            return "None";
+        }
+
+        return _pots.FirstOrDefault(p => p.Id == id)?.Name ?? "None";
+    }
+
+    private Guid GetPotSelection(Guid transactionId) =>
+        _selectedPotByTransaction.TryGetValue(transactionId, out Guid? pot) && pot is Guid id ? id : Guid.Empty;
+
+    private void SetPotSelection(Guid transactionId, Guid value) =>
+        _selectedPotByTransaction[transactionId] = value == Guid.Empty ? null : value;
 
     private async Task ReloadTransactionsAsync()
     {
@@ -78,7 +119,9 @@ public partial class OneOffCategorise : IDisposable
         {
             if (!_selectedCategoryByTransaction.ContainsKey(row.TransactionId) && _categories.Count > 0)
             {
-                _selectedCategoryByTransaction[row.TransactionId] = _categories[0].Id;
+                Guid defaultCategory = _categories[0].Id;
+                _selectedCategoryByTransaction[row.TransactionId] = defaultCategory;
+                ApplyDefaultPotSelection(row.TransactionId, defaultCategory);
             }
         }
     }
@@ -92,6 +135,32 @@ public partial class OneOffCategorise : IDisposable
             .ToListAsync();
     }
 
+    private void SetCategory(Guid transactionId, Guid categoryId)
+    {
+        _selectedCategoryByTransaction[transactionId] = categoryId;
+        ApplyDefaultPotSelection(transactionId, categoryId);
+    }
+
+    private void ApplyDefaultPotSelection(Guid transactionId, Guid categoryId)
+    {
+        if (!ShowPotUi)
+        {
+            _selectedPotByTransaction[transactionId] = null;
+            return;
+        }
+
+        List<PotOption> potsForCategory = PotsForCategory(categoryId).ToList();
+        _selectedPotByTransaction[transactionId] = _potMappingMode switch
+        {
+            PotMappingMode.ThreePots => potsForCategory.Count > 0 ? potsForCategory[0].Id : null,
+            PotMappingMode.SeveralPots => potsForCategory.Count == 1 ? potsForCategory[0].Id : null,
+            _ => null,
+        };
+    }
+
+    private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>
+        _pots.Where(p => p.CategoryId == categoryId);
+
     private async Task AssignAsync(Guid transactionId)
     {
         _statusMessage = null;
@@ -100,10 +169,12 @@ public partial class OneOffCategorise : IDisposable
             return;
         }
 
+        _selectedPotByTransaction.TryGetValue(transactionId, out Guid? potId);
+
         try
         {
             await CategorisationService.CategoriseAsync(
-                new OneOffCategorisationRequest(transactionId, categoryId, MappedPotId: null));
+                new OneOffCategorisationRequest(transactionId, categoryId, potId));
             _statusMessage = "Assignment saved.";
             await ReloadTransactionsAsync();
         }
@@ -131,12 +202,13 @@ public partial class OneOffCategorise : IDisposable
     private static string FormatKind(TransactionKind kind) =>
         kind switch
         {
-            TransactionKind.InternalTransfer => "Internal transfer",
-            TransactionKind.PotMovement => "Pot movement",
-            TransactionKind.RefundCredit => "Refund",
+            TransactionKind.ExpenseDebit => "Expense debit",
             TransactionKind.IncomeCredit => "Income credit",
-            _ => "Expense",
+            TransactionKind.RefundCredit => "Refund",
+            _ => kind.ToString(),
         };
 
     private sealed record CategoryOption(Guid Id, BudgetCategoryKind Kind);
+
+    private sealed record PotOption(Guid Id, string Name, Guid CategoryId);
 }

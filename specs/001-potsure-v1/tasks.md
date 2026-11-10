@@ -650,3 +650,14 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T196 [US2] [US8] Use **today's calendar date** (not latest statement transaction date) as the FR-M034 suggestion window end in `BuildVariableEstimateAsync` (`DetectionReview.razor.cs`) and `RecurrenceReviewService` when calling `VariableExpenseEstimator.Estimate` per **FR-M034** and spec Session 2026-11-09 (contradicts)
 - [X] T197 [US2] [US8] Surface `EstimateCoverageLabel` from variable expense suggestions during **confirm** and variable **edit** on `DetectionReview.razor` (and align `RecurringSummary` edit where estimates are shown) so partial-history labelling is visible in the UI per **FR-M034** and **SC-008** (partial)
 - [X] T198 [US8] Add explicit **accept refreshed suggestion** affordance for variable expense monthly estimates on confirmed **edit** flows (`RecurringSummary.razor`, `DetectionReview` confirmed edit) without auto-applying `VariableExpenseEstimator` output on load per **FR-M008c**, **FR-M034**, and US8/AC1 (partial)
+
+---
+
+## Phase 32: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-10, pass 2 post Phase 31) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T199 [US6] Add optional mapped-pot assignment and **FR-M013b** default pre-selection on category change to `OneOffCategorise.razor` / `OneOffCategorise.razor.cs`, passing `MappedPotId` through `OneOffCategorisationService.CategoriseAsync` (today always `null`) per **FR-M037** and **FR-M013b** (missing)
+- [X] T200 [US4] [US2] Recompute **FR-M013b** default pot when category changes on `TransactionAttributionReview`, `DetectionReview` merge (`_mergeCategoryId`), and split part category selectors (mirror `ApplyDefaultPotSelection` used on confirm) per **FR-M013b** (partial)
+- [ ] T201 [US2] [US3] Implement **FR-M010b** income credit auto-attribution to confirmed income patterns on import, persisted override UI for income credits, and restrict **FR-M019** actual-income displays to attributed credits using `ActualIncomeCalculator.MeanMonthlyReceipts` (not all `IncomeCredit` rows) on plan settings and period reports per **FR-M010b**, **FR-M019**, and US2/AC8 (contradicts)
+- [X] T202 [US8] When merging confirmed expenses as **variable**, compute **FR-M034** monthly estimate and coverage via `ExpensePatternService.EstimateVariableMonthlyAsync` (or merged-label history) instead of placeholder coverage text in `MergeSelectedAsync` per **FR-M034** and US8/AC1 (partial)

@@ -36,6 +36,7 @@ public partial class TransactionAttributionReview : IDisposable
     private List<CategoryOption> _categories = [];
     private List<PotOption> _pots = [];
     private List<PatternOption> _patterns = [];
+    private PotMappingMode _potMappingMode = PotMappingMode.CategoryOnly;
     private Dictionary<Guid, Guid> _categoryByTransaction = [];
     private Dictionary<Guid, Guid?> _potByTransaction = [];
     private Dictionary<Guid, Guid?> _patternByTransaction = [];
@@ -47,6 +48,7 @@ public partial class TransactionAttributionReview : IDisposable
         try
         {
             await ProfileSeeder.EnsureProfileAsync();
+            await LoadPotMappingModeAsync();
             await LoadLookupsAsync();
             await ReloadAsync();
         }
@@ -72,6 +74,16 @@ public partial class TransactionAttributionReview : IDisposable
             await ReloadAsync();
             StateHasChanged();
         });
+
+    private async Task LoadPotMappingModeAsync()
+    {
+        _potMappingMode = await DbContext.BudgetProfiles
+            .AsNoTracking()
+            .Select(p => p.PotMappingMode)
+            .SingleAsync();
+    }
+
+    private bool ShowPotUi => _potMappingMode != PotMappingMode.CategoryOnly;
 
     private async Task LoadLookupsAsync()
     {
@@ -131,6 +143,29 @@ public partial class TransactionAttributionReview : IDisposable
         {
             _statusMessage = ex.Message;
         }
+    }
+
+    private void SetCategory(Guid transactionId, Guid categoryId)
+    {
+        _categoryByTransaction[transactionId] = categoryId;
+        ApplyDefaultPotSelection(transactionId, categoryId);
+    }
+
+    private void ApplyDefaultPotSelection(Guid transactionId, Guid categoryId)
+    {
+        if (!ShowPotUi)
+        {
+            _potByTransaction[transactionId] = null;
+            return;
+        }
+
+        List<PotOption> potsForCategory = PotsForCategory(categoryId).ToList();
+        _potByTransaction[transactionId] = _potMappingMode switch
+        {
+            PotMappingMode.ThreePots => potsForCategory.Count > 0 ? potsForCategory[0].Id : null,
+            PotMappingMode.SeveralPots => potsForCategory.Count == 1 ? potsForCategory[0].Id : null,
+            _ => null,
+        };
     }
 
     private IEnumerable<PotOption> PotsForCategory(Guid categoryId) =>

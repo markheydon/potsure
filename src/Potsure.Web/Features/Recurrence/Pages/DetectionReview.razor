@@ -423,7 +423,7 @@ else
                  ValueChanged="OnMergeLabelChangedAsync"
                  Placeholder="Merged vendor label (optional)" />
         <BbLabel>Category</BbLabel>
-        <BbSelect TValue="Guid" @bind-Value="_mergeCategoryId">
+        <BbSelect TValue="Guid" Value="@_mergeCategoryId" ValueChanged="SetMergeCategory">
             <BbSelectTrigger>
                 <BbSelectValue Placeholder="Category">
                     <ChildContent Context="ignored">
@@ -542,7 +542,7 @@ else
             </BbTypographyMuted>
         }
         <BbInput @bind-Value="_splitPartOneLabel" Placeholder="First part label" />
-        <BbSelect TValue="Guid" @bind-Value="_splitPartOneCategoryId">
+        <BbSelect TValue="Guid" Value="@_splitPartOneCategoryId" ValueChanged="SetSplitPartOneCategory">
             <BbSelectTrigger>
                 <BbSelectValue Placeholder="First part category">
                     <ChildContent Context="ignored">
@@ -575,7 +575,7 @@ else
         </BbSelect>
         <BbInput @bind-Value="_splitPartOneTag" Placeholder="First part tag (optional)" />
         <BbInput @bind-Value="_splitPartTwoLabel" Placeholder="Second part label" />
-        <BbSelect TValue="Guid" @bind-Value="_splitPartTwoCategoryId">
+        <BbSelect TValue="Guid" Value="@_splitPartTwoCategoryId" ValueChanged="SetSplitPartTwoCategory">
             <BbSelectTrigger>
                 <BbSelectValue Placeholder="Second part category">
                     <ChildContent Context="ignored">

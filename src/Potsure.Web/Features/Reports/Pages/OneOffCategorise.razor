@@ -70,7 +70,9 @@ else
             <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="Guid"
                                Header="Category">
                 <CellTemplate Context="row">
-                    <BbSelect TValue="Guid" @bind-Value="_selectedCategoryByTransaction[row.TransactionId]">
+                    <BbSelect TValue="Guid"
+                              Value="@_selectedCategoryByTransaction[row.TransactionId]"
+                              ValueChanged="@(id => SetCategory(row.TransactionId, id))">
                         <BbSelectTrigger>
                             <BbSelectValue Placeholder="Category">
                                 <ChildContent Context="ignored">
@@ -87,6 +89,32 @@ else
                     </BbSelect>
                 </CellTemplate>
             </BbDataTableColumn>
+            @if (ShowPotUi)
+            {
+                <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="Guid?"
+                                   Header="Pot">
+                    <CellTemplate Context="row">
+                        <BbSelect TValue="Guid"
+                                  Value="@GetPotSelection(row.TransactionId)"
+                                  ValueChanged="@(id => SetPotSelection(row.TransactionId, id))">
+                            <BbSelectTrigger>
+                                <BbSelectValue Placeholder="None">
+                                    <ChildContent Context="ignored">
+                                        @PotSelectionLabel(row.TransactionId)
+                                    </ChildContent>
+                                </BbSelectValue>
+                            </BbSelectTrigger>
+                            <BbSelectContent>
+                                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                                @foreach (PotOption pot in PotsForCategory(_selectedCategoryByTransaction[row.TransactionId]))
+                                {
+                                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                                }
+                            </BbSelectContent>
+                        </BbSelect>
+                    </CellTemplate>
+                </BbDataTableColumn>
+            }
             <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="string"
                                Header="Actions">
                 <CellTemplate Context="row">

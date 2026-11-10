@@ -59,7 +59,9 @@ else
             <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid"
                                Header="Category">
                 <CellTemplate Context="row">
-                    <BbSelect TValue="Guid" @bind-Value="_categoryByTransaction[row.TransactionId]">
+                    <BbSelect TValue="Guid"
+                              Value="@_categoryByTransaction[row.TransactionId]"
+                              ValueChanged="@(id => SetCategory(row.TransactionId, id))">
                         <BbSelectTrigger>
                             <BbSelectValue Placeholder="Category">
                                 <ChildContent Context="ignored">

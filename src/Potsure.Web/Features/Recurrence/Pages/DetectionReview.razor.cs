@@ -754,9 +754,15 @@ public partial class DetectionReview
             decimal? mergedFixed = anyVariable
                 ? null
                 : entities.Sum(e => e.FixedAmount ?? 0m);
-            decimal? mergedMonthly = anyVariable
-                ? entities.Sum(e => e.StoredMonthlyEstimate ?? e.FixedAmount ?? 0m)
-                : null;
+            decimal? mergedMonthly = null;
+            string? mergedCoverage = null;
+            if (anyVariable)
+            {
+                VariableExpenseEstimateResult estimate =
+                    await ExpenseService.EstimateVariableMonthlyAsync(mergedLabel);
+                mergedMonthly = estimate.MonthlyEstimate;
+                mergedCoverage = estimate.CoverageLabel;
+            }
 
             if (!anyVariable && _mergePaymentAnchor is null)
             {
@@ -775,7 +781,7 @@ public partial class DetectionReview
                     anyVariable ? "Variable" : "Fixed",
                     mergedFixed,
                     mergedMonthly,
-                    anyVariable ? "Merged from selected patterns." : null,
+                    mergedCoverage,
                     UserResolvedAssignments: true,
                     mergeAnchor,
                     mergeAnchorOverride));
@@ -894,6 +900,75 @@ public partial class DetectionReview
     {
         _expenseCategoryByLabel[label] = categoryId;
         ApplyDefaultPotSelection(label, categoryId);
+    }
+
+    private void SetMergeCategory(Guid categoryId)
+    {
+        _mergeCategoryId = categoryId;
+        ApplyDefaultPotForMerge(categoryId);
+    }
+
+    private void ApplyDefaultPotForMerge(Guid categoryId)
+    {
+        if (!ShowPotUi)
+        {
+            _mergePotId = null;
+            return;
+        }
+
+        List<PotOption> potsForCategory = PotsForCategory(categoryId).ToList();
+        _mergePotId = _potMappingMode switch
+        {
+            PotMappingMode.ThreePots => potsForCategory.Count > 0 ? potsForCategory[0].Id : null,
+            PotMappingMode.SeveralPots => potsForCategory.Count == 1 ? potsForCategory[0].Id : null,
+            _ => null,
+        };
+    }
+
+    private void SetSplitPartOneCategory(Guid categoryId)
+    {
+        _splitPartOneCategoryId = categoryId;
+        ApplyDefaultPotForSplitPart(categoryId, partOne: true);
+    }
+
+    private void SetSplitPartTwoCategory(Guid categoryId)
+    {
+        _splitPartTwoCategoryId = categoryId;
+        ApplyDefaultPotForSplitPart(categoryId, partOne: false);
+    }
+
+    private void ApplyDefaultPotForSplitPart(Guid categoryId, bool partOne)
+    {
+        if (!ShowPotUi)
+        {
+            if (partOne)
+            {
+                _splitPartOnePotId = null;
+            }
+            else
+            {
+                _splitPartTwoPotId = null;
+            }
+
+            return;
+        }
+
+        List<PotOption> potsForCategory = PotsForCategory(categoryId).ToList();
+        Guid? defaultPot = _potMappingMode switch
+        {
+            PotMappingMode.ThreePots => potsForCategory.Count > 0 ? potsForCategory[0].Id : null,
+            PotMappingMode.SeveralPots => potsForCategory.Count == 1 ? potsForCategory[0].Id : null,
+            _ => null,
+        };
+
+        if (partOne)
+        {
+            _splitPartOnePotId = defaultPot;
+        }
+        else
+        {
+            _splitPartTwoPotId = defaultPot;
+        }
     }
 
     private void ApplyDefaultPotSelection(string label, Guid categoryId)
