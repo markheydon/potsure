@@ -329,7 +329,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 ### Release evidence (constitution II / SC-007)
 
 - [X] T149 [P] Close Playwright E2E release evidence: `tests/Potsure.E2E/KeyJourneysTests.cs` exercises CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
-- [ ] T150 [US12] Run quickstart Scenario 9 keyboard-only audit on category health, budget balance, and recurring summary; update validation log in `specs/001-potsure-v1/quickstart.md` (**SC-007**)
+- [X] T150 [US12] Run quickstart Scenario 9 keyboard-only audit on category health, budget balance, and recurring summary; update validation log in `specs/001-potsure-v1/quickstart.md` (**SC-007**)
 - [X] T151 [P] Close **SC-003** release evidence: overlapping re-import scenarios (US2 AC7 / quickstart Scenario 2) demonstrate assignment memory without manual re-entry; non-partial integration coverage in **T106** / **T140**–**T142** or documented equivalent (partial  -  `ReimportAssignmentMemoryTests` is release evidence; quickstart Scenario 2 log refresh in **T185**)
 
 ---
@@ -606,7 +606,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T183 [P] [US10] Update `ExportSnapshotBuilder` in `src/Potsure.Infrastructure/Features/Export/ExportSnapshotBuilder.cs` and contracts/export-formats.md alignment for standing plan fields (no budget period dates; estimated income + cadence)
 - [X] T184 [P] Update `DeterminismTests` and reporting integration tests in `tests/Potsure.Reporting.Tests/` for **30.4375** proration and unchanged-input repeat viewing (**FR-M036**)
-- [ ] T185 [P] Refresh quickstart validation log Scenarios **3**, **4b**, **5**, and **7** in `specs/001-potsure-v1/quickstart.md` after Phase 27 checkpoint
+- [X] T185 [P] Refresh quickstart validation log Scenarios **3**, **4b**, **5**, and **7** in `specs/001-potsure-v1/quickstart.md` after Phase 27 checkpoint
 - [X] T186 [P] Align `docs/deployment-database.md`, `docs/self-host.md`, and quickstart Scenario 8c notes with canonical `dotnet ef` `--project src/Potsure.Data` and AppHost `WithMigrationsProject` → Data (artifact audit **2026-11-09**); pair with **T158** Aspire ef-tool fix
 
 **Checkpoint**: Standing plan saves without period dates; report range shared per tab; category health and budget balance prorate with **30.4375**; pot modes enforce **FR-M013**; recurring edit/delete and anchors persist; budgeting golden tests cover new catalogue items.
@@ -617,10 +617,10 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-09, post commit 1751be1 / Phase 27 implement) between spec intent, plan decisions, and present codebase behaviour.
 
-- [ ] T187 [US2] [US9] Add field-level **edit** flows for confirmed recurring income and expense rows on `DetectionReview.razor` and `RecurringSummary.razor` (label, cadence, fixed/variable amounts, payment anchor, pot/tag, income splits) wired to `IncomePatternService` / `ExpensePatternService` `SaveAsync`; verify reports refresh after save per **FR-M008c**, **FR-M021**, and US2/AC3 (partial)
+- [X] T187 [US2] [US9] Add field-level **edit** flows for confirmed recurring income and expense rows on `DetectionReview.razor` and `RecurringSummary.razor` (label, cadence, fixed/variable amounts, payment anchor, pot/tag, income splits) wired to `IncomePatternService` / `ExpensePatternService` `SaveAsync`; verify reports refresh after save per **FR-M008c**, **FR-M021**, and US2/AC3 (partial)
 - [X] T188 [US4] Expose mapped-pot **edit** (display name and category reassignment within mode invariants) on `PotMapping.razor` via `BankPotService.UpdateAsync`; add UI tests or service coverage for category moves blocked under **three pots** rules per **FR-M013c** and US4/AC11 (partial  -  PotMapping edit UI; extra UI test deferred)
-- [ ] T189 [P] Re-run quickstart Scenario **8c** after `Potsure.MigrationsHost` wiring (`aspire run`: database healthy → `ef-migrations` finished → web healthy) and set Scenario 8c validation log to **Pass** or document a blocking defect per constitution 1.2.0 Scenario 8c and plan EF orchestration (partial)
-- [ ] T190 [P] [US11] Extend `HostedIdentityHttpTests` (or adjacent `WebApplicationFactory` coverage) to POST register and password sign-in and assert an authenticated session cookie  -  not GET-only antiforgery token checks per **SC-005** and partial **T155**
+- [X] T189 [P] Re-run quickstart Scenario **8c** after `Potsure.MigrationsHost` wiring (`aspire run`: database healthy → `ef-migrations` finished → web healthy) and set Scenario 8c validation log to **Pass** or document a blocking defect per constitution 1.2.0 Scenario 8c and plan EF orchestration (partial  -  **T189** 2026-11-09: schema-host **FailedToStart** in devcontainer smoke; documented in quickstart)
+- [X] T190 [P] [US11] Extend `HostedIdentityHttpTests` (or adjacent `WebApplicationFactory` coverage) to POST register and password sign-in and assert an authenticated session cookie  -  not GET-only antiforgery token checks per **SC-005** and partial **T155**
 - [X] T191 [P] Update quickstart validation log Scenario **2** (assignment memory / re-import) to reflect `ReimportAssignmentMemoryTests` release evidence per **SC-003** and partial **T151** (complements open **T185** for Scenarios 3, 4b, 5, 7)
 
 ---
@@ -639,3 +639,14 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-09, post Phase 29) between spec intent, plan decisions, and present codebase behaviour.
 
 - [X] T194 [US2] Expose optional payment anchor date override on `DetectionReview` expense **confirm**, **merge**, and **split** flows (surface derived default; persist `PaymentAnchorDate` and `PaymentAnchorUserOverride` via `SaveRecurringExpenseRequest` / `ExpensePatternService`) per **FR-M008c** and spec Session 2026-11-09 payment-anchor clarifications (partial)
+
+---
+
+## Phase 31: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-10, post Phase 30) between spec intent, plan decisions, and present codebase behaviour.
+
+- [X] T195 [US2] [US7] [US8] Honour non-overridden payment anchors on re-import and commitment projection: when `PaymentAnchorUserOverride` is false, advance `PaymentAnchorDate` to the latest attributed or vendor-matched debit after import and use that effective anchor (not a stale stored date alone) in `PeriodReportService`, `RunwayReportService`, and `CommitmentPaymentAnchorResolver` per **FR-M008c**, data-model **PaymentAnchorUserOverride**, and **T174** (partial)
+- [X] T196 [US2] [US8] Use **today's calendar date** (not latest statement transaction date) as the FR-M034 suggestion window end in `BuildVariableEstimateAsync` (`DetectionReview.razor.cs`) and `RecurrenceReviewService` when calling `VariableExpenseEstimator.Estimate` per **FR-M034** and spec Session 2026-11-09 (contradicts)
+- [X] T197 [US2] [US8] Surface `EstimateCoverageLabel` from variable expense suggestions during **confirm** and variable **edit** on `DetectionReview.razor` (and align `RecurringSummary` edit where estimates are shown) so partial-history labelling is visible in the UI per **FR-M034** and **SC-008** (partial)
+- [X] T198 [US8] Add explicit **accept refreshed suggestion** affordance for variable expense monthly estimates on confirmed **edit** flows (`RecurringSummary.razor`, `DetectionReview` confirmed edit) without auto-applying `VariableExpenseEstimator` output on load per **FR-M008c**, **FR-M034**, and US8/AC1 (partial)

@@ -202,14 +202,21 @@ public sealed class PeriodReportService(
 
         return expenses
             .Where(e => categoryKinds.ContainsKey(e.CategoryId))
-            .Select(e => new CommitmentExpenseInput(
-                categoryKinds[e.CategoryId],
-                e.Cadence,
-                e.AmountKind,
-                e.FixedAmount,
-                e.StoredMonthlyEstimate,
-                e.PaymentAnchorDate
-                    ?? (anchors.TryGetValue(e.Id, out DateOnly anchor) ? anchor : anchorFallback)))
+            .Select(e =>
+            {
+                anchors.TryGetValue(e.Id, out DateOnly historyAnchor);
+                DateOnly effective = CommitmentPaymentAnchorResolver.ResolveEffectiveExpenseAnchor(
+                    e,
+                    historyAnchor,
+                    anchorFallback);
+                return new CommitmentExpenseInput(
+                    categoryKinds[e.CategoryId],
+                    e.Cadence,
+                    e.AmountKind,
+                    e.FixedAmount,
+                    e.StoredMonthlyEstimate,
+                    effective);
+            })
             .ToList();
     }
 

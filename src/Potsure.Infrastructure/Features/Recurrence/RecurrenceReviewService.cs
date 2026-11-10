@@ -147,7 +147,7 @@ public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
             .Distinct()
             .OrderBy(d => d)
             .ToList();
-        DateOnly asOf = coverageDays.Count > 0 ? coverageDays[^1] : DateOnly.FromDateTime(DateTime.UtcNow);
+        DateOnly asOf = DateOnly.FromDateTime(DateTime.UtcNow);
 
         for (int i = 0; i < items.Count; i++)
         {

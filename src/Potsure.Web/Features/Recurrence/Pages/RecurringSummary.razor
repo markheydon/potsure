@@ -63,7 +63,12 @@ else if (_model is not null)
                                        Header="Actions">
                         <CellTemplate Context="row">
                             <div class="bb:flex bb:flex-wrap bb:gap-2">
-                                <BbLink Href="/recurrence/review">Edit on review</BbLink>
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="ButtonVariant.Outline"
+                                          OnClick="@(() => BeginEditIncome(row))">
+                                    Edit
+                                </BbButton>
+                                <BbLink Href="/recurrence/review">Review</BbLink>
                                 <BbButton Size="ButtonSize.Small"
                                           Variant="ButtonVariant.Outline"
                                           OnClick="@(() => DeleteIncomeAsync(row.Id))">
@@ -74,6 +79,49 @@ else if (_model is not null)
                     </BbDataTableColumn>
                 </Columns>
             </BbDataTable>
+        }
+        @if (_editingIncomeId is not null)
+        {
+            <PotsureSection Title="Edit confirmed income" Class="bb:mt-4">
+                <BbLabel>Source label</BbLabel>
+                <BbInput @bind-Value="_incomeEdit.SourceLabel" />
+                <BbLabel>Cadence</BbLabel>
+                <BbSelect TValue="IncomeCadence" @bind-Value="_incomeEdit.Cadence">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Cadence">
+                            <ChildContent Context="ignored">
+                                @IncomeCadenceLabel(_incomeEdit.Cadence)
+                            </ChildContent>
+                        </BbSelectValue>
+                    </BbSelectTrigger>
+                    <BbSelectContent>
+                        @foreach (IncomeCadence cadence in Enum.GetValues<IncomeCadence>())
+                        {
+                            <BbSelectItem TValue="IncomeCadence" Value="@cadence" Text="@IncomeCadenceLabel(cadence)" />
+                        }
+                    </BbSelectContent>
+                </BbSelect>
+                <BbLabel>Amount (£)</BbLabel>
+                <BbInput Type="InputType.Number"
+                         Value="@FormatDecimal(_incomeEdit.Amount)"
+                         ValueChanged="@(v => _incomeEdit.Amount = ParseDecimal(v, _incomeEdit.Amount))" />
+                <BbLabel>Needs %</BbLabel>
+                <BbInput Type="InputType.Number"
+                         Value="@FormatDecimal(_incomeEdit.Needs)"
+                         ValueChanged="@(v => _incomeEdit.Needs = ParseDecimal(v, _incomeEdit.Needs))" />
+                <BbLabel>Wants %</BbLabel>
+                <BbInput Type="InputType.Number"
+                         Value="@FormatDecimal(_incomeEdit.Wants)"
+                         ValueChanged="@(v => _incomeEdit.Wants = ParseDecimal(v, _incomeEdit.Wants))" />
+                <BbLabel>Savings &amp; debt %</BbLabel>
+                <BbInput Type="InputType.Number"
+                         Value="@FormatDecimal(_incomeEdit.SavingsDebt)"
+                         ValueChanged="@(v => _incomeEdit.SavingsDebt = ParseDecimal(v, _incomeEdit.SavingsDebt))" />
+                <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-2">
+                    <BbButton OnClick="SaveIncomeEditAsync">Save changes</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="CancelEdit">Cancel</BbButton>
+                </div>
+            </PotsureSection>
         }
     </PotsureSection>
 
@@ -121,7 +169,12 @@ else if (_model is not null)
                                        Header="Actions">
                         <CellTemplate Context="row">
                             <div class="bb:flex bb:flex-wrap bb:gap-2">
-                                <BbLink Href="/recurrence/review">Edit on review</BbLink>
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="ButtonVariant.Outline"
+                                          OnClick="@(() => BeginEditExpenseAsync(row))">
+                                    Edit
+                                </BbButton>
+                                <BbLink Href="/recurrence/review">Review</BbLink>
                                 <BbButton Size="ButtonSize.Small"
                                           Variant="ButtonVariant.Outline"
                                           OnClick="@(() => DeleteExpenseAsync(row.Id))">
@@ -132,6 +185,116 @@ else if (_model is not null)
                     </BbDataTableColumn>
                 </Columns>
             </BbDataTable>
+        }
+        @if (_editingExpenseId is not null)
+        {
+            <PotsureSection Title="Edit confirmed expense" Class="bb:mt-4">
+                <BbLabel>Vendor label</BbLabel>
+                <BbInput @bind-Value="_expenseEdit.VendorLabel" />
+                <BbLabel>Category</BbLabel>
+                <BbSelect TValue="Guid"
+                          Value="@_expenseEdit.CategoryId"
+                          ValueChanged="SetExpenseCategory">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Category">
+                            <ChildContent Context="ignored">
+                                @CategoryLabel(_expenseEdit.CategoryId)
+                            </ChildContent>
+                        </BbSelectValue>
+                    </BbSelectTrigger>
+                    <BbSelectContent>
+                        @foreach (var category in _categories)
+                        {
+                            <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
+                        }
+                    </BbSelectContent>
+                </BbSelect>
+                @if (ShowPotUi)
+                {
+                    <BbLabel>Mapped pot (optional)</BbLabel>
+                    <BbSelect TValue="Guid" @bind-Value="ExpensePotSelection">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="None">
+                                <ChildContent Context="ignored">
+                                    @PotSelectionLabel(ExpensePotSelection)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                            @foreach (var pot in PotsForCategory(_expenseEdit.CategoryId))
+                            {
+                                <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                }
+                <BbLabel>Tag (optional)</BbLabel>
+                <BbInput @bind-Value="_expenseEdit.Tag" />
+                <BbLabel>Cadence</BbLabel>
+                <BbSelect TValue="ExpenseCadence" @bind-Value="_expenseEdit.Cadence">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Cadence">
+                            <ChildContent Context="ignored">
+                                @_expenseEdit.Cadence
+                            </ChildContent>
+                        </BbSelectValue>
+                    </BbSelectTrigger>
+                    <BbSelectContent>
+                        @foreach (ExpenseCadence cadence in Enum.GetValues<ExpenseCadence>())
+                        {
+                            <BbSelectItem TValue="ExpenseCadence" Value="@cadence" Text="@cadence.ToString()" />
+                        }
+                    </BbSelectContent>
+                </BbSelect>
+                <BbLabel>Amount behaviour</BbLabel>
+                <BbSelect TValue="ExpenseAmountKind" @bind-Value="_expenseEdit.AmountKind">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Fixed or variable">
+                            <ChildContent Context="ignored">
+                                @ExpenseAmountKindLabel(_expenseEdit.AmountKind)
+                            </ChildContent>
+                        </BbSelectValue>
+                    </BbSelectTrigger>
+                    <BbSelectContent>
+                        <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Fixed" Text="Fixed per payment" />
+                        <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
+                    </BbSelectContent>
+                </BbSelect>
+                <BbLabel>Amount (£)</BbLabel>
+                <BbInput Type="InputType.Number"
+                         Value="@FormatDecimal(_expenseEdit.Amount)"
+                         ValueChanged="@(v => _expenseEdit.Amount = ParseDecimal(v, _expenseEdit.Amount))" />
+                @if (_expenseEdit.AmountKind == ExpenseAmountKind.Variable)
+                {
+                    @if (!string.IsNullOrWhiteSpace(_expenseEdit.CoverageLabel))
+                    {
+                        <BbTypographyMuted Class="bb:text-sm">@_expenseEdit.CoverageLabel</BbTypographyMuted>
+                    }
+                    @if (_pendingVariableSuggestion is not null)
+                    {
+                        <BbTypographyMuted Class="bb:text-sm">
+                            Suggested from recent spend: £@FormatDecimal(_pendingVariableSuggestion.MonthlyEstimate)
+                            (@_pendingVariableSuggestion.CoverageLabel)
+                        </BbTypographyMuted>
+                        <BbButton Size="ButtonSize.Small"
+                                  Variant="ButtonVariant.Outline"
+                                  OnClick="AcceptPendingVariableSuggestion">
+                            Use suggested estimate
+                        </BbButton>
+                    }
+                }
+                @if (_expenseEdit.AmountKind == ExpenseAmountKind.Fixed)
+                {
+                    <BbLabel>Payment anchor</BbLabel>
+                    <BbDatePicker Value="@(_expenseEdit.PaymentAnchor?.ToDateTime(TimeOnly.MinValue))"
+                                  ValueChanged="SetExpensePaymentAnchor" />
+                }
+                <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-2">
+                    <BbButton OnClick="SaveExpenseEditAsync">Save changes</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="CancelEdit">Cancel</BbButton>
+                </div>
+            </PotsureSection>
         }
     </PotsureSection>
 

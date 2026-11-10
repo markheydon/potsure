@@ -6,6 +6,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Infrastructure.Persistence.Repositories;
 using Potsure.Statements;
@@ -36,6 +37,7 @@ public sealed class StatementImportService(
     StatementUploadRepository uploadRepository,
     ICurrentOwnerAccessor ownerAccessor,
     TransactionAttributionService attributionService,
+    ExpensePatternService expensePatternService,
     BudgetProfileSeeder profileSeeder,
     ILogger<StatementImportService> logger)
 {
@@ -274,6 +276,7 @@ public sealed class StatementImportService(
             try
             {
                 await attributionService.AttributeAllConfirmedExpensesAsync(cancellationToken);
+                await expensePatternService.RefreshNonOverriddenPaymentAnchorsAfterImportAsync(cancellationToken);
             }
             catch (Exception ex)
             {

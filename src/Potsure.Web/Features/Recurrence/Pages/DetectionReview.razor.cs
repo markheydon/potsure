@@ -57,8 +57,13 @@ public partial class DetectionReview
     private Dictionary<string, decimal> _incomeAmountByLabel = [];
     private Dictionary<string, decimal> _expenseAmountByLabel = [];
     private Dictionary<string, ExpenseAmountKind> _expenseAmountKindByLabel = [];
+    private Dictionary<string, ExpenseCadence> _expenseCadenceByLabel = [];
     private Dictionary<string, DateOnly> _expensePaymentAnchorByLabel = [];
     private Dictionary<string, bool> _expensePaymentAnchorOverrideByLabel = [];
+    private Dictionary<string, string?> _expenseCoverageLabelByLabel = [];
+    private Dictionary<string, VariableExpenseEstimateResult?> _expensePendingSuggestionByLabel = [];
+    private Dictionary<string, string> _confirmedLabelByLabel = [];
+    private HashSet<string> _editingConfirmedLabels = [];
     private HashSet<string> _mergeSelection = [];
     private string? _mergeLabel;
     private Guid _mergeCategoryId;
@@ -163,7 +168,230 @@ public partial class DetectionReview
                 _expenseAmountByLabel[item.Label] = item.TypicalAmount ?? 0m;
                 EnsureExpenseAmountKindDefault(item);
                 await EnsureExpensePaymentAnchorDefaultAsync(item);
+                if (item.State == PatternConfirmationState.Suggested && ExpenseTreatAsVariable(item))
+                {
+                    VariableExpenseEstimateResult suggestion = await ExpenseService.EstimateVariableMonthlyAsync(item.Label);
+                    _expenseCoverageLabelByLabel[item.Label] = suggestion.CoverageLabel;
+                }
             }
+
+            if (item.State == PatternConfirmationState.Confirmed && item.PersistedId is not null)
+            {
+                await HydrateConfirmedPatternFieldsAsync(item);
+            }
+        }
+    }
+
+    private async Task HydrateConfirmedPatternFieldsAsync(RecurrenceReviewItem item)
+    {
+        if (item.PersistedId is not Guid id)
+        {
+            return;
+        }
+
+        if (item.IsIncome)
+        {
+            IncomeSourceEntity entity = await DbContext.IncomeSources.AsNoTracking().SingleAsync(s => s.Id == id);
+            _confirmedLabelByLabel[item.Label] = entity.SourceLabel;
+            _incomeCadenceByLabel[item.Label] = entity.Cadence;
+            _incomeAmountByLabel[item.Label] = entity.Cadence is IncomeCadence.Variable or IncomeCadence.AdHoc
+                ? entity.EstimateAmount ?? 0m
+                : entity.FixedAmount ?? entity.EstimateAmount ?? 0m;
+            _incomeSplitsByLabel[item.Label] = new IncomeSplitInput
+            {
+                Needs = entity.SplitNeedsPercent,
+                Wants = entity.SplitWantsPercent,
+                SavingsDebt = entity.SplitSavingsDebtPercent,
+            };
+            return;
+        }
+
+        RecurringExpenseEntity expense = await DbContext.RecurringExpenses.AsNoTracking().SingleAsync(e => e.Id == id);
+        _confirmedLabelByLabel[item.Label] = expense.VendorLabel;
+        _expenseCategoryByLabel[item.Label] = expense.CategoryId;
+        _expensePotByLabel[item.Label] = expense.MappedPotId;
+        _expenseTagByLabel[item.Label] = expense.Tag;
+        _expenseCadenceByLabel[item.Label] = expense.Cadence;
+        _expenseAmountKindByLabel[item.Label] = expense.AmountKind;
+        _expenseAmountByLabel[item.Label] = expense.AmountKind == ExpenseAmountKind.Variable
+            ? expense.StoredMonthlyEstimate ?? 0m
+            : expense.FixedAmount ?? expense.StoredMonthlyEstimate ?? 0m;
+        _expenseCoverageLabelByLabel[item.Label] = expense.EstimateCoverageLabel;
+        if (expense.PaymentAnchorDate is DateOnly anchor)
+        {
+            _expensePaymentAnchorByLabel[item.Label] = anchor;
+            _expensePaymentAnchorOverrideByLabel[item.Label] = expense.PaymentAnchorUserOverride;
+        }
+    }
+
+    private async Task ToggleEditConfirmedAsync(RecurrenceReviewItem item)
+    {
+        if (!_editingConfirmedLabels.Remove(item.Label))
+        {
+            _editingConfirmedLabels.Add(item.Label);
+            if (!item.IsIncome && ExpenseTreatAsVariable(item))
+            {
+                _expensePendingSuggestionByLabel[item.Label] =
+                    await ExpenseService.EstimateVariableMonthlyAsync(item.Label);
+            }
+        }
+        else
+        {
+            _expensePendingSuggestionByLabel.Remove(item.Label);
+        }
+    }
+
+    private void AcceptVariableSuggestion(RecurrenceReviewItem item)
+    {
+        if (_expensePendingSuggestionByLabel.TryGetValue(item.Label, out VariableExpenseEstimateResult? suggestion)
+            && suggestion is not null)
+        {
+            _expenseAmountByLabel[item.Label] = suggestion.MonthlyEstimate;
+            _expenseCoverageLabelByLabel[item.Label] = suggestion.CoverageLabel;
+        }
+    }
+
+    private string? GetExpenseCoverageLabel(string label) =>
+        _expenseCoverageLabelByLabel.GetValueOrDefault(label);
+
+    private VariableExpenseEstimateResult? GetPendingVariableSuggestion(string label) =>
+        _expensePendingSuggestionByLabel.GetValueOrDefault(label);
+
+    private bool HasPendingVariableSuggestion(string label) =>
+        GetPendingVariableSuggestion(label) is not null;
+
+    private async Task OnExpenseAmountKindChangedAsync(RecurrenceReviewItem item, ExpenseAmountKind kind)
+    {
+        SetExpenseAmountKind(item.Label, kind);
+        if (ExpenseTreatAsVariable(item))
+        {
+            VariableExpenseEstimateResult suggestion = await ExpenseService.EstimateVariableMonthlyAsync(item.Label);
+            _expenseCoverageLabelByLabel[item.Label] = suggestion.CoverageLabel;
+        }
+    }
+
+    private ExpenseCadence GetExpenseCadence(RecurrenceReviewItem item) =>
+        _expenseCadenceByLabel.GetValueOrDefault(item.Label, item.ExpenseCadence ?? ExpenseCadence.Monthly);
+
+    private void SetExpenseCadence(string label, ExpenseCadence cadence) =>
+        _expenseCadenceByLabel[label] = cadence;
+
+    private string GetConfirmedLabel(RecurrenceReviewItem item) =>
+        _confirmedLabelByLabel.GetValueOrDefault(item.Label, item.Label);
+
+    private void SetConfirmedLabel(RecurrenceReviewItem item, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        _confirmedLabelByLabel[item.Label] = value.Trim();
+    }
+
+    private async Task SaveConfirmedEditAsync(RecurrenceReviewItem item)
+    {
+        if (item.State != PatternConfirmationState.Confirmed || item.PersistedId is not Guid id)
+        {
+            _statusMessage = "Only saved confirmed patterns can be edited.";
+            return;
+        }
+
+        _statusMessage = null;
+        string savedLabel = GetConfirmedLabel(item);
+        try
+        {
+            if (item.IsIncome)
+            {
+                IncomeSplitInput splits = _incomeSplitsByLabel[item.Label];
+                IncomeCadence cadence = _incomeCadenceByLabel[item.Label];
+                decimal amount = _incomeAmountByLabel.GetValueOrDefault(item.Label);
+                if (amount <= 0m)
+                {
+                    _statusMessage = "Enter a positive amount before saving.";
+                    return;
+                }
+
+                decimal? fixedAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? null : amount;
+                decimal? estimateAmount = cadence is IncomeCadence.Variable or IncomeCadence.AdHoc ? amount : null;
+
+                await IncomeService.SaveAsync(
+                    new SaveIncomeSourceRequest(
+                        id,
+                        savedLabel,
+                        cadence,
+                        fixedAmount,
+                        estimateAmount,
+                        splits.Needs,
+                        splits.Wants,
+                        splits.SavingsDebt,
+                        PatternConfirmationState.Confirmed));
+            }
+            else
+            {
+                Guid categoryId = _expenseCategoryByLabel[item.Label];
+                Guid? potId = _expensePotByLabel[item.Label];
+                string? tag = NullIfWhiteSpace(_expenseTagByLabel[item.Label]);
+                ExpenseCadence cadence = GetExpenseCadence(item);
+                bool treatAsVariable = ExpenseTreatAsVariable(item);
+                decimal entered = _expenseAmountByLabel.GetValueOrDefault(item.Label);
+                decimal? monthlyEstimate = null;
+                string? coverageLabel = null;
+                decimal? fixedAmount = null;
+
+                if (treatAsVariable)
+                {
+                    monthlyEstimate = entered;
+                    if (monthlyEstimate is null or <= 0m)
+                    {
+                        _statusMessage = "Enter a positive monthly estimate before saving.";
+                        return;
+                    }
+
+                    RecurringExpenseEntity? existing = await DbContext.RecurringExpenses
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(e => e.Id == id);
+                    coverageLabel = GetExpenseCoverageLabel(item.Label) ?? existing?.EstimateCoverageLabel;
+                }
+                else
+                {
+                    fixedAmount = entered > 0m ? entered : item.TypicalAmount;
+                    if (fixedAmount is null or <= 0m)
+                    {
+                        _statusMessage = "Enter a positive fixed amount per payment before saving.";
+                        return;
+                    }
+                }
+
+                (DateOnly? paymentAnchor, bool paymentAnchorOverride) = GetExpensePaymentAnchorForSave(item);
+
+                RecurringExpenseEntity saved = await ExpenseService.SaveAsync(
+                    new SaveRecurringExpenseRequest(
+                        id,
+                        savedLabel,
+                        categoryId,
+                        potId,
+                        cadence,
+                        PaymentType: "Card",
+                        treatAsVariable ? ExpenseAmountKind.Variable : ExpenseAmountKind.Fixed,
+                        fixedAmount,
+                        monthlyEstimate,
+                        coverageLabel,
+                        tag,
+                        paymentAnchor,
+                        paymentAnchorOverride,
+                        PatternConfirmationState.Confirmed));
+
+                await AttributionService.AttributeMatchingDebitsAsync(saved.Id);
+            }
+
+            _editingConfirmedLabels.Remove(item.Label);
+            _statusMessage = $"Saved changes to {savedLabel}.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = ex.Message;
         }
     }
 
@@ -304,7 +532,7 @@ public partial class DetectionReview
                 string? tag = NullIfWhiteSpace(_expenseTagByLabel[item.Label]);
                 ExpenseCadence cadence = item.ExpenseCadence ?? ExpenseCadence.Monthly;
                 bool treatAsVariable = ExpenseTreatAsVariable(item);
-                VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
+                VariableExpenseEstimateResult estimate = await ExpenseService.EstimateVariableMonthlyAsync(item.Label);
                 decimal entered = _expenseAmountByLabel.GetValueOrDefault(item.Label);
                 decimal? monthlyEstimate = null;
                 string? coverageLabel = estimate.CoverageLabel;
@@ -422,7 +650,7 @@ public partial class DetectionReview
                 string? coverage = null;
                 if (variable && (monthlyPart is null or <= 0m))
                 {
-                    VariableExpenseEstimateResult estimate = await BuildVariableEstimateAsync(item.Label);
+                    VariableExpenseEstimateResult estimate = await ExpenseService.EstimateVariableMonthlyAsync(item.Label);
                     monthlyPart = estimate.MonthlyEstimate;
                     coverage = estimate.CoverageLabel;
                 }
@@ -876,18 +1104,4 @@ public partial class DetectionReview
         public decimal SavingsDebt { get; set; } = 20m;
     }
 
-    private async Task<VariableExpenseEstimateResult> BuildVariableEstimateAsync(string vendorLabel)
-    {
-        string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
-        List<TransactionEntity> transactions = await DbContext.Transactions.AsNoTracking().ToListAsync();
-        List<(DateOnly Date, decimal Amount)> debits = transactions
-            .Where(t => t.Kind == TransactionKind.ExpenseDebit)
-            .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
-            .Select(t => (t.TransactionDate, t.Amount))
-            .ToList();
-
-        List<DateOnly> coverageDays = transactions.Select(t => t.TransactionDate).Distinct().OrderBy(d => d).ToList();
-        DateOnly asOf = coverageDays.Count > 0 ? coverageDays[^1] : DateOnly.FromDateTime(DateTime.UtcNow);
-        return VariableExpenseEstimator.Estimate(debits, coverageDays, asOf);
-    }
 }

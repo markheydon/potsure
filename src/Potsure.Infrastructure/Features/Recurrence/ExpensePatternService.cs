@@ -110,6 +110,79 @@ public sealed class ExpensePatternService(
         return entity;
     }
 
+    /// <summary>
+    /// FR-M034 variable monthly estimate suggestion (window ends today; does not mutate stored patterns).
+    /// </summary>
+    public async Task<VariableExpenseEstimateResult> EstimateVariableMonthlyAsync(
+        string vendorLabel,
+        CancellationToken cancellationToken = default)
+    {
+        string normalised = PatternLabelNormalizer.Normalize(vendorLabel);
+        List<TransactionEntity> transactions = await dbContext.Transactions
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        List<(DateOnly Date, decimal Amount)> debits = transactions
+            .Where(t => t.Kind == TransactionKind.ExpenseDebit)
+            .Where(t => string.Equals(PatternLabelNormalizer.Normalize(t.Name), normalised, StringComparison.Ordinal))
+            .Select(t => (t.TransactionDate, t.Amount))
+            .ToList();
+
+        List<DateOnly> coverageDays = transactions
+            .Select(t => t.TransactionDate)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        DateOnly asOf = DateOnly.FromDateTime(DateTime.UtcNow);
+        return VariableExpenseEstimator.Estimate(debits, coverageDays, asOf);
+    }
+
+    /// <summary>
+    /// Advances stored payment anchors after import when the user has not overridden them (FR-M008c).
+    /// </summary>
+    public async Task<int> RefreshNonOverriddenPaymentAnchorsAfterImportAsync(
+        CancellationToken cancellationToken = default)
+    {
+        List<RecurringExpenseEntity> expenses = await dbContext.RecurringExpenses
+            .Where(e => e.State == PatternConfirmationState.Confirmed)
+            .Where(e => !e.PaymentAnchorUserOverride)
+            .Where(e => e.AmountKind == ExpenseAmountKind.Fixed)
+            .ToListAsync(cancellationToken);
+
+        if (expenses.Count == 0)
+        {
+            return 0;
+        }
+
+        IReadOnlyDictionary<Guid, DateOnly> resolved = await CommitmentPaymentAnchorResolver.ResolveExpenseAnchorsAsync(
+            dbContext,
+            expenses,
+            cancellationToken);
+
+        int updated = 0;
+        foreach (RecurringExpenseEntity entity in expenses)
+        {
+            if (!resolved.TryGetValue(entity.Id, out DateOnly latest))
+            {
+                continue;
+            }
+
+            if (entity.PaymentAnchorDate != latest)
+            {
+                entity.PaymentAnchorDate = latest;
+                updated++;
+            }
+        }
+
+        if (updated > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return updated;
+    }
+
     public async Task DeleteConfirmedAsync(Guid expenseId, CancellationToken cancellationToken = default)
     {
         RecurringExpenseEntity entity = await dbContext.RecurringExpenses

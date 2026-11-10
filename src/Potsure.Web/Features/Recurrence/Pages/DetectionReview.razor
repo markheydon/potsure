@@ -1,5 +1,6 @@
 ﻿@page "/recurrence/review"
 @using Potsure.Infrastructure.Features.Recurrence
+@using Potsure.Recurrence
 @rendermode InteractiveServer
 
 <PageTitle>Recurring patterns</PageTitle>
@@ -139,7 +140,7 @@ else
                                 <BbLabel>Amount behaviour</BbLabel>
                                 <BbSelect TValue="ExpenseAmountKind"
                                           Value="@GetExpenseAmountKind(item)"
-                                          ValueChanged="@(kind => SetExpenseAmountKind(item.Label, kind))">
+                                          ValueChanged="@(kind => OnExpenseAmountKindChangedAsync(item, kind))">
                                     <BbSelectTrigger>
                                         <BbSelectValue Placeholder="Fixed or variable">
                                             <ChildContent Context="ignored">
@@ -158,6 +159,10 @@ else
                                     <BbInput Type="InputType.Number"
                                              Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
                                              ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                    @if (!string.IsNullOrWhiteSpace(GetExpenseCoverageLabel(item.Label)))
+                                    {
+                                        <BbTypographyMuted Class="bb:text-sm">@GetExpenseCoverageLabel(item.Label)</BbTypographyMuted>
+                                    }
                                 }
                                 else
                                 {
@@ -199,13 +204,186 @@ else
                         </div>
                         @if (item.State == PatternConfirmationState.Confirmed)
                         {
-                            <div class="bb:flex bb:flex-wrap bb:gap-2 bb:pt-2">
-                                <BbButton Size="ButtonSize.Small"
-                                          Variant="ButtonVariant.Outline"
-                                          OnClick="() => DeleteConfirmedAsync(item)">
-                                    Delete
-                                </BbButton>
-                            </div>
+                            @if (_editingConfirmedLabels.Contains(item.Label))
+                            {
+                                <div class="bb:flex bb:flex-col bb:gap-3 bb:border-t bb:border-border bb:pt-3">
+                                    <BbLabel>Label</BbLabel>
+                                    <BbInput Value="@GetConfirmedLabel(item)"
+                                             ValueChanged="@(v => SetConfirmedLabel(item, v))" />
+                                    @if (item.IsIncome)
+                                    {
+                                        IncomeSplitInput editSplits = _incomeSplitsByLabel[item.Label];
+                                        <BbLabel>Cadence</BbLabel>
+                                        <BbSelect TValue="IncomeCadence" @bind-Value="_incomeCadenceByLabel[item.Label]">
+                                            <BbSelectTrigger>
+                                                <BbSelectValue Placeholder="Cadence">
+                                                    <ChildContent Context="ignored">
+                                                        @IncomeCadenceLabel(_incomeCadenceByLabel[item.Label])
+                                                    </ChildContent>
+                                                </BbSelectValue>
+                                            </BbSelectTrigger>
+                                            <BbSelectContent>
+                                                @foreach (IncomeCadence cadence in Enum.GetValues<IncomeCadence>())
+                                                {
+                                                    <BbSelectItem TValue="IncomeCadence" Value="@cadence" Text="@IncomeCadenceLabel(cadence)" />
+                                                }
+                                            </BbSelectContent>
+                                        </BbSelect>
+                                        <BbLabel>Needs %</BbLabel>
+                                        <BbInput Type="InputType.Number"
+                                                 Value="@FormatDecimal(editSplits.Needs)"
+                                                 ValueChanged="@(v => editSplits.Needs = ParseDecimal(v, editSplits.Needs))" />
+                                        <BbLabel>Wants %</BbLabel>
+                                        <BbInput Type="InputType.Number"
+                                                 Value="@FormatDecimal(editSplits.Wants)"
+                                                 ValueChanged="@(v => editSplits.Wants = ParseDecimal(v, editSplits.Wants))" />
+                                        <BbLabel>Savings &amp; debt %</BbLabel>
+                                        <BbInput Type="InputType.Number"
+                                                 Value="@FormatDecimal(editSplits.SavingsDebt)"
+                                                 ValueChanged="@(v => editSplits.SavingsDebt = ParseDecimal(v, editSplits.SavingsDebt))" />
+                                        <BbLabel>Amount</BbLabel>
+                                        <BbInput Type="InputType.Number"
+                                                 Value="@FormatDecimal(_incomeAmountByLabel[item.Label])"
+                                                 ValueChanged="@(v => _incomeAmountByLabel[item.Label] = ParseDecimal(v, _incomeAmountByLabel[item.Label]))" />
+                                    }
+                                    else
+                                    {
+                                        <BbLabel>Category</BbLabel>
+                                        <BbSelect TValue="Guid"
+                                                  Value="@_expenseCategoryByLabel[item.Label]"
+                                                  ValueChanged="@(id => SetExpenseCategory(item.Label, id))">
+                                            <BbSelectTrigger>
+                                                <BbSelectValue Placeholder="Category">
+                                                    <ChildContent Context="ignored">
+                                                        @CategoryLabel(_expenseCategoryByLabel[item.Label])
+                                                    </ChildContent>
+                                                </BbSelectValue>
+                                            </BbSelectTrigger>
+                                            <BbSelectContent>
+                                                @foreach (CategoryOption category in _categories)
+                                                {
+                                                    <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
+                                                }
+                                            </BbSelectContent>
+                                        </BbSelect>
+                                        @if (ShowPotUi)
+                                        {
+                                            <BbLabel>Mapped pot (optional)</BbLabel>
+                                            <BbSelect TValue="Guid"
+                                                      Value="@GetExpensePotSelection(item.Label)"
+                                                      ValueChanged="@(id => SetExpensePotSelection(item.Label, id))">
+                                                <BbSelectTrigger>
+                                                    <BbSelectValue Placeholder="None">
+                                                        <ChildContent Context="ignored">
+                                                            @PotSelectionLabel(GetExpensePotSelection(item.Label))
+                                                        </ChildContent>
+                                                    </BbSelectValue>
+                                                </BbSelectTrigger>
+                                                <BbSelectContent>
+                                                    <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                                                    @foreach (PotOption pot in PotsForCategory(_expenseCategoryByLabel[item.Label]))
+                                                    {
+                                                        <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                                                    }
+                                                </BbSelectContent>
+                                            </BbSelect>
+                                        }
+                                        <BbLabel>Tag (optional)</BbLabel>
+                                        <BbInput Value="@_expenseTagByLabel[item.Label]"
+                                                 ValueChanged="@(v => _expenseTagByLabel[item.Label] = v)" />
+                                        <BbLabel>Cadence</BbLabel>
+                                        <BbSelect TValue="ExpenseCadence"
+                                                  Value="@GetExpenseCadence(item)"
+                                                  ValueChanged="@(c => SetExpenseCadence(item.Label, c))">
+                                            <BbSelectTrigger>
+                                                <BbSelectValue Placeholder="Cadence">
+                                                    <ChildContent Context="ignored">
+                                                        @GetExpenseCadence(item)
+                                                    </ChildContent>
+                                                </BbSelectValue>
+                                            </BbSelectTrigger>
+                                            <BbSelectContent>
+                                                @foreach (ExpenseCadence cadence in Enum.GetValues<ExpenseCadence>())
+                                                {
+                                                    <BbSelectItem TValue="ExpenseCadence" Value="@cadence" Text="@cadence.ToString()" />
+                                                }
+                                            </BbSelectContent>
+                                        </BbSelect>
+                                        <BbLabel>Amount behaviour</BbLabel>
+                                        <BbSelect TValue="ExpenseAmountKind"
+                                                  Value="@GetExpenseAmountKind(item)"
+                                                  ValueChanged="@(kind => OnExpenseAmountKindChangedAsync(item, kind))">
+                                            <BbSelectTrigger>
+                                                <BbSelectValue Placeholder="Fixed or variable">
+                                                    <ChildContent Context="ignored">
+                                                        @ExpenseAmountKindLabel(GetExpenseAmountKind(item))
+                                                    </ChildContent>
+                                                </BbSelectValue>
+                                            </BbSelectTrigger>
+                                            <BbSelectContent>
+                                                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Fixed" Text="Fixed per payment" />
+                                                <BbSelectItem TValue="ExpenseAmountKind" Value="@ExpenseAmountKind.Variable" Text="Variable (monthly estimate)" />
+                                            </BbSelectContent>
+                                        </BbSelect>
+                                        @if (ExpenseTreatAsVariable(item))
+                                        {
+                                            <BbLabel>Monthly estimate (£)</BbLabel>
+                                            <BbInput Type="InputType.Number"
+                                                     Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
+                                                     ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                            @if (!string.IsNullOrWhiteSpace(GetExpenseCoverageLabel(item.Label)))
+                                            {
+                                                <BbTypographyMuted Class="bb:text-sm">@GetExpenseCoverageLabel(item.Label)</BbTypographyMuted>
+                                            }
+                                            @if (HasPendingVariableSuggestion(item.Label))
+                                            {
+                                                <BbTypographyMuted Class="bb:text-sm">
+                                                    Suggested from recent spend: £@FormatDecimal(GetPendingVariableSuggestion(item.Label)!.MonthlyEstimate)
+                                                    (@GetPendingVariableSuggestion(item.Label)!.CoverageLabel)
+                                                </BbTypographyMuted>
+                                                <BbButton Size="ButtonSize.Small"
+                                                          Variant="ButtonVariant.Outline"
+                                                          OnClick="() => AcceptVariableSuggestion(item)">
+                                                    Use suggested estimate
+                                                </BbButton>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <BbLabel>Fixed amount per payment (£)</BbLabel>
+                                            <BbInput Type="InputType.Number"
+                                                     Value="@FormatDecimal(_expenseAmountByLabel[item.Label])"
+                                                     ValueChanged="@(v => _expenseAmountByLabel[item.Label] = ParseDecimal(v, _expenseAmountByLabel[item.Label]))" />
+                                            <BbLabel>Payment anchor</BbLabel>
+                                            <BbDatePicker Value="@GetExpenseAnchorPickerValue(item.Label)"
+                                                          ValueChanged="@(v => SetExpenseAnchorFromPickerAsync(item.Label, v))" />
+                                        }
+                                    }
+                                    <div class="bb:flex bb:flex-wrap bb:gap-2">
+                                        <BbButton Size="ButtonSize.Small" OnClick="() => SaveConfirmedEditAsync(item)">Save changes</BbButton>
+                                        <BbButton Size="ButtonSize.Small"
+                                                  Variant="ButtonVariant.Outline"
+                                                  OnClick="() => ToggleEditConfirmedAsync(item)">
+                                            Cancel
+                                        </BbButton>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bb:flex bb:flex-wrap bb:gap-2 bb:pt-2">
+                                    <BbButton Size="ButtonSize.Small"
+                                              Variant="ButtonVariant.Outline"
+                                              OnClick="() => ToggleEditConfirmedAsync(item)">
+                                        Edit
+                                    </BbButton>
+                                    <BbButton Size="ButtonSize.Small"
+                                              Variant="ButtonVariant.Outline"
+                                              OnClick="() => DeleteConfirmedAsync(item)">
+                                        Delete
+                                    </BbButton>
+                                </div>
+                            }
                         }
                         @if (!item.IsIncome && item.State == PatternConfirmationState.Confirmed)
                         {
