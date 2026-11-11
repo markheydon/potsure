@@ -1,0 +1,74 @@
+@page "/plan/funding"
+@rendermode InteractiveServer
+
+<PageTitle>Recorded funding</PageTitle>
+
+<PotsurePageHeader Title="Recorded and planned funding"
+                   Description="Recorded funding is what you have already set aside; imports do not change it."
+                   HeadingLevel="1" />
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading funding…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Funding unavailable</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+}
+else
+{
+    <BbAlert Variant="AlertVariant.Info">
+        <Icon><LucideIcon Name="info" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertDescription>
+                Four measures on reports: allocation, recorded funding, actual activity, and under/over.
+                Recorded funding is what you have already set aside; imports do not change it.
+            </BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+
+    <div class="bb:grid bb:items-start bb:gap-6 bb:md:grid-cols-2 bb:lg:grid-cols-3">
+        @foreach (FundingFormRow row in _rows)
+        {
+            <PotsureSection Title="@BudgetCategoryDisplay.Format(row.Kind)">
+<ChildContent>
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Recorded funding (category)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(row.RecordedDirect)"
+                             ValueChanged="@(v => row.RecordedDirect = ParseDecimal(v, row.RecordedDirect))" />
+                </div>
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Planned future funding (category)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(row.PlannedDirect)"
+                             ValueChanged="@(v => row.PlannedDirect = ParseDecimal(v, row.PlannedDirect))" />
+                </div>
+                @if (row.Pots.Count > 0)
+                {
+                    <BbSeparator />
+                    <BbTypographySmall Class="bb:font-medium">Pot recorded funding</BbTypographySmall>
+                    @foreach (PotFundingForm pot in row.Pots)
+                    {
+                        <div class="bb:grid bb:gap-2">
+                            <BbLabel>@pot.Name</BbLabel>
+                            <BbInput Type="InputType.Number"
+                                     Value="@FormatDecimal(pot.Recorded)"
+                                     ValueChanged="@(v => pot.Recorded = ParseDecimal(v, pot.Recorded))" />
+                        </div>
+                    }
+                }
+</ChildContent>
+                <Footer>
+                    <BbButton Variant="ButtonVariant.Default" OnClick="() => SaveRowAsync(row)">Save @BudgetCategoryDisplay.Format(row.Kind)</BbButton>
+                </Footer>
+            </PotsureSection>
+        }
+    </div>
+}

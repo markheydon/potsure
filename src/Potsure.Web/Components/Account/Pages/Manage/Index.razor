@@ -1,0 +1,137 @@
+﻿@page "/Account/Manage"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Edit profile</PageTitle>
+
+<StatusMessage />
+
+<BbCard Class="bb:w-full bb:max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="bb:text-2xl">Edit profile</BbCardTitle>
+        <BbCardDescription>Update your personal information.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent Class="bb:space-y-6">
+        <BbSeparator />
+        <div class="bb:flex bb:items-center bb:gap-4">
+            <BbAvatar Size="AvatarSize.Large">
+                <BbAvatarFallback>@ProfileInitials</BbAvatarFallback>
+            </BbAvatar>
+        </div>
+        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+            <DataAnnotationsValidator />
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+            <div class="bb:space-y-4">
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel For="profile-username">Username</BbLabel>
+                    <BbInput Id="profile-username" Value="@username" Disabled="true" Placeholder="Username" />
+                </div>
+                <div class="bb:space-y-2">
+                    <div class="bb:grid bb:gap-2">
+                        <BbLabel For="profile-email">Email</BbLabel>
+                        <BbInput Id="profile-email" Value="@email" Disabled="true" Placeholder="Email" />
+                    </div>
+                    <BbTypographyMuted Class="bb:text-sm">This is your primary email.</BbTypographyMuted>
+                    <BbTypographyMuted Class="bb:text-sm">
+                        To change it, go to
+                        <BbLink Href="Account/Manage/Email" Class="bb:underline-offset-4 bb:hover:underline">Manage email</BbLink>.
+                    </BbTypographyMuted>
+                </div>
+                <BbFormFieldInput TValue="string"
+                                  @bind-Value="Input.PhoneNumber"
+                                  Label="Phone number"
+                                  Placeholder="Enter your phone number" />
+            </div>
+            <BbSeparator Class="bb:mt-6 bb:mb-4" />
+            <div class="bb:flex bb:flex-col-reverse bb:gap-2 bb:sm:flex-row bb:sm:justify-end">
+                <BbButton Variant="ButtonVariant.Outline" Href="/">Cancel</BbButton>
+                <BbButton Type="ButtonType.Submit">Save changes</BbButton>
+            </div>
+        </EditForm>
+    </BbCardContent>
+</BbCard>
+
+@code {
+    private ApplicationUser? user;
+    private string? username;
+    private string? email;
+    private string? phoneNumber;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    private string ProfileInitials => GetInitials(username ?? email);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        username = await UserManager.GetUserNameAsync(user);
+        email = await UserManager.GetEmailAsync(user);
+        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+
+        Input.PhoneNumber ??= phoneNumber;
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        if (Input.PhoneNumber != phoneNumber)
+        {
+            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+            if (!setPhoneResult.Succeeded)
+            {
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                return;
+            }
+        }
+
+        await SignInManager.RefreshSignInAsync(user);
+        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+    }
+
+    private static string GetInitials(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "?";
+        }
+
+        var localPart = value.Contains('@', StringComparison.Ordinal)
+            ? value.Split('@')[0]
+            : value;
+
+        var letters = localPart.Where(char.IsLetterOrDigit).Take(2).ToArray();
+        return letters.Length == 0
+            ? "?"
+            : new string(letters).ToUpperInvariant();
+    }
+
+    private sealed class InputModel
+    {
+        [Phone]
+        [Display(Name = "Phone number")]
+        public string? PhoneNumber { get; set; }
+    }
+}

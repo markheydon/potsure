@@ -1,0 +1,18 @@
+@inherits LayoutComponentBase
+
+<div class="bb:relative bb:flex bb:min-h-screen bb:flex-col">
+    <header class="bb:flex bb:h-14 bb:items-center bb:justify-end bb:px-4">
+        <BbDarkModeToggle @rendermode="InteractiveServer"
+                          Variant="ButtonVariant.Ghost" />
+    </header>
+
+    <main class="bb:flex bb:flex-1 bb:flex-col bb:items-center bb:px-4 bb:pb-8">
+        <div class="bb:w-full bb:max-w-sm">
+            @Body
+        </div>
+    </main>
+</div>
+
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<BbDialogProvider />
+<BbPortalHost />

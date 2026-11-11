@@ -1,0 +1,180 @@
+﻿@page "/reports/category-health"
+@rendermode InteractiveServer
+
+<PageTitle>Category health</PageTitle>
+
+<PotsurePageHeader Title="Category health" HeadingLevel="1" />
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading report…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Report unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_summary is not null)
+{
+    <ReportDateRangePicker />
+
+    <PotsureSection Title="Income">
+        <BbItemGroup Class="bb:grid bb:gap-2 bb:sm:grid-cols-2">
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.BudgetedIncomeHeading</BbItemTitle>
+                    <BbItemDescription>
+                        @if (_summary.Value.PlanIncomeNotSet)
+                        {
+                            <text>Not set</text>
+                        }
+                        else
+                        {
+                            @UkCurrencyDisplay.Format(_summary.Value.EstimatedIncomeInRange?.Amount ?? 0m)
+                        }
+                    </BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+            <BbItem>
+                <BbItemContent>
+                    <BbItemTitle>@ReportCopy.ActualReceiptsHeading</BbItemTitle>
+                    <BbItemDescription>@UkCurrencyDisplay.Format(_summary.Value.ActualIncomeInPeriod.Amount)</BbItemDescription>
+                </BbItemContent>
+            </BbItem>
+        </BbItemGroup>
+        <BbTypographyMuted>@ReportCopy.CategoryHealthBudgetedNote</BbTypographyMuted>
+    </PotsureSection>
+
+    @if (_categoryChartRows.Count > 0)
+    {
+        <section aria-label="Category measures chart">
+            <PotsurePageHeader Title="Category measures chart"
+                               HeadingLevel="2"
+                               Class="bb:sr-only bb:mb-4" />
+            <BbBarChart Data="@_categoryChartRows"
+                        Config="@_categoryChartConfig"
+                        Title="Category measures"
+                        Height="350px"
+                        AriaLabel="Grouped bar chart of allocation, recorded funding and actual activity by category">
+                <BbXAxis DataKey="Category" />
+                <BbYAxis />
+                <BbChartTooltip />
+                <BbChartLegend />
+                <BbBar DataKey="Allocation" />
+                <BbBar DataKey="RecordedFunding" />
+                <BbBar DataKey="Actual" />
+            </BbBarChart>
+        </section>
+    }
+
+    <BbDataTable TData="CategoryPeriodTableRow"
+                 Data="@_categoryTableRows"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="@CategoryTableAriaLabel">
+        <Columns>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="BudgetCategoryKind"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    @FormatKind(row.Summary.Kind)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Allocation">
+                <CellTemplate Context="row">
+                    @(row.Summary.NotSet ? "Not set" : UkCurrencyDisplay.Format(row.Summary.Allocation?.Amount ?? 0m))
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Recorded funding">
+                <CellTemplate Context="row">
+                    @UkCurrencyDisplay.Format(row.Summary.RecordedFunding.Amount)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Actual activity">
+                <CellTemplate Context="row">
+                    @UkCurrencyDisplay.Format(row.Summary.ActualActivity.Amount)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="CategoryPeriodTableRow" TValue="decimal"
+                               Header="Under / over">
+                <CellTemplate Context="row">
+                    @(row.Summary.NotSet ? "Not set" : UkCurrencyDisplay.Format(row.Summary.UnderOver?.Amount ?? 0m))
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
+
+    @foreach (CategoryPeriodSummary row in _summary.Value.Categories.Where(c => c.OverAllocationWarning))
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Over-allocation</BbAlertTitle>
+            <BbAlertDescription>
+                Recorded funding and pot assignments exceed allocation for @FormatKind(row.Kind).
+            </BbAlertDescription>
+        </BbAlert>
+    }
+
+    @if (_potBreakdown.Count > 0)
+    {
+        <PotsureSection Title="Mapped bank pots">
+            <BbDataTable TData="CategoryPotBreakdownLine"
+                           Data="@_potBreakdown"
+                           ShowToolbar="false"
+                           ShowPagination="false"
+                           AriaLabel="Pot funding by category">
+                <Columns>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="BudgetCategoryKind"
+                                       Header="Category">
+                        <CellTemplate Context="pot">
+                            @FormatKind(pot.Category)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
+                                       Header="Pot"
+                                       Property="@(pot => pot.PotName)" />
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="string"
+                                       Header="Allocation to pot">
+                        <CellTemplate Context="pot">
+                            @(pot.AllocationToPot is decimal allocation ? UkCurrencyDisplay.Format(allocation) : "-")
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                    <BbDataTableColumn TData="CategoryPotBreakdownLine" TValue="decimal"
+                                       Header="Recorded funding">
+                        <CellTemplate Context="pot">
+                            @UkCurrencyDisplay.Format(pot.RecordedFunding)
+                        </CellTemplate>
+                    </BbDataTableColumn>
+                </Columns>
+            </BbDataTable>
+        </PotsureSection>
+    }
+
+    <div class="bb:mt-4" id="category-health-text-summary">
+        <BbTypographyMuted>Textual summary:</BbTypographyMuted>
+        <BbItemGroup>
+            @foreach (CategoryPeriodSummary row in _summary.Value.Categories)
+            {
+                <BbItem>
+                    <BbItemTitle>@FormatKind(row.Kind): allocation @(row.NotSet ? "not set" : UkCurrencyDisplay.Format(row.Allocation?.Amount ?? 0m)), recorded funding @UkCurrencyDisplay.Format(row.RecordedFunding.Amount), actual @UkCurrencyDisplay.Format(row.ActualActivity.Amount), under/over @(row.NotSet ? "not set" : UkCurrencyDisplay.Format(row.UnderOver?.Amount ?? 0m)).</BbItemTitle>
+                </BbItem>
+            }
+        </BbItemGroup>
+    </div>
+
+    @if (_summary.Value.UncategorisedSpendWarning)
+    {
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertTitle>Uncategorised spend</BbAlertTitle>
+            <BbAlertDescription>
+                @UkCurrencyDisplay.Format(_summary.Value.UncategorisedSpend.Amount) of spend is not attributed to a category.
+                <BbLink Href="/reports/categorise">Assign transactions</BbLink>
+                ·
+                <BbLink Href="/reports/attribution">Reassign attributed debits</BbLink>
+            </BbAlertDescription>
+        </BbAlert>
+    }
+}

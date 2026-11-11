@@ -1,0 +1,24 @@
+@inherits LayoutComponentBase
+
+<BbSidebarProvider>
+    <AppSidebar />
+
+    <BbSidebarInset>
+        <header class="bb:sticky bb:top-0 bb:z-40 bb:flex bb:h-14 bb:items-center bb:gap-2 bb:border-b bb:bg-background bb:px-4">
+            <BbSidebarTrigger />
+            <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-4" />
+            <BbTypographySmall Class="bb:font-medium">Potsure</BbTypographySmall>
+            <div class="bb:flex bb:flex-1 bb:items-center bb:justify-end bb:gap-1">
+                <BbDarkModeToggle Variant="ButtonVariant.Ghost" />
+            </div>
+        </header>
+
+        <div class="bb:flex bb:flex-1 bb:flex-col bb:gap-6 bb:p-6">
+            @Body
+        </div>
+    </BbSidebarInset>
+</BbSidebarProvider>
+
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<BbDialogProvider />
+<BbPortalHost />

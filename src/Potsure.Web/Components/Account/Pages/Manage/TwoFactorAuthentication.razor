@@ -1,0 +1,125 @@
+﻿@page "/Account/Manage/TwoFactorAuthentication"
+
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Two-factor authentication (2FA)</PageTitle>
+
+<StatusMessage />
+<BbCard Class="bb:w-full bb:max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="bb:text-2xl">Two-factor authentication</BbCardTitle>
+        <BbCardDescription>Manage authenticator apps and recovery codes.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent Class="bb:space-y-4">
+@if (canTrack)
+{
+    if (is2faEnabled)
+    {
+        if (recoveryCodesLeft == 0)
+        {
+            <BbAlert Variant="AlertVariant.Danger">
+                <BbAlertDescription>
+                    <strong>You have no recovery codes left.</strong>
+                    <BbTypographyP>You must <BbLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</BbLink> before you can log in with a recovery code.</BbTypographyP>
+                </BbAlertDescription>
+            </BbAlert>
+        }
+        else if (recoveryCodesLeft == 1)
+        {
+            <BbAlert Variant="AlertVariant.Danger">
+                <BbAlertDescription>
+                    <strong>You have 1 recovery code left.</strong>
+                    <BbTypographyP>You can <BbLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</BbLink>.</BbTypographyP>
+                </BbAlertDescription>
+            </BbAlert>
+        }
+        else if (recoveryCodesLeft <= 3)
+        {
+            <BbAlert Variant="AlertVariant.Warning">
+                <BbAlertDescription>
+                    <strong>You have @recoveryCodesLeft recovery codes left.</strong>
+                    <BbTypographyP>You should <BbLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</BbLink>.</BbTypographyP>
+                </BbAlertDescription>
+            </BbAlert>
+        }
+
+        <div class="bb:flex bb:flex-wrap bb:gap-2">
+            @if (isMachineRemembered)
+            {
+                <form @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
+                    <AntiforgeryToken />
+                    <BbButton Type="ButtonType.Submit">Forget this browser</BbButton>
+                </form>
+            }
+
+            <BbButton Href="Account/Manage/Disable2fa">Disable 2FA</BbButton>
+            <BbButton Href="Account/Manage/GenerateRecoveryCodes">Reset recovery codes</BbButton>
+        </div>
+    }
+
+    <div class="bb:flex bb:flex-wrap bb:gap-2">
+        @if (!hasAuthenticator)
+        {
+            <BbButton Href="Account/Manage/EnableAuthenticator">Add authenticator app</BbButton>
+        }
+        else
+        {
+            <BbButton Href="Account/Manage/EnableAuthenticator">Set up authenticator app</BbButton>
+            <BbButton Href="Account/Manage/ResetAuthenticator">Reset authenticator app</BbButton>
+        }
+    </div>
+}
+else
+{
+    <BbAlert Variant="AlertVariant.Danger">
+        <BbAlertDescription>
+            <strong>Privacy and cookie policy have not been accepted.</strong>
+            <BbTypographyP>You must accept the policy before you can enable two-factor authentication.</BbTypographyP>
+        </BbAlertDescription>
+    </BbAlert>
+}
+
+    </BbCardContent>
+</BbCard>
+
+@code {
+    private bool canTrack;
+    private bool hasAuthenticator;
+    private int recoveryCodesLeft;
+    private bool is2faEnabled;
+    private bool isMachineRemembered;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        canTrack = HttpContext.Features.Get<ITrackingConsentFeature>()?.CanTrack ?? true;
+        hasAuthenticator = await UserManager.GetAuthenticatorKeyAsync(user) is not null;
+        is2faEnabled = await UserManager.GetTwoFactorEnabledAsync(user);
+        isMachineRemembered = await SignInManager.IsTwoFactorClientRememberedAsync(user);
+        recoveryCodesLeft = await UserManager.CountRecoveryCodesAsync(user);
+    }
+
+    private async Task OnSubmitForgetBrowserAsync()
+    {
+        await SignInManager.ForgetTwoFactorClientAsync();
+
+        RedirectManager.RedirectToCurrentPageWithStatus(
+            "The current browser has been forgotten. When you login again from this browser you will be prompted for your 2fa code.",
+            HttpContext);
+    }
+}

@@ -1,0 +1,155 @@
+@page "/plan"
+@rendermode InteractiveServer
+
+<PageTitle>Plan settings</PageTitle>
+
+<PotsurePageHeader Title="Plan settings"
+                   Description="Choose your allocation preset and estimated income for category allocations."
+                   HeadingLevel="1">
+    <Actions>
+        <PotsureRelatedNav>
+            <BbButton Href="/plan/pots" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="piggy-bank" Size="15" /></Icon>
+                <ChildContent>Pot mapping</ChildContent>
+            </BbButton>
+            <BbButton Href="/plan/funding" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                <Icon><LucideIcon Name="wallet" Size="15" /></Icon>
+                <ChildContent>Recorded funding</ChildContent>
+            </BbButton>
+        </PotsureRelatedNav>
+    </Actions>
+</PotsurePageHeader>
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading plan…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+        <ChildContent>
+            <BbAlertTitle>Could not save plan</BbAlertTitle>
+            <BbAlertDescription>@_error</BbAlertDescription>
+        </ChildContent>
+    </BbAlert>
+}
+else
+{
+    @if (_saveMessage is not null)
+    {
+        <BbAlert Variant="AlertVariant.Success" AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+            <Icon><LucideIcon Name="circle-check" Size="18" /></Icon>
+            <ChildContent>
+                <BbAlertTitle>Plan saved</BbAlertTitle>
+                <BbAlertDescription>@_saveMessage</BbAlertDescription>
+            </ChildContent>
+        </BbAlert>
+    }
+
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <PotsureSection Title="Standing plan income" Class="bb:w-full bb:max-w-4xl">
+<ChildContent>
+            <BbTypographyMuted>
+                <strong>@ReportCopy.BudgetedIncomeHeading</strong> drives category allocations only.
+                Actual receipts are shown using the window below and on reports separately (@ReportCopy.ActualReceiptsHeading).
+            </BbTypographyMuted>
+
+            @if (!_planIncomeComplete)
+            {
+                <BbAlert Variant="AlertVariant.Info">
+                    <BbAlertTitle>Estimated income not set</BbAlertTitle>
+                    <BbAlertDescription>Enter an amount and cadence below to enable category allocations on reports.</BbAlertDescription>
+                </BbAlert>
+            }
+
+            <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Allocation preset</BbLabel>
+                    <BbSelect TValue="AllocationPreset" @bind-Value="_form.Preset">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select preset">
+                                <ChildContent Context="ignored">
+                                    @FormatPreset(_form.Preset)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (AllocationPreset preset in Enum.GetValues<AllocationPreset>())
+                            {
+                                <BbSelectItem TValue="AllocationPreset" Value="@preset" Text="@FormatPreset(preset)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Estimated income amount</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@FormatDecimal(_form.EstimatedIncomeAmount)"
+                             ValueChanged="@(v => _form.EstimatedIncomeAmount = ParseDecimal(v, _form.EstimatedIncomeAmount))" />
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Income cadence</BbLabel>
+                    <BbSelect TValue="PlanIncomeCadence?" @bind-Value="_form.EstimatedIncomeCadence">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select cadence">
+                                <ChildContent Context="ignored">
+                                    @(_form.EstimatedIncomeCadence is { } c ? FormatCadence(c) : "Not selected")
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (PlanIncomeCadence cadence in Enum.GetValues<PlanIncomeCadence>())
+                            {
+                                <BbSelectItem TValue="PlanIncomeCadence?" Value="@cadence" Text="@FormatCadence(cadence)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </div>
+
+                <div class="bb:grid bb:gap-2">
+                    <BbLabel>Actual receipts window (months)</BbLabel>
+                    <BbInput Type="InputType.Number"
+                             Value="@_form.ActualIncomeWindowMonths.ToString(CultureInfo.InvariantCulture)"
+                             ValueChanged="OnActualIncomeWindowMonthsChanged" />
+                    <BbTypographyMuted>Used to summarise actual income on this page (1 to 12 months).</BbTypographyMuted>
+                </div>
+            </div>
+
+            @if (_incomeSuggestion is not null)
+            {
+                <BbAlert Variant="AlertVariant.Info">
+                    <Icon><LucideIcon Name="lightbulb" Size="18" /></Icon>
+                    <ChildContent>
+                        <BbAlertTitle>Suggested estimated income (not applied)</BbAlertTitle>
+                        <BbAlertDescription>
+                            @UkCurrencyDisplay.Format(_incomeSuggestion.SuggestedAmount) per month equivalent (@FormatCadence(_incomeSuggestion.SuggestedCadence)).
+                            @_incomeSuggestion.Rationale
+                            @if (_incomeSuggestion.ExcludedSources.Count > 0)
+                            {
+                                <span> Not included (variable or ad hoc cadence, or no amount): @string.Join(", ", _incomeSuggestion.ExcludedSources).</span>
+                            }
+                        </BbAlertDescription>
+                    </ChildContent>
+                </BbAlert>
+            }
+
+            @if (_actualReceiptsInWindow is not null)
+            {
+                <BbTypographyMuted AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+                    @ReportCopy.ActualReceiptsHeading (last @_form.ActualIncomeWindowMonths month@(_form.ActualIncomeWindowMonths == 1 ? "" : "s")):
+                    @UkCurrencyDisplay.Format(_actualReceiptsInWindow.Value)
+                </BbTypographyMuted>
+            }
+</ChildContent>
+
+            <Footer>
+                <BbButton Type="ButtonType.Submit" Disabled="_saving">
+                    @(_saving ? "Saving…" : "Save plan")
+                </BbButton>
+            </Footer>
+        </PotsureSection>
+    </EditForm>
+}

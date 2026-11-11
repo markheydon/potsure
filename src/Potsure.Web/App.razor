@@ -1,0 +1,45 @@
+﻿@namespace Potsure.Web.Components
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <!-- Your theme's CSS variables. Edit these to restyle the whole app. -->
+    <!-- link href="styles/themes/default.css" rel="stylesheet" / -->
+    <link href="styles/themes/sunset.css" rel="stylesheet" />
+    <!-- BlazorBlueprint component styles -->
+    <link href="_content/BlazorBlueprint.Components/blazorblueprint.css" rel="stylesheet" />
+    <!-- Base and primary colour palettes for BbThemeSwitcher. Loads after your
+         theme so the data-base-color / data-primary-color selectors can win. -->
+    <!-- link href="_content/BlazorBlueprint.Components/css/themes.css" rel="stylesheet" / -->
+    <!-- App styles (Tailwind utilities for the pages in this project) -->
+    <link href="css/app.css" rel="stylesheet" />
+    <!-- Quill 2 powers BbRichTextEditor. Only the showcase uses it - delete both
+         Quill tags if you drop the rich text editor. -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@@2.0.3/dist/quill.core.css" rel="stylesheet" />
+    <HeadOutlet />
+    <!-- Applies the saved theme before the first paint. Must stay a plain
+         blocking script: no type="module", no async, no defer. -->
+    <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+</head>
+
+<body class="font-sans antialiased">
+    <Routes @rendermode="InteractiveServer" />
+
+    <div id="blazor-error-ui"
+         class="hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-destructive text-destructive-foreground">
+        An error has occurred. This application may no longer respond until reloaded.
+        <a href="" class="underline">Reload</a>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@@2.0.3/dist/quill.js"></script>
+</body>
+
+</html>

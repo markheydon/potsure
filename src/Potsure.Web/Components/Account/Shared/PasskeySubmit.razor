@@ -1,0 +1,66 @@
+﻿@using Microsoft.AspNetCore.Antiforgery
+@inject IServiceProvider Services
+
+<button type="submit" name="__passkeySubmit" @attributes="SubmitAttributes">@ChildContent</button>
+<passkey-submit
+    operation="@Operation"
+    name="@Name"
+    email-name="@EmailName"
+    request-token-name="@tokens?.HeaderName"
+    request-token-value="@tokens?.RequestToken">
+</passkey-submit>
+
+@code {
+    private const string PrimaryButtonClass =
+        "bb:w-full bb:inline-flex bb:h-10 bb:items-center bb:justify-center bb:gap-2 bb:rounded-md bb:bg-primary bb:px-4 bb:py-2 bb:text-sm bb:font-medium bb:text-primary-foreground bb:hover:opacity-90 bb:focus-visible:outline bb:focus-visible:outline-2 bb:focus-visible:outline-offset-2 bb:focus-visible:outline-ring";
+
+    private const string OutlineButtonClass =
+        "bb:w-full bb:inline-flex bb:h-10 bb:items-center bb:justify-center bb:gap-2 bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-4 bb:py-2 bb:text-sm bb:font-medium bb:shadow-sm bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline bb:focus-visible:outline-2 bb:focus-visible:outline-offset-2 bb:focus-visible:outline-ring";
+
+    private AntiforgeryTokenSet? tokens;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [Parameter]
+    [EditorRequired]
+    public PasskeyOperation Operation { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public string Name { get; set; } = default!;
+
+    [Parameter]
+    public string? EmailName { get; set; }
+
+    [Parameter]
+    public bool Outline { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private IReadOnlyDictionary<string, object> SubmitAttributes
+    {
+        get
+        {
+            var attrs = AdditionalAttributes is null
+                ? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, object>(AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
+
+            if (!attrs.ContainsKey("class"))
+            {
+                attrs["class"] = Outline ? OutlineButtonClass : PrimaryButtonClass;
+            }
+
+            return attrs;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        tokens = Services.GetService<IAntiforgery>()?.GetTokens(HttpContext);
+    }
+}

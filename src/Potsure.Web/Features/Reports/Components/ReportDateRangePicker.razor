@@ -1,0 +1,69 @@
+@using Potsure.Web.Services
+@inject ReportDateRangeSessionState DateRangeState
+
+<div class="bb:grid bb:gap-4 bb:sm:grid-cols-2 bb:max-w-2xl bb:mb-6" role="group" aria-label="Report date range">
+    <div class="bb:grid bb:gap-2">
+        <BbLabel>Report start (inclusive)</BbLabel>
+        <BbDatePicker Value="_start"
+                      ValueChanged="OnStartChangedAsync" />
+    </div>
+    <div class="bb:grid bb:gap-2">
+        <BbLabel>Report end (inclusive)</BbLabel>
+        <BbDatePicker Value="_end"
+                      ValueChanged="OnEndChangedAsync" />
+    </div>
+</div>
+
+@code {
+    private DateTime? _start;
+    private DateTime? _end;
+
+    protected override void OnInitialized()
+    {
+        (DateOnly rangeStart, DateOnly rangeEnd) = DateRangeState.GetRange();
+        _start = rangeStart.ToDateTime(TimeOnly.MinValue);
+        _end = rangeEnd.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private Task OnStartChangedAsync(DateTime? value)
+    {
+        if (value is null || _end is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        DateOnly start = DateOnly.FromDateTime(value.Value);
+        DateOnly end = DateOnly.FromDateTime(_end.Value);
+        (DateOnly currentStart, DateOnly currentEnd) = DateRangeState.GetRange();
+        if (start == currentStart && end == currentEnd)
+        {
+            _start = value;
+            return Task.CompletedTask;
+        }
+
+        _start = value;
+        DateRangeState.SetRange(start, end);
+        return Task.CompletedTask;
+    }
+
+    private Task OnEndChangedAsync(DateTime? value)
+    {
+        if (value is null || _start is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        DateOnly start = DateOnly.FromDateTime(_start.Value);
+        DateOnly end = DateOnly.FromDateTime(value.Value);
+        (DateOnly currentStart, DateOnly currentEnd) = DateRangeState.GetRange();
+        if (start == currentStart && end == currentEnd)
+        {
+            _end = value;
+            return Task.CompletedTask;
+        }
+
+        _end = value;
+        DateRangeState.SetRange(start, end);
+        return Task.CompletedTask;
+    }
+}

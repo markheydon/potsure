@@ -1,0 +1,130 @@
+﻿@page "/reports/categorise"
+@rendermode InteractiveServer
+
+<PageTitle>Assign transactions</PageTitle>
+
+<PotsurePageHeader Title="Assign transactions"
+                   HeadingLevel="1"
+                   />
+
+<BbTypographyMuted>
+    One-off assignments affect category actual activity only and do not create recurring patterns (FR-M037).
+</BbTypographyMuted>
+
+<ReportDateRangePicker />
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading transactions…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else if (_transactions.Count == 0)
+{
+    <BbTypographyP>No unattributed transactions in the current budget period.</BbTypographyP>
+    <PotsureRelatedNav>
+        <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    </PotsureRelatedNav>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <BbAlert Variant="AlertVariant.Default">
+            <BbAlertDescription>@_statusMessage</BbAlertDescription>
+        </BbAlert>
+    }
+
+    <BbDataTable TData="UncategorisedTransactionRow"
+                 Data="@_transactions"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Unattributed transactions">
+        <Columns>
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="DateOnly"
+                               Header="Date">
+                <CellTemplate Context="row">
+                    @row.TransactionDate.ToString("dd/MM/yyyy")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="string"
+                               Header="Name"
+                               Property="@(row => row.Name)" />
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="TransactionKind"
+                               Header="Kind">
+                <CellTemplate Context="row">
+                    @FormatKind(row.Kind)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="decimal"
+                               Header="Amount">
+                <CellTemplate Context="row">
+                    @UkCurrencyDisplay.FormatAbs(row.Amount)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="Guid"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@_selectedCategoryByTransaction[row.TransactionId]"
+                              ValueChanged="@(id => SetCategory(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Category">
+                                <ChildContent Context="ignored">
+                                    @CategoryLabel(_selectedCategoryByTransaction[row.TransactionId])
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (CategoryOption category in _categories)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            @if (ShowPotUi)
+            {
+                <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="Guid?"
+                                   Header="Pot">
+                    <CellTemplate Context="row">
+                        <BbSelect TValue="Guid"
+                                  Value="@GetPotSelection(row.TransactionId)"
+                                  ValueChanged="@(id => SetPotSelection(row.TransactionId, id))">
+                            <BbSelectTrigger>
+                                <BbSelectValue Placeholder="None">
+                                    <ChildContent Context="ignored">
+                                        @PotSelectionLabel(row.TransactionId)
+                                    </ChildContent>
+                                </BbSelectValue>
+                            </BbSelectTrigger>
+                            <BbSelectContent>
+                                <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                                @foreach (PotOption pot in PotsForCategory(_selectedCategoryByTransaction[row.TransactionId]))
+                                {
+                                    <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                                }
+                            </BbSelectContent>
+                        </BbSelect>
+                    </CellTemplate>
+                </BbDataTableColumn>
+            }
+            <BbDataTableColumn TData="UncategorisedTransactionRow" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="row">
+                    <BbButton OnClick="() => AssignAsync(row.TransactionId)">Assign</BbButton>
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
+
+    <PotsureRelatedNav>
+        <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    </PotsureRelatedNav>
+}
