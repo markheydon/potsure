@@ -1,24 +1,18 @@
 {
   "name": "Potsure",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
   "features": {
     "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {},
-    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "os-provided"
-    },
-    "ghcr.io/devcontainers-extra/features/uv:1": {},
-    "ghcr.io/devcontainers/features/dotnet:2": {
-      "version": "10.0"
-    },
-    "ghcr.io/devcontainers/features/powershell:2": {},
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/markheydon/devcontainer-features/copilot-likes:1": {},
+    "ghcr.io/markheydon/devcontainer-features/spec-kit:1": {},
     "ghcr.io/stu-bell/devcontainer-features/cursor-cli:0": {}
   },
   "hostRequirements": {
     "cpus": 4,
-    "memory": "16gb",
+    "memory": "8gb",
     "storage": "32gb"
   },
   "onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools",
@@ -26,13 +20,13 @@
     "SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust"
   },
   "postStartCommand": "aspire certs trust --non-interactive",
-  "postCreateCommand": "bash .devcontainer/setup-spec-kit.sh",
   "customizations": {
     "vscode": {
       "extensions": [
         "microsoft-aspire.aspire-vscode",
-        "GitHub.copilot-chat",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "GitHub.copilot",
+        "GitHub.vscode-github-actions"
       ]
     }
   }
