@@ -35,7 +35,9 @@ public partial class PrivacyDataPanel
     private string _deleteChallengePhrase = string.Empty;
     private string _hostedPassword = string.Empty;
     private string? _exportMessage;
+    private string? _exportReauthError;
     private string? _deleteMessage;
+    private string? _deleteReauthError;
     private string? _downloadBase64;
     private string? _downloadFileName;
     private string? _downloadContentType;
@@ -46,6 +48,7 @@ public partial class PrivacyDataPanel
     private async Task BeginExportAsync()
     {
         _exportMessage = null;
+        _exportReauthError = null;
         _downloadBase64 = null;
         if (ReauthenticationService.IsReauthenticationValid)
         {
@@ -54,6 +57,7 @@ public partial class PrivacyDataPanel
         }
 
         _exportChallengePhrase = string.Empty;
+        _exportReauthError = null;
         _hostedPassword = string.Empty;
         _showExportReauth = true;
     }
@@ -61,6 +65,7 @@ public partial class PrivacyDataPanel
     private async Task BeginDeleteAsync()
     {
         _deleteMessage = null;
+        _deleteReauthError = null;
         if (ReauthenticationService.IsReauthenticationValid)
         {
             await DeleteAsync();
@@ -82,17 +87,19 @@ public partial class PrivacyDataPanel
 
     private async Task ConfirmExportReauthAsync()
     {
+        _exportReauthError = null;
         if (IsHosted)
         {
-            if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
+            string? hostedError = await ValidateHostedPasswordAsync();
+            if (hostedError is not null)
             {
-                _exportMessage = "Enter your current account password to confirm export.";
+                _exportReauthError = hostedError;
                 return;
             }
         }
         else if (!string.Equals(_exportChallengePhrase.Trim(), ExportPhrase, StringComparison.Ordinal))
         {
-            _exportMessage = $"Type {ExportPhrase} to confirm export.";
+            _exportReauthError = $"Type {ExportPhrase} exactly to confirm export.";
             return;
         }
 
@@ -103,23 +110,58 @@ public partial class PrivacyDataPanel
 
     private async Task ConfirmDeleteReauthAsync()
     {
+        _deleteReauthError = null;
         if (IsHosted)
         {
-            if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
+            string? hostedError = await ValidateHostedPasswordAsync();
+            if (hostedError is not null)
             {
-                _deleteMessage = "Enter your current account password to confirm deletion.";
+                _deleteReauthError = hostedError;
                 return;
             }
         }
         else if (!string.Equals(_deleteChallengePhrase.Trim(), DeletePhrase, StringComparison.Ordinal))
         {
-            _deleteMessage = $"Type {DeletePhrase} to confirm deletion.";
+            _deleteReauthError = $"Type {DeletePhrase} exactly to confirm deletion.";
             return;
         }
 
         ReauthenticationService.GrantReauthentication();
         _showDeleteReauth = false;
         await DeleteAsync();
+    }
+
+    private Task SetHostedPasswordAsync(string? value)
+    {
+        _hostedPassword = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task SetExportChallengePhraseAsync(string? value)
+    {
+        _exportChallengePhrase = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task SetDeleteChallengePhraseAsync(string? value)
+    {
+        _deleteChallengePhrase = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private async Task<string?> ValidateHostedPasswordAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_hostedPassword))
+        {
+            return "Enter your password to continue.";
+        }
+
+        if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
+        {
+            return "That password is incorrect. Try again.";
+        }
+
+        return null;
     }
 
     private async Task ExportAsync()

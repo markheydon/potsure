@@ -36,14 +36,23 @@
             {
                 <BbTypographyP>Enter your current account password to confirm export.</BbTypographyP>
                 <BbInput Type="InputType.Password"
-                         @bind-Value="_hostedPassword"
+                         Value="_hostedPassword"
+                         ValueChanged="SetHostedPasswordAsync"
                          Autocomplete="current-password"
                          Placeholder="Current password" />
             }
             else
             {
                 <BbTypographyP>Type @ExportPhrase to confirm you want to download your financial data.</BbTypographyP>
-                <BbInput @bind-Value="_exportChallengePhrase" Placeholder="@ExportPhrase" />
+                <BbInput Value="_exportChallengePhrase"
+                         ValueChanged="SetExportChallengePhraseAsync"
+                         Placeholder="@ExportPhrase" />
+            }
+            @if (_exportReauthError is not null)
+            {
+                <BbAlert Variant="AlertVariant.Warning" AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+                    <BbAlertDescription>@_exportReauthError</BbAlertDescription>
+                </BbAlert>
             }
             <BbButton Disabled="_busy" OnClick="ConfirmExportReauthAsync">Continue export</BbButton>
         </div>
@@ -85,14 +94,23 @@
             {
                 <BbTypographyP>Enter your current account password to confirm permanent deletion.</BbTypographyP>
                 <BbInput Type="InputType.Password"
-                         @bind-Value="_hostedPassword"
+                         Value="_hostedPassword"
+                         ValueChanged="SetHostedPasswordAsync"
                          Autocomplete="current-password"
                          Placeholder="Current password" />
             }
             else
             {
                 <BbTypographyP>Type @DeletePhrase to confirm permanent deletion.</BbTypographyP>
-                <BbInput @bind-Value="_deleteChallengePhrase" Placeholder="@DeletePhrase" />
+                <BbInput Value="_deleteChallengePhrase"
+                         ValueChanged="SetDeleteChallengePhraseAsync"
+                         Placeholder="@DeletePhrase" />
+            }
+            @if (_deleteReauthError is not null)
+            {
+                <BbAlert Variant="AlertVariant.Warning" AdditionalAttributes="@(new Dictionary<string, object> { ["aria-live"] = "polite" })">
+                    <BbAlertDescription>@_deleteReauthError</BbAlertDescription>
+                </BbAlert>
             }
             <BbButton Variant="ButtonVariant.Destructive" Disabled="_busy" OnClick="ConfirmDeleteReauthAsync">
                 Continue deletion

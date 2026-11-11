@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Potsure.Data;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Export;
@@ -20,22 +21,26 @@ public sealed class UserDataDeletionService(
             return false;
         }
 
-        await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
-            await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
         string ownerKey = ownerAccessor.OwnerKey;
+        IExecutionStrategy executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
+                await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        await dbContext.Assignments.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.Transactions.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.StatementUploads.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.RecurringExpenses.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.IncomeSources.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BankPots.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetCategories.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.BudgetProfiles.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.MonzoAccounts.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.Assignments.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.Transactions.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.StatementUploads.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.RecurringExpenses.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.IncomeSources.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.BankPots.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.BudgetCategories.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.BudgetProfiles.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
+            await dbContext.MonzoAccounts.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
 
-        await transaction.CommitAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
+
         return true;
     }
 }
