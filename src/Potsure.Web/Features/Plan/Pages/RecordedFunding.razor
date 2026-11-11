@@ -36,7 +36,7 @@ else
     <div class="bb:grid bb:items-start bb:gap-6 bb:md:grid-cols-2 bb:lg:grid-cols-3">
         @foreach (FundingFormRow row in _rows)
         {
-            <PotsureSection Title="@row.Kind.ToString()">
+            <PotsureSection Title="@BudgetCategoryDisplay.Format(row.Kind)">
 <ChildContent>
                 <div class="bb:grid bb:gap-2">
                     <BbLabel>Recorded funding (category)</BbLabel>
@@ -66,7 +66,7 @@ else
                 }
 </ChildContent>
                 <Footer>
-                    <BbButton Variant="ButtonVariant.Default" OnClick="() => SaveRowAsync(row)">Save @row.Kind</BbButton>
+                    <BbButton Variant="ButtonVariant.Default" OnClick="() => SaveRowAsync(row)">Save @BudgetCategoryDisplay.Format(row.Kind)</BbButton>
                 </Footer>
             </PotsureSection>
         }

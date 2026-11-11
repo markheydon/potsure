@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Potsure.Budgeting;
 using Potsure.Infrastructure.Features.Plan;
+using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Plan.Pages;
 
@@ -38,17 +39,22 @@ public partial class RecordedFunding
         IReadOnlyList<RecordedFundingReadModel> recorded = await RecordedFundingService.GetAsync();
         IReadOnlyList<PlannedFundingReadModel> planned = await PlannedFundingService.GetAsync();
 
-        _rows = recorded
-            .Select(r =>
-            {
-                PlannedFundingReadModel? plan = planned.Single(p => p.CategoryId == r.CategoryId);
-                return new FundingFormRow(
-                    r.CategoryId,
-                    r.Kind,
-                    r.RecordedFundingDirect,
-                    plan.PlannedFutureFundingDirect,
-                    r.Pots.Select(p => new PotFundingForm(p.PotId, p.PotName, p.RecordedFunding)).ToList());
-            })
+        _rows = BudgetCategoryDisplay
+            .OrderByStrategy(
+                recorded.Select(r =>
+                {
+                    PlannedFundingReadModel plan = planned.Single(p => p.CategoryId == r.CategoryId);
+                    return new FundingFormRow(
+                        r.CategoryId,
+                        r.Kind,
+                        r.RecordedFundingDirect,
+                        plan.PlannedFutureFundingDirect,
+                        r.Pots
+                            .OrderBy(p => p.PotName, StringComparer.OrdinalIgnoreCase)
+                            .Select(p => new PotFundingForm(p.PotId, p.PotName, p.RecordedFunding))
+                            .ToList());
+                }),
+                r => r.Kind)
             .ToList();
     }
 
