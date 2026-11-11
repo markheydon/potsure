@@ -88,5 +88,5 @@ Adopt **feature-folder organisation** as the default way to group product capabi
 ## References
 
 - **REF-001**: [`CONVENTIONS.md`](../CONVENTIONS.md)  -  Project Structure
-- **REF-002**: [`.agents/skills/blazor-blueprint/references/potsure-integration.md`](../.agents/skills/blazor-blueprint/references/potsure-integration.md)  -  Web paths
+- **REF-002**: [`src/Potsure.Web/README.md`](../src/Potsure.Web/README.md)  -  Web paths and feature folders
 - **REF-003**: `specs/001-potsure-v1/plan.md`  -  Blazor / Identity shell expectations

@@ -1,30 +1,30 @@
 ---
 name: blazor-blueprint
 description: >-
-  Build and refactor BlazorBlueprint v4 UI in Potsure (Bb* components, primitives,
-  Lucide icons, charts, overlays). Fetches official llms docs on demand instead of
-  guessing APIs. Use when editing Razor under src/Potsure.Web, adding Bb components,
-  theming, dialogs/toasts, or BlazorBlueprint package alignment.
+  Use BlazorBlueprint (Bb*) APIs from official machine-readable documentation.
+  Fetch docs on demand via llms.txt. Use when implementing or refactoring
+  BlazorBlueprint UI, theming, overlays, icons, or layout utilities.
 ---
 
-# BlazorBlueprint (Potsure)
+# BlazorBlueprint
 
-BlazorBlueprint ships **machine-readable docs** at [blazorblueprintui.com/llms.txt](https://blazorblueprintui.com/llms.txt). **Do not copy `llms-full.txt` into this repo** (~2.8 MB, changes with library releases). This skill holds **Potsure wiring** and a **fetch map**; load upstream text only for the components you touch.
+Official docs are published as plain text under [blazorblueprintui.com/llms.txt](https://blazorblueprintui.com/llms.txt). **Do not vendor `llms-full.txt` into the repo** (large, changes with releases). **Do not load the full bundle into context** unless the task is a rare cross-cutting audit.
 
 ## Workflow
 
-1. Read [references/potsure-integration.md](references/potsure-integration.md) before changing global setup (`Program.cs`, `App.razor`, layouts, `_Imports.razor`, theme CSS).
-2. For component or API work, follow [references/documentation-map.md](references/documentation-map.md) and fetch **one or a few** upstream files (WebFetch or `curl`), not the full bundle unless the task truly spans many unrelated components.
-3. Match existing Potsure Razor: `@rendermode InteractiveServer` on interactive pages, `Bb*` styled components first, UK English user-facing copy, AGENTS.md package rules (no new NuGet packages unless the user explicitly asked).
-4. After edits, prefer `dotnet build src/Potsure.Web/Potsure.Web.csproj -c Release` when UI compile breaks are likely.
+1. Open `https://blazorblueprintui.com/llms.txt` for entry points and topic paths.
+2. Resolve a component or topic via `https://blazorblueprintui.com/llms/index.txt` (search for `Bb*` name or keyword).
+3. Fetch **only** the files you need (WebFetch or `curl -sL`), for example `setup.txt`, `patterns.txt`, `services.txt`, or one `components/{slug}.txt` / `primitives/{slug}.txt`.
+4. Use parameter names, child content, and service wiring from the fetched doc when writing Razor.
+5. If the doc and compiler disagree, trust the build and the installed package version.
 
-## Quick upstream index
+## URL index
 
 | Need | URL |
 |------|-----|
 | Entry / package list | `https://blazorblueprintui.com/llms.txt` |
 | Component name → doc path | `https://blazorblueprintui.com/llms/index.txt` |
-| Install, render modes, Tailwind `bb:` prefix | `https://blazorblueprintui.com/llms/setup.txt` |
+| Install, render modes, `bb:` Tailwind prefix | `https://blazorblueprintui.com/llms/setup.txt` |
 | `@bind`, controlled state, conventions | `https://blazorblueprintui.com/llms/patterns.txt` |
 | Toast, dialog, theme, portal services | `https://blazorblueprintui.com/llms/services.txt` |
 | Styled component | `https://blazorblueprintui.com/llms/components/{slug}.txt` |
@@ -33,20 +33,14 @@ BlazorBlueprint ships **machine-readable docs** at [blazorblueprintui.com/llms.t
 
 Slug is kebab-case from the index (e.g. `BbDataTable` → `data-table.txt`).
 
-## Rules agents often miss
+## Fetch hints
 
-- **Two layers**: styled `BlazorBlueprint.Components` (`Bb*`) on `BlazorBlueprint.Primitives`; Potsure uses **Lucide** icons (`BlazorBlueprint.Icons.Lucide.Components`).
-- **Styles**: library utilities use the **`bb:`** prefix in `blazorblueprint.css`; app shell styling uses project CSS/Tailwind separately (see `setup.txt`).
-- **Overlays**: `BbPortalHost` must exist in layouts that host interactive UI using dialogs, sheets, menus, toasts (Potsure: `MainLayout.razor`, `AuthLayout.razor`).
-- **Version alignment**: keep `BlazorBlueprint.Components` and `BlazorBlueprint.Primitives` on matching v4 lines (`Directory.Packages.props`).
-- **Charts**: use BlazorBlueprint chart components per feature spec; do not add a separate chart library without explicit instruction.
+| Task | Typical files |
+|------|----------------|
+| Global setup or first package use | `setup.txt` |
+| Dialogs, sheets, toasts, theme service | `services.txt` + one component doc |
+| Odd binding or state | `patterns.txt` |
+| Unknown `Bb*` API | `index.txt` → single `components/{slug}.txt` |
+| Copy from catalog | `blueprints.txt` then path under `blueprints/` |
 
-## When a skill is worth it
-
-Upstream docs are complete but **large and generic**. This skill is the thin layer: **where Potsure already integrated Blueprint**, **how to pull the right upstream file**, and **repo constraints**. Without it, agents either hallucinate `Bb*` APIs or burn context on `llms-full.txt`.
-
-## Additional resources
-
-- Potsure setup and file map: [references/potsure-integration.md](references/potsure-integration.md)
-- Fetch strategy and task routing: [references/documentation-map.md](references/documentation-map.md)
-- Feature decisions: `specs/001-potsure-v1/plan.md` (BlazorBlueprint integration section)
+Avoid `llms-full.txt` and bulk-fetching every `components/*.txt` unless you are editing many unrelated components in one task.

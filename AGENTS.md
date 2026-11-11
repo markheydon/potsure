@@ -81,7 +81,7 @@ Project skills live in `.agents/skills/`.
 | `project-documentation` | Project-aware docs placement |
 | `code-review` | PR or branch review before merge (see `.cursor/commands/loop-code-review.md`) |
 | `principal-engineering` | Non-trivial implementation, refactors, analyzer/build fixes, EF migrations, new abstractions - keep changes architecturally sound and root-cause based |
-| `blazor-blueprint` | BlazorBlueprint UI in `Potsure.Web` (`Bb*` components, theme, overlays, icons) |
+| `blazor-blueprint` | BlazorBlueprint official llms docs (`Bb*` APIs). In this repo, host is `src/Potsure.Web/`. |
 | `aspire` (and related `aspire-*` skills) | AppHost exists or you are wiring/deploying Aspire resources |
 
 ## Task Routing
