@@ -93,21 +93,58 @@ public partial class PotMapping
 
     private void EnsureCategorySelectionValid()
     {
-        if (_categories.Count == 0)
+        List<CategoryOption> addOptions = CategoriesAvailableForNewPot();
+        if (addOptions.Count == 0)
         {
             _newPotCategoryId = Guid.Empty;
-            return;
+        }
+        else if (addOptions.All(c => c.Id != _newPotCategoryId))
+        {
+            _newPotCategoryId = addOptions[0].Id;
         }
 
-        if (_categories.All(c => c.Id != _newPotCategoryId))
+        if (_editingPotId is Guid editId)
         {
-            _newPotCategoryId = _categories[0].Id;
+            List<CategoryOption> editOptions = CategoriesAvailableForEdit(editId);
+            if (editOptions.Count == 0)
+            {
+                _editPotCategoryId = Guid.Empty;
+            }
+            else if (editOptions.All(c => c.Id != _editPotCategoryId))
+            {
+                _editPotCategoryId = editOptions[0].Id;
+            }
+        }
+    }
+
+    private bool ShowAddPotSection =>
+        _mode != PotMappingMode.CategoryOnly
+        && !(_mode == PotMappingMode.ThreePots && _pots.Count >= 3);
+
+    private List<CategoryOption> CategoriesAvailableForNewPot()
+    {
+        if (_mode != PotMappingMode.ThreePots)
+        {
+            return _categories;
         }
 
-        if (_editingPotId is not null && _categories.All(c => c.Id != _editPotCategoryId))
+        HashSet<Guid> mappedCategoryIds = _pots.Select(p => p.CategoryId).ToHashSet();
+        return _categories.Where(c => !mappedCategoryIds.Contains(c.Id)).ToList();
+    }
+
+    private List<CategoryOption> CategoriesAvailableForEdit(Guid potId)
+    {
+        if (_mode != PotMappingMode.ThreePots)
         {
-            _editPotCategoryId = _categories[0].Id;
+            return _categories;
         }
+
+        HashSet<Guid> mappedByOtherPots = _pots
+            .Where(p => p.Id != potId)
+            .Select(p => p.CategoryId)
+            .ToHashSet();
+
+        return _categories.Where(c => !mappedByOtherPots.Contains(c.Id)).ToList();
     }
 
     private async Task PersistModeAsync(PotMappingMode revertOnFailure)
@@ -264,6 +301,13 @@ public partial class PotMapping
             return false;
         }
 
+        if (_mode == PotMappingMode.ThreePots
+            && _pots.Any(p => p.CategoryId == categoryId && p.Id != _editingPotId))
+        {
+            error = "Three pots mode allows at most one pot per category.";
+            return false;
+        }
+
         error = null;
         return true;
     }
@@ -272,7 +316,7 @@ public partial class PotMapping
         new() { ["aria-live"] = "polite" };
 
     private string SelectedNewPotCategoryLabel =>
-        _categories.FirstOrDefault(c => c.Id == _newPotCategoryId) is { } selected
+        CategoriesAvailableForNewPot().FirstOrDefault(c => c.Id == _newPotCategoryId) is { } selected
             ? BudgetCategoryDisplay.Format(selected.Kind)
             : "Select category";
 

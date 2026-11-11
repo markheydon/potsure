@@ -130,48 +130,57 @@ else
             }
         </PotsureSection>
 
-        <PotsureSection Title="Add a pot" Class="bb:w-full bb:max-w-4xl">
-            <ChildContent>
-            @if (_addPotError is not null)
-            {
-                <BbAlert Variant="AlertVariant.Warning"
-                         AccentBorder="true"
-                         AdditionalAttributes="@InlineAlertAttributes">
-                    <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
-                    <ChildContent>
-                        <BbAlertDescription>@_addPotError</BbAlertDescription>
-                    </ChildContent>
-                </BbAlert>
-            }
-            <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
-                <div class="bb:grid bb:gap-2">
-                    <BbLabel>New pot name</BbLabel>
-                    <BbInput @bind-Value="_newPotName" />
+        @if (ShowAddPotSection)
+        {
+            <PotsureSection Title="Add a pot" Class="bb:w-full bb:max-w-4xl">
+                <ChildContent>
+                @if (_addPotError is not null)
+                {
+                    <BbAlert Variant="AlertVariant.Warning"
+                             AccentBorder="true"
+                             AdditionalAttributes="@InlineAlertAttributes">
+                        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+                        <ChildContent>
+                            <BbAlertDescription>@_addPotError</BbAlertDescription>
+                        </ChildContent>
+                    </BbAlert>
+                }
+                <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
+                    <div class="bb:grid bb:gap-2">
+                        <BbLabel>New pot name</BbLabel>
+                        <BbInput @bind-Value="_newPotName" />
+                    </div>
+                    <div class="bb:grid bb:gap-2">
+                        <BbLabel>Category</BbLabel>
+                        <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
+                            <BbSelectTrigger>
+                                <BbSelectValue Placeholder="Select category">
+                                    <ChildContent Context="ignored">
+                                        @SelectedNewPotCategoryLabel
+                                    </ChildContent>
+                                </BbSelectValue>
+                            </BbSelectTrigger>
+                            <BbSelectContent>
+                                @foreach (CategoryOption option in CategoriesAvailableForNewPot())
+                                {
+                                    <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
+                                }
+                            </BbSelectContent>
+                        </BbSelect>
+                    </div>
                 </div>
-                <div class="bb:grid bb:gap-2">
-                    <BbLabel>Category</BbLabel>
-                    <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
-                        <BbSelectTrigger>
-                            <BbSelectValue Placeholder="Select category">
-                                <ChildContent Context="ignored">
-                                    @SelectedNewPotCategoryLabel
-                                </ChildContent>
-                            </BbSelectValue>
-                        </BbSelectTrigger>
-                        <BbSelectContent>
-                            @foreach (CategoryOption option in _categories)
-                            {
-                                <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
-                            }
-                        </BbSelectContent>
-                    </BbSelect>
-                </div>
-            </div>
-            </ChildContent>
-            <Footer>
-                <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
-            </Footer>
-        </PotsureSection>
+                </ChildContent>
+                <Footer>
+                    <BbButton Variant="ButtonVariant.Default" OnClick="CreatePotAsync">Add pot</BbButton>
+                </Footer>
+            </PotsureSection>
+        }
+        else if (_mode == PotMappingMode.ThreePots && _pots.Count >= 3)
+        {
+            <BbTypographyMuted Class="bb:max-w-4xl">
+                You have mapped all three pots allowed in three-pot mode. Delete a pot to add a different one.
+            </BbTypographyMuted>
+        }
 
         @if (_editingPotId is Guid editingId && _pots.FirstOrDefault(p => p.Id == editingId) is not null)
         {
@@ -192,14 +201,14 @@ else
                     <BbSelectTrigger>
                         <BbSelectValue Placeholder="Category">
                             <ChildContent Context="ignored">
-                                @(_categories.FirstOrDefault(c => c.Id == _editPotCategoryId) is { } cat
+                                @(CategoriesAvailableForEdit(editingId).FirstOrDefault(c => c.Id == _editPotCategoryId) is { } cat
                                     ? BudgetCategoryDisplay.Format(cat.Kind)
                                     : "Category")
                             </ChildContent>
                         </BbSelectValue>
                     </BbSelectTrigger>
                     <BbSelectContent>
-                        @foreach (CategoryOption option in _categories)
+                        @foreach (CategoryOption option in CategoriesAvailableForEdit(editingId))
                         {
                             <BbSelectItem TValue="Guid" Value="@option.Id" Text="@BudgetCategoryDisplay.Format(option.Kind)" />
                         }
