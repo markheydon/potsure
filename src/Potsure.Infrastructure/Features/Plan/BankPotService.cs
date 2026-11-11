@@ -65,7 +65,7 @@ public sealed class BankPotService(
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
         EnsurePotCrudAllowed(profile.PotMappingMode);
 
-        BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == request.CategoryId);
+        BudgetCategoryEntity category = RequireCategory(profile, request.CategoryId);
         EntityOwnershipValidator.EnsureOwnedBy(category.OwnerKey, ownerAccessor.OwnerKey);
 
         ValidatePotInventoryForMode(profile, additionalPot: true, targetCategoryId: request.CategoryId);
@@ -95,8 +95,8 @@ public sealed class BankPotService(
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
         EnsurePotCrudAllowed(profile.PotMappingMode);
 
-        BankPotEntity entity = profile.Pots.Single(p => p.Id == request.Id);
-        BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == request.CategoryId);
+        BankPotEntity entity = RequirePot(profile, request.Id);
+        BudgetCategoryEntity category = RequireCategory(profile, request.CategoryId);
 
         if (entity.CategoryId != request.CategoryId)
         {
@@ -123,7 +123,7 @@ public sealed class BankPotService(
     public async Task DeleteAsync(DeleteBankPotRequest request, CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
-        BankPotEntity entity = profile.Pots.Single(p => p.Id == request.PotId);
+        BankPotEntity entity = RequirePot(profile, request.PotId);
         EntityOwnershipValidator.EnsureOwnedBy(entity.OwnerKey, ownerAccessor.OwnerKey);
 
         if (entity.RecordedFundingAmount > 0m)
@@ -136,7 +136,7 @@ public sealed class BankPotService(
 
             if (request.FundingDisposition == BankPotFundingDisposition.RollToCategory)
             {
-                BudgetCategoryEntity category = profile.Categories.Single(c => c.Id == entity.CategoryId);
+                BudgetCategoryEntity category = RequireCategory(profile, entity.CategoryId);
                 category.RecordedFundingDirectAmount += entity.RecordedFundingAmount;
             }
         }
@@ -237,6 +237,31 @@ public sealed class BankPotService(
         {
             transaction.MappedPotId = null;
         }
+    }
+
+    private static BankPotEntity RequirePot(BudgetProfileEntity profile, Guid potId)
+    {
+        if (profile.Pots.All(p => p.Id != potId))
+        {
+            throw new InvalidOperationException("This pot no longer exists. Refresh the page and try again.");
+        }
+
+        return profile.Pots.First(p => p.Id == potId);
+    }
+
+    private static BudgetCategoryEntity RequireCategory(BudgetProfileEntity profile, Guid categoryId)
+    {
+        if (categoryId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Choose a category for this pot.");
+        }
+
+        if (profile.Categories.All(c => c.Id != categoryId))
+        {
+            throw new InvalidOperationException("Choose a valid category for this pot.");
+        }
+
+        return profile.Categories.First(c => c.Id == categoryId);
     }
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)

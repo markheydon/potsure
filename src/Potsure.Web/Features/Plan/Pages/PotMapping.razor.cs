@@ -81,12 +81,33 @@ public partial class PotMapping
             .OrderByStrategy(profile.Categories, static c => c.Kind)
             .Select(c => new CategoryOption(c.Id, c.Kind))
             .ToList();
-        if (_categories.Count > 0 && _newPotCategoryId == Guid.Empty)
+        EnsureCategorySelectionValid();
+
+        _pots = (await PotService.ListAsync()).ToList();
+
+        if (_editingPotId is Guid editId && _pots.All(p => p.Id != editId))
+        {
+            CancelEditPot();
+        }
+    }
+
+    private void EnsureCategorySelectionValid()
+    {
+        if (_categories.Count == 0)
+        {
+            _newPotCategoryId = Guid.Empty;
+            return;
+        }
+
+        if (_categories.All(c => c.Id != _newPotCategoryId))
         {
             _newPotCategoryId = _categories[0].Id;
         }
 
-        _pots = (await PotService.ListAsync()).ToList();
+        if (_editingPotId is not null && _categories.All(c => c.Id != _editPotCategoryId))
+        {
+            _editPotCategoryId = _categories[0].Id;
+        }
     }
 
     private async Task PersistModeAsync(PotMappingMode revertOnFailure)
@@ -171,6 +192,12 @@ public partial class PotMapping
             return;
         }
 
+        if (!TryValidateCategorySelection(_editPotCategoryId, out string? categoryError))
+        {
+            _editPotError = categoryError;
+            return;
+        }
+
         try
         {
             _editPotError = null;
@@ -205,6 +232,12 @@ public partial class PotMapping
             return;
         }
 
+        if (!TryValidateCategorySelection(_newPotCategoryId, out string? categoryError))
+        {
+            _addPotError = categoryError;
+            return;
+        }
+
         try
         {
             await PotService.CreateAsync(new CreateBankPotRequest(_newPotName, _newPotCategoryId));
@@ -215,6 +248,24 @@ public partial class PotMapping
         {
             _addPotError = ex.Message;
         }
+    }
+
+    private bool TryValidateCategorySelection(Guid categoryId, out string? error)
+    {
+        if (categoryId == Guid.Empty)
+        {
+            error = "Choose a category for this pot.";
+            return false;
+        }
+
+        if (_categories.All(c => c.Id != categoryId))
+        {
+            error = "Choose a valid category for this pot.";
+            return false;
+        }
+
+        error = null;
+        return true;
     }
 
     private static Dictionary<string, object> InlineAlertAttributes { get; } =
