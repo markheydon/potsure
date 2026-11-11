@@ -8,8 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Potsure.Data.Identity;
-using Potsure.Web.Components.Account.Pages;
-using Potsure.Web.Components.Account.Pages.Manage;
+using Potsure.Web.Components.Account;
 using Potsure.Web.Security;
 
 namespace Microsoft.AspNetCore.Routing;
@@ -29,17 +28,50 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             [FromForm] string provider,
             [FromForm] string returnUrl) =>
         {
-            IEnumerable<KeyValuePair<string, StringValues>> query = [
-                new("ReturnUrl", returnUrl),
-                new("Action", ExternalLogin.LoginCallbackAction)];
-
-            var redirectUrl = UriHelper.BuildRelative(
+            var callbackUrl = UriHelper.BuildRelative(
                 context.Request.PathBase,
-                "/Account/ExternalLogin",
-                QueryString.Create(query));
+                "/Account/ExternalLogin/callback",
+                QueryString.Create("ReturnUrl", returnUrl));
 
-            var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, callbackUrl);
             return TypedResults.Challenge(properties, [provider]);
+        });
+
+        accountGroup.MapGet("/ExternalLogin/callback", async (
+            HttpContext context,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
+            [FromQuery] string? returnUrl) =>
+        {
+            var info = await signInManager.GetExternalLoginInfoAsync();
+            if (info is null)
+            {
+                return IdentityHttpResponses.LocalRedirect(
+                    context,
+                    "/Account/Login",
+                    "Error loading external login information.");
+            }
+
+            var result = await signInManager.ExternalLoginSignInAsync(
+                info.LoginProvider,
+                info.ProviderKey,
+                isPersistent: false,
+                bypassTwoFactor: true);
+
+            if (result.Succeeded)
+            {
+                string safeReturnUrl = HostedReturnUrlValidator.Normalize(returnUrl);
+                return IdentityHttpResponses.LocalRedirect(context, safeReturnUrl);
+            }
+
+            if (result.IsLockedOut)
+            {
+                return IdentityHttpResponses.LocalRedirect(context, "/Account/Lockout");
+            }
+
+            return IdentityHttpResponses.LocalRedirectWithQuery(
+                context,
+                "/Account/ExternalLogin",
+                new Dictionary<string, StringValues> { ["ReturnUrl"] = returnUrl ?? string.Empty });
         });
 
         accountGroup.MapPost("/Logout", async (
@@ -101,13 +133,55 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             // Clear the existing external cookie to ensure a clean login process
             await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            var redirectUrl = UriHelper.BuildRelative(
+            var callbackUrl = UriHelper.BuildRelative(
                 context.Request.PathBase,
-                "/Account/Manage/ExternalLogins",
-                QueryString.Create("Action", ExternalLogins.LinkLoginCallbackAction));
+                "/Account/Manage/ExternalLogins/callback");
 
-            var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl, signInManager.UserManager.GetUserId(context.User));
+            var properties = signInManager.ConfigureExternalAuthenticationProperties(
+                provider,
+                callbackUrl,
+                signInManager.UserManager.GetUserId(context.User));
             return TypedResults.Challenge(properties, [provider]);
+        });
+
+        manageGroup.MapGet("/ExternalLogins/callback", async (
+            HttpContext context,
+            [FromServices] SignInManager<ApplicationUser> signInManager,
+            [FromServices] UserManager<ApplicationUser> userManager) =>
+        {
+            var user = await userManager.GetUserAsync(context.User);
+            if (user is null)
+            {
+                return IdentityHttpResponses.LocalRedirect(
+                    context,
+                    "/Account/InvalidUser",
+                    $"Error: Unable to load user with ID '{userManager.GetUserId(context.User)}'.");
+            }
+
+            var userId = await userManager.GetUserIdAsync(user);
+            var info = await signInManager.GetExternalLoginInfoAsync(userId);
+            if (info is null)
+            {
+                return IdentityHttpResponses.LocalRedirect(
+                    context,
+                    "/Account/Manage/ExternalLogins",
+                    "Error: Could not load external login info.");
+            }
+
+            var result = await userManager.AddLoginAsync(user, info);
+            if (result.Succeeded)
+            {
+                await context.SignOutAsync(IdentityConstants.ExternalScheme);
+                return IdentityHttpResponses.LocalRedirect(
+                    context,
+                    "/Account/Manage/ExternalLogins",
+                    "The external login was added.");
+            }
+
+            return IdentityHttpResponses.LocalRedirect(
+                context,
+                "/Account/Manage/ExternalLogins",
+                "Error: The external login was not added. External logins can only be associated with one account.");
         });
 
         var loggerFactory = endpoints.ServiceProvider.GetRequiredService<ILoggerFactory>();

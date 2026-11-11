@@ -7,15 +7,7 @@ namespace Potsure.Web.Components.Account;
 
 public sealed class IdentityRedirectManager(NavigationManager navigationManager)
 {
-    public const string StatusCookieName = "Identity.StatusMessage";
-
-    private static readonly CookieBuilder StatusCookieBuilder = new()
-    {
-        SameSite = SameSiteMode.Strict,
-        HttpOnly = true,
-        IsEssential = true,
-        MaxAge = TimeSpan.FromSeconds(5),
-    };
+    public const string StatusCookieName = IdentityStatusCookie.Name;
 
     public void RedirectTo(string? uri)
     {
@@ -33,7 +25,7 @@ public sealed class IdentityRedirectManager(NavigationManager navigationManager)
 
     public void RedirectToWithStatus(string uri, string message, HttpContext context)
     {
-        context.Response.Cookies.Append(StatusCookieName, message, StatusCookieBuilder.Build(context));
+        IdentityStatusCookie.Append(context, message);
         RedirectTo(uri);
     }
 
