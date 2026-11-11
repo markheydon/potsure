@@ -19,7 +19,11 @@ public partial class PotMapping
     private PotsureDbContext DbContext { get; set; } = null!;
 
     private bool _loading = true;
-    private string? _error;
+    private string? _loadError;
+    private string? _modeError;
+    private string? _potsError;
+    private string? _addPotError;
+    private string? _editPotError;
     private PotMappingMode _mode = PotMappingMode.CategoryOnly;
 
     private PotMappingMode Mode
@@ -58,7 +62,7 @@ public partial class PotMapping
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _loadError = ex.Message;
         }
         finally
         {
@@ -89,13 +93,13 @@ public partial class PotMapping
     {
         try
         {
-            _error = null;
+            _modeError = null;
             await PotService.SetPotMappingModeAsync(_mode);
         }
         catch (Exception ex)
         {
             _mode = revertOnFailure;
-            _error = ex.Message;
+            _modeError = ex.Message;
         }
     }
 
@@ -129,13 +133,13 @@ public partial class PotMapping
     {
         try
         {
-            _error = null;
+            _potsError = null;
             await PotService.DeleteAsync(new DeleteBankPotRequest(potId, disposition));
             await LoadAsync();
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _potsError = ex.Message;
         }
     }
 
@@ -144,6 +148,8 @@ public partial class PotMapping
         _editingPotId = pot.Id;
         _editPotName = pot.Name;
         _editPotCategoryId = pot.CategoryId;
+        _editPotError = null;
+        _potsError = null;
     }
 
     private async Task SaveEditPotAsync()
@@ -159,9 +165,15 @@ public partial class PotMapping
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_editPotName))
+        {
+            _editPotError = "Enter a pot name.";
+            return;
+        }
+
         try
         {
-            _error = null;
+            _editPotError = null;
             await PotService.UpdateAsync(
                 new UpdateBankPotRequest(
                     potId,
@@ -174,15 +186,22 @@ public partial class PotMapping
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _editPotError = ex.Message;
         }
+    }
+
+    private void CancelEditPot()
+    {
+        _editingPotId = null;
+        _editPotError = null;
     }
 
     private async Task CreatePotAsync()
     {
+        _addPotError = null;
         if (string.IsNullOrWhiteSpace(_newPotName))
         {
-            _error = "Enter a pot name.";
+            _addPotError = "Enter a pot name.";
             return;
         }
 
@@ -190,14 +209,16 @@ public partial class PotMapping
         {
             await PotService.CreateAsync(new CreateBankPotRequest(_newPotName, _newPotCategoryId));
             _newPotName = string.Empty;
-            _error = null;
             await LoadAsync();
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _addPotError = ex.Message;
         }
     }
+
+    private static Dictionary<string, object> InlineAlertAttributes { get; } =
+        new() { ["aria-live"] = "polite" };
 
     private string SelectedNewPotCategoryLabel =>
         _categories.FirstOrDefault(c => c.Id == _newPotCategoryId) is { } selected

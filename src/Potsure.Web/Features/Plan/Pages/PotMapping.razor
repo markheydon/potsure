@@ -20,13 +20,13 @@
 {
     <PotsureLoadingState Message="Loading pot settings…" />
 }
-else if (_error is not null)
+else if (_loadError is not null)
 {
     <BbAlert Variant="AlertVariant.Warning">
         <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
         <ChildContent>
             <BbAlertTitle>Pot mapping unavailable</BbAlertTitle>
-            <BbAlertDescription>@_error</BbAlertDescription>
+            <BbAlertDescription>@_loadError</BbAlertDescription>
         </ChildContent>
     </BbAlert>
 }
@@ -35,6 +35,17 @@ else
     <PotsureSection Title="How do you use Monzo pots?"
                     Description="Choose whether Potsure tracks Monzo pots or only category totals. You can change this at any time."
                     Class="bb:w-full bb:max-w-4xl">
+        @if (_modeError is not null)
+        {
+            <BbAlert Variant="AlertVariant.Warning"
+                     AccentBorder="true"
+                     AdditionalAttributes="@InlineAlertAttributes">
+                <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+                <ChildContent>
+                    <BbAlertDescription>@_modeError</BbAlertDescription>
+                </ChildContent>
+            </BbAlert>
+        }
         <div class="bb:grid bb:gap-2 bb:max-w-md">
             <BbLabel For="pot-mode-select">Pot mapping</BbLabel>
             <BbSelect TValue="PotMappingMode" @bind-Value="Mode">
@@ -58,6 +69,17 @@ else
     @if (_mode != PotMappingMode.CategoryOnly)
     {
         <PotsureSection Title="Pots" Class="bb:w-full bb:max-w-4xl">
+            @if (_potsError is not null)
+            {
+                <BbAlert Variant="AlertVariant.Warning"
+                         AccentBorder="true"
+                         AdditionalAttributes="@InlineAlertAttributes">
+                    <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+                    <ChildContent>
+                        <BbAlertDescription>@_potsError</BbAlertDescription>
+                    </ChildContent>
+                </BbAlert>
+            }
             @if (_pots.Count == 0)
             {
                 <BbEmpty Title="No pots yet"
@@ -110,6 +132,17 @@ else
 
         <PotsureSection Title="Add a pot" Class="bb:w-full bb:max-w-4xl">
             <ChildContent>
+            @if (_addPotError is not null)
+            {
+                <BbAlert Variant="AlertVariant.Warning"
+                         AccentBorder="true"
+                         AdditionalAttributes="@InlineAlertAttributes">
+                    <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+                    <ChildContent>
+                        <BbAlertDescription>@_addPotError</BbAlertDescription>
+                    </ChildContent>
+                </BbAlert>
+            }
             <div class="bb:grid bb:gap-4 bb:sm:grid-cols-2">
                 <div class="bb:grid bb:gap-2">
                     <BbLabel>New pot name</BbLabel>
@@ -143,6 +176,17 @@ else
         @if (_editingPotId is Guid editingId && _pots.FirstOrDefault(p => p.Id == editingId) is not null)
         {
             <PotsureSection Title="Edit pot" Class="bb:w-full bb:max-w-4xl">
+                @if (_editPotError is not null)
+                {
+                    <BbAlert Variant="AlertVariant.Warning"
+                             AccentBorder="true"
+                             AdditionalAttributes="@InlineAlertAttributes">
+                        <Icon><LucideIcon Name="triangle-alert" Size="18" /></Icon>
+                        <ChildContent>
+                            <BbAlertDescription>@_editPotError</BbAlertDescription>
+                        </ChildContent>
+                    </BbAlert>
+                }
                 <BbInput @bind-Value="_editPotName" Placeholder="Pot name" />
                 <BbSelect TValue="Guid" @bind-Value="_editPotCategoryId">
                     <BbSelectTrigger>
@@ -163,7 +207,7 @@ else
                 </BbSelect>
                 <div class="bb:flex bb:gap-2 bb:mt-2">
                     <BbButton OnClick="SaveEditPotAsync">Save</BbButton>
-                    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _editingPotId = null)">Cancel</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="CancelEditPot">Cancel</BbButton>
                 </div>
             </PotsureSection>
         }
