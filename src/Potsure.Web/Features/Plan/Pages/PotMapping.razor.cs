@@ -46,9 +46,11 @@ public partial class PotMapping
     private List<CategoryOption> _categories = [];
     private string _newPotName = string.Empty;
     private Guid _newPotCategoryId;
-    private Guid? _pendingDeletePotId;
-    private decimal _pendingDeleteFunding;
+    private Guid? _confirmDeletePotId;
+    private string? _confirmDeletePotName;
+    private decimal _confirmDeleteRecordedFunding;
     private bool _showFundingDispositionDialog;
+    private int _potsTableKey;
     private Guid? _editingPotId;
     private string _editPotName = string.Empty;
     private Guid _editPotCategoryId;
@@ -81,9 +83,11 @@ public partial class PotMapping
             .OrderByStrategy(profile.Categories, static c => c.Kind)
             .Select(c => new CategoryOption(c.Id, c.Kind))
             .ToList();
-        EnsureCategorySelectionValid();
 
         _pots = (await PotService.ListAsync()).ToList();
+        _potsTableKey++;
+
+        EnsureCategorySelectionValid();
 
         if (_editingPotId is Guid editId && _pots.All(p => p.Id != editId))
         {
@@ -98,9 +102,9 @@ public partial class PotMapping
         {
             _newPotCategoryId = Guid.Empty;
         }
-        else if (addOptions.All(c => c.Id != _newPotCategoryId))
+        else if (_newPotCategoryId == Guid.Empty || addOptions.All(c => c.Id != _newPotCategoryId))
         {
-            _newPotCategoryId = addOptions[0].Id;
+            _newPotCategoryId = SelectDefaultNewPotCategoryId(addOptions);
         }
 
         if (_editingPotId is Guid editId)
@@ -118,7 +122,8 @@ public partial class PotMapping
     }
 
     private bool ShowAddPotSection =>
-        _mode != PotMappingMode.CategoryOnly
+        _editingPotId is null
+        && _mode != PotMappingMode.CategoryOnly
         && !(_mode == PotMappingMode.ThreePots && _pots.Count >= 3);
 
     private List<CategoryOption> CategoriesAvailableForNewPot()
@@ -129,7 +134,9 @@ public partial class PotMapping
         }
 
         HashSet<Guid> mappedCategoryIds = _pots.Select(p => p.CategoryId).ToHashSet();
-        return _categories.Where(c => !mappedCategoryIds.Contains(c.Id)).ToList();
+        return BudgetCategoryDisplay
+            .OrderByStrategy(_categories.Where(c => !mappedCategoryIds.Contains(c.Id)), c => c.Kind)
+            .ToList();
     }
 
     private List<CategoryOption> CategoriesAvailableForEdit(Guid potId)
@@ -144,8 +151,32 @@ public partial class PotMapping
             .Select(p => p.CategoryId)
             .ToHashSet();
 
-        return _categories.Where(c => !mappedByOtherPots.Contains(c.Id)).ToList();
+        return BudgetCategoryDisplay
+            .OrderByStrategy(_categories.Where(c => !mappedByOtherPots.Contains(c.Id)), c => c.Kind)
+            .ToList();
     }
+
+    private static Guid SelectDefaultNewPotCategoryId(IReadOnlyList<CategoryOption> availableOptions)
+    {
+        if (availableOptions.Count == 0)
+        {
+            return Guid.Empty;
+        }
+
+        foreach (BudgetCategoryKind kind in BudgetCategoryDisplay.StrategyOrder)
+        {
+            CategoryOption? match = availableOptions.FirstOrDefault(c => c.Kind == kind);
+            if (match is not null)
+            {
+                return match.Id;
+            }
+        }
+
+        return availableOptions[0].Id;
+    }
+
+    private string NewPotCategorySelectKey =>
+        string.Join(',', CategoriesAvailableForNewPot().Select(c => c.Id));
 
     private async Task PersistModeAsync(PotMappingMode revertOnFailure)
     {
@@ -161,30 +192,50 @@ public partial class PotMapping
         }
     }
 
+    private bool ShowSimpleDeleteConfirm =>
+        _confirmDeletePotId is not null && !_showFundingDispositionDialog && _confirmDeleteRecordedFunding == 0m;
+
     private void PromptDeletePot(BankPotReadModel pot)
     {
-        if (pot.RecordedFundingAmount > 0m)
+        _confirmDeletePotId = pot.Id;
+        _confirmDeletePotName = pot.Name;
+        _confirmDeleteRecordedFunding = pot.RecordedFundingAmount;
+        _potsError = null;
+        _showFundingDispositionDialog = pot.RecordedFundingAmount > 0m;
+
+        if (_editingPotId == pot.Id)
         {
-            _pendingDeletePotId = pot.Id;
-            _pendingDeleteFunding = pot.RecordedFundingAmount;
-            _showFundingDispositionDialog = true;
+            CancelEditPot();
+        }
+    }
+
+    private void CancelDeletePot()
+    {
+        _confirmDeletePotId = null;
+        _confirmDeletePotName = null;
+        _confirmDeleteRecordedFunding = 0m;
+        _showFundingDispositionDialog = false;
+    }
+
+    private async Task ConfirmSimpleDeleteAsync()
+    {
+        if (_confirmDeletePotId is not Guid potId)
+        {
             return;
         }
 
-        _ = DeletePotAsync(pot.Id, BankPotFundingDisposition.NotApplicable);
+        await DeletePotAsync(potId, BankPotFundingDisposition.NotApplicable);
     }
 
     private async Task ConfirmFundingDispositionAsync(BankPotFundingDisposition disposition)
     {
-        if (_pendingDeletePotId is not Guid potId)
+        if (_confirmDeletePotId is not Guid potId)
         {
             return;
         }
 
         _showFundingDispositionDialog = false;
         await DeletePotAsync(potId, disposition);
-        _pendingDeletePotId = null;
-        _pendingDeleteFunding = 0m;
     }
 
     private async Task DeletePotAsync(Guid potId, BankPotFundingDisposition disposition)
@@ -193,6 +244,7 @@ public partial class PotMapping
         {
             _potsError = null;
             await PotService.DeleteAsync(new DeleteBankPotRequest(potId, disposition));
+            CancelDeletePot();
             await LoadAsync();
         }
         catch (Exception ex)
@@ -207,6 +259,7 @@ public partial class PotMapping
         _editPotName = pot.Name;
         _editPotCategoryId = pot.CategoryId;
         _editPotError = null;
+        _addPotError = null;
         _potsError = null;
     }
 

@@ -63,6 +63,31 @@ public sealed class BankPotServiceTests
     }
 
     [Fact]
+    public async Task ListAsync_AfterDelete_DoesNotReturnDeletedPot_InSameScope()
+    {
+        await using ServiceProvider provider = BuildProvider();
+        BankPotService service = provider.GetRequiredService<BankPotService>();
+        BudgetProfileSeeder seeder = provider.GetRequiredService<BudgetProfileSeeder>();
+        PotsureDbContext db = provider.GetRequiredService<PotsureDbContext>();
+
+        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        BudgetProfileEntity profile = await db.BudgetProfiles.Include(p => p.Categories).SingleAsync(TestContext.Current.CancellationToken);
+        profile.PotMappingMode = PotMappingMode.SeveralPots;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Guid categoryId = profile.Categories[0].Id;
+        BankPotReadModel pot = await service.CreateAsync(new CreateBankPotRequest("Pot", categoryId), TestContext.Current.CancellationToken);
+
+        Assert.Single(await service.ListAsync(TestContext.Current.CancellationToken));
+
+        await service.DeleteAsync(
+            new DeleteBankPotRequest(pot.Id),
+            TestContext.Current.CancellationToken);
+
+        Assert.Empty(await service.ListAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task SetPotMappingModeAsync_BlocksCategoryOnly_WhenPotsExist()
     {
         await using ServiceProvider provider = BuildProvider();

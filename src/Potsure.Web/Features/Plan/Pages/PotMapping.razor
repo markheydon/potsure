@@ -80,6 +80,22 @@ else
                     </ChildContent>
                 </BbAlert>
             }
+            @if (ShowSimpleDeleteConfirm)
+            {
+                <BbAlert Variant="AlertVariant.Warning" AccentBorder="true">
+                    <BbAlertDescription>
+                        Delete pot <strong>@_confirmDeletePotName</strong>? This cannot be undone.
+                    </BbAlertDescription>
+                </BbAlert>
+                <div class="bb:flex bb:flex-wrap bb:gap-2">
+                    <BbButton Variant="ButtonVariant.Destructive" Size="ButtonSize.Small" OnClick="ConfirmSimpleDeleteAsync">
+                        Delete pot
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="CancelDeletePot">
+                        Cancel
+                    </BbButton>
+                </div>
+            }
             @if (_pots.Count == 0)
             {
                 <BbEmpty Title="No pots yet"
@@ -90,7 +106,8 @@ else
             }
             else
             {
-                <BbDataTable TData="BankPotReadModel"
+                <BbDataTable @key="_potsTableKey"
+                             TData="BankPotReadModel"
                              Data="@_pots"
                              ShowToolbar="false"
                              ShowPagination="false"
@@ -128,6 +145,30 @@ else
                     </Columns>
                 </BbDataTable>
             }
+            @if (_showFundingDispositionDialog && _confirmDeletePotId is not null)
+            {
+                <BbAlert Variant="AlertVariant.Warning" AccentBorder="true" Class="bb:mt-4">
+                    <BbAlertTitle>Delete @_confirmDeletePotName?</BbAlertTitle>
+                    <BbAlertDescription>
+                        This pot has @UkCurrencyDisplay.Format(_confirmDeleteRecordedFunding) recorded funding.
+                        Roll it into the parent category funding, or discard it when deleting the pot.
+                    </BbAlertDescription>
+                </BbAlert>
+                <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-2">
+                    <BbButton Variant="ButtonVariant.Destructive" Size="ButtonSize.Small"
+                              OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.RollToCategory))">
+                        Roll into category funding
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.Discard))">
+                        Discard funding
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
+                              OnClick="CancelDeletePot">
+                        Cancel
+                    </BbButton>
+                </div>
+            }
         </PotsureSection>
 
         @if (ShowAddPotSection)
@@ -152,7 +193,9 @@ else
                     </div>
                     <div class="bb:grid bb:gap-2">
                         <BbLabel>Category</BbLabel>
-                        <BbSelect TValue="Guid" @bind-Value="_newPotCategoryId">
+                        <BbSelect @key="@NewPotCategorySelectKey"
+                                  TValue="Guid"
+                                  @bind-Value="_newPotCategoryId">
                             <BbSelectTrigger>
                                 <BbSelectValue Placeholder="Select category">
                                     <ChildContent Context="ignored">
@@ -175,7 +218,7 @@ else
                 </Footer>
             </PotsureSection>
         }
-        else if (_mode == PotMappingMode.ThreePots && _pots.Count >= 3)
+        else if (_editingPotId is null && _mode == PotMappingMode.ThreePots && _pots.Count >= 3)
         {
             <BbTypographyMuted Class="bb:max-w-4xl">
                 You have mapped all three pots allowed in three-pot mode. Delete a pot to add a different one.
@@ -221,29 +264,6 @@ else
             </PotsureSection>
         }
 
-        @if (_showFundingDispositionDialog)
-        {
-            <BbAlert Variant="AlertVariant.Warning">
-                <BbAlertTitle>Recorded funding on this pot</BbAlertTitle>
-                <BbAlertDescription>
-                    This pot has @UkCurrencyDisplay.Format(_pendingDeleteFunding) recorded funding.
-                    Roll it into the parent category funding, or discard it when deleting the pot.
-                </BbAlertDescription>
-            </BbAlert>
-            <div class="bb:flex bb:flex-wrap bb:gap-2 bb:mt-2">
-                <BbButton OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.RollToCategory))">
-                    Roll into category funding
-                </BbButton>
-                <BbButton Variant="ButtonVariant.Outline"
-                          OnClick="@(() => ConfirmFundingDispositionAsync(BankPotFundingDisposition.Discard))">
-                    Discard funding
-                </BbButton>
-                <BbButton Variant="ButtonVariant.Ghost"
-                          OnClick="@(() => _showFundingDispositionDialog = false)">
-                    Cancel
-                </BbButton>
-            </div>
-        }
     }
     else
     {

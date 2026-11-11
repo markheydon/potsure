@@ -48,10 +48,20 @@ public sealed class BankPotService(
     /// </summary>
     public async Task<IReadOnlyList<BankPotReadModel>> ListAsync(CancellationToken cancellationToken = default)
     {
-        BudgetProfileEntity profile = await LoadProfileAsync(cancellationToken);
-        return profile.Pots
+        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        string ownerKey = ownerAccessor.OwnerKey;
+
+        List<BankPotEntity> pots = await dbContext.BankPots
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.OwnerKey == ownerKey)
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+
+        return pots
             .Select(MapPot)
-            .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p.CategoryKind)
+            .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
