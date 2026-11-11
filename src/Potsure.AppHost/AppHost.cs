@@ -9,14 +9,15 @@ var sql = builder.AddAzureSqlServer("sql")
 
 var database = sql.AddDatabase("potsure");
 
-var schemaHost = builder.AddProject<Projects.Potsure_MigrationsHost>("schema-host")
+#pragma warning disable ASPIREDOTNETPROJECT001
+var schemaHost = builder.AddDotnetProject("schema-host", "../Potsure.MigrationsHost/Potsure.MigrationsHost.csproj")
+#pragma warning restore ASPIREDOTNETPROJECT001
     .WithReference(database)
     .WaitFor(database)
     .WithHttpEndpoint(port: 5192);
 
 #pragma warning disable ASPIREPROJECTS001
 var dataProtectionMigrations = schemaHost.AddEFMigrations(
-#pragma warning restore ASPIREPROJECTS001
         "ef-data-protection-migrations",
         "Potsure.Data.PotsureDataProtectionDbContext")
     .WithReference(database)
@@ -25,10 +26,10 @@ var dataProtectionMigrations = schemaHost.AddEFMigrations(
     .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();
+#pragma warning restore ASPIREPROJECTS001
 
 #pragma warning disable ASPIREPROJECTS001
 var migrations = schemaHost.AddEFMigrations(
-#pragma warning restore ASPIREPROJECTS001
         "ef-migrations",
         "Potsure.Data.PotsureDbContext")
     .WithReference(database)
@@ -38,8 +39,11 @@ var migrations = schemaHost.AddEFMigrations(
     .WithMigrationsProject("../Potsure.Data/Potsure.Data.csproj")
     .RunDatabaseUpdateOnStart()
     .PublishAsMigrationScript();
+#pragma warning restore ASPIREPROJECTS001
 
-var web = builder.AddProject<Projects.Potsure_Web>("web")
+#pragma warning disable ASPIREDOTNETPROJECT001
+var web = builder.AddDotnetProject("web", "../Potsure.Web/Potsure.Web.csproj")
+#pragma warning restore ASPIREDOTNETPROJECT001
     .WithExternalHttpEndpoints()
     .WithEndpoint("http", endpoint => endpoint.Port = 5191)
     .WithHttpHealthCheck("/health")
