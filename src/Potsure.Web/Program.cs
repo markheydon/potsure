@@ -65,12 +65,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddBlazorBlueprintComponents(configureTheme: options =>
-{
-    options.DefaultRadius = 0.65;
-    options.PersistToLocalStorage = true;
-    options.DetectSystemPreference = true;
-});
+builder.Services.AddBlazorBlueprintComponents();
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -123,18 +118,14 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseRequestLocalization();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+app.UseHttpsRedirection();
+app.UseAntiforgery();
 
 if (deployment.Mode == DeploymentMode.Hosted)
 {
     app.UseAuthentication();
     app.UseAuthorization();
 }
-
-app.UseAntiforgery();
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapRazorComponents<App>()
