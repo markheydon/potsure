@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
-using BankPotReadModel = Potsure.Infrastructure.Features.Plan.BankPotReadModel;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Web.Resources;
 using Potsure.Web.Services;
+using BankPotReadModel = Potsure.Infrastructure.Features.Plan.BankPotReadModel;
 
 namespace Potsure.Web.Features.Reports.Pages;
 
