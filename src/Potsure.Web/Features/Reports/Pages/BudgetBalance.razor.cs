@@ -50,9 +50,7 @@ public partial class BudgetBalance : IDisposable
     private async void OnDateRangeChanged() =>
         await InvokeAsync(async () =>
         {
-            _loading = true;
             await LoadReportAsync();
-            _loading = false;
             StateHasChanged();
         });
 

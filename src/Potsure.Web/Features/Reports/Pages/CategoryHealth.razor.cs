@@ -55,9 +55,7 @@ public partial class CategoryHealth : IDisposable
     private async void OnDateRangeChanged() =>
         await InvokeAsync(async () =>
         {
-            _loading = true;
             await LoadReportAsync();
-            _loading = false;
             StateHasChanged();
         });
 
@@ -85,6 +83,10 @@ public partial class CategoryHealth : IDisposable
         catch (Exception ex)
         {
             _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
         }
     }
 

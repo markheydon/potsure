@@ -27,6 +27,11 @@ public sealed class ReportDateRangeSessionState
             throw new ArgumentException("Report end date must be on or after the start date.");
         }
 
+        if (_start == start && _end == end)
+        {
+            return;
+        }
+
         _start = start;
         _end = end;
         Changed?.Invoke();

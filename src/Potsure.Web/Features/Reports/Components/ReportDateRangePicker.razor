@@ -32,10 +32,17 @@
             return Task.CompletedTask;
         }
 
+        DateOnly start = DateOnly.FromDateTime(value.Value);
+        DateOnly end = DateOnly.FromDateTime(_end.Value);
+        (DateOnly currentStart, DateOnly currentEnd) = DateRangeState.GetRange();
+        if (start == currentStart && end == currentEnd)
+        {
+            _start = value;
+            return Task.CompletedTask;
+        }
+
         _start = value;
-        DateRangeState.SetRange(
-            DateOnly.FromDateTime(_start.Value),
-            DateOnly.FromDateTime(_end.Value));
+        DateRangeState.SetRange(start, end);
         return Task.CompletedTask;
     }
 
@@ -46,10 +53,17 @@
             return Task.CompletedTask;
         }
 
+        DateOnly start = DateOnly.FromDateTime(_start.Value);
+        DateOnly end = DateOnly.FromDateTime(value.Value);
+        (DateOnly currentStart, DateOnly currentEnd) = DateRangeState.GetRange();
+        if (start == currentStart && end == currentEnd)
+        {
+            _end = value;
+            return Task.CompletedTask;
+        }
+
         _end = value;
-        DateRangeState.SetRange(
-            DateOnly.FromDateTime(_start.Value),
-            DateOnly.FromDateTime(_end.Value));
+        DateRangeState.SetRange(start, end);
         return Task.CompletedTask;
     }
 }
