@@ -34,18 +34,24 @@
             <PotsurePageHeader Title="Confirm export" HeadingLevel="3" />
             @if (IsHosted)
             {
-                <BbTypographyP>Enter your current account password to confirm export.</BbTypographyP>
-                <BbInput Type="InputType.Password"
-                         Value="_hostedPassword"
-                         ValueChanged="SetHostedPasswordAsync"
-                         Autocomplete="current-password"
-                         Placeholder="Current password" />
+                <BbTypographyP>Re-enter your current account password to confirm export.</BbTypographyP>
+                <BbFormFieldInput @key="_exportPasswordFieldKey"
+                                  TValue="string"
+                                  @bind-Value="_exportReauthPassword"
+                                  Label="Current password"
+                                  Type="InputType.Password"
+                                  Name="@($"potsure-export-reauth-{_exportPasswordFieldKey}")"
+                                  Placeholder="Current password"
+                                  UpdateTiming="UpdateTiming.Immediate"
+                                  Autocomplete="new-password"
+                                  Required="true" />
             }
             else
             {
                 <BbTypographyP>Type @ExportPhrase to confirm you want to download your financial data.</BbTypographyP>
                 <BbInput Value="_exportChallengePhrase"
                          ValueChanged="SetExportChallengePhraseAsync"
+                         UpdateTiming="UpdateTiming.Immediate"
                          Placeholder="@ExportPhrase" />
             }
             @if (_exportReauthError is not null)
@@ -92,18 +98,24 @@
             <PotsurePageHeader Title="Confirm deletion" HeadingLevel="3" />
             @if (IsHosted)
             {
-                <BbTypographyP>Enter your current account password to confirm permanent deletion.</BbTypographyP>
-                <BbInput Type="InputType.Password"
-                         Value="_hostedPassword"
-                         ValueChanged="SetHostedPasswordAsync"
-                         Autocomplete="current-password"
-                         Placeholder="Current password" />
+                <BbTypographyP>Re-enter your current account password to confirm permanent deletion.</BbTypographyP>
+                <BbFormFieldInput @key="_deletePasswordFieldKey"
+                                  TValue="string"
+                                  @bind-Value="_deleteReauthPassword"
+                                  Label="Current password"
+                                  Type="InputType.Password"
+                                  Name="@($"potsure-delete-reauth-{_deletePasswordFieldKey}")"
+                                  Placeholder="Current password"
+                                  UpdateTiming="UpdateTiming.Immediate"
+                                  Autocomplete="new-password"
+                                  Required="true" />
             }
             else
             {
                 <BbTypographyP>Type @DeletePhrase to confirm permanent deletion.</BbTypographyP>
                 <BbInput Value="_deleteChallengePhrase"
                          ValueChanged="SetDeleteChallengePhraseAsync"
+                         UpdateTiming="UpdateTiming.Immediate"
                          Placeholder="@DeletePhrase" />
             }
             @if (_deleteReauthError is not null)

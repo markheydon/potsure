@@ -33,7 +33,8 @@ public partial class PrivacyDataPanel
     private bool _showDeleteReauth;
     private string _exportChallengePhrase = string.Empty;
     private string _deleteChallengePhrase = string.Empty;
-    private string _hostedPassword = string.Empty;
+    private string _exportReauthPassword = string.Empty;
+    private string _deleteReauthPassword = string.Empty;
     private string? _exportMessage;
     private string? _exportReauthError;
     private string? _deleteMessage;
@@ -44,6 +45,14 @@ public partial class PrivacyDataPanel
 
     private const string ExportPhrase = "EXPORT";
     private const string DeletePhrase = "DELETE";
+
+    private int _exportPasswordFieldKey;
+    private int _deletePasswordFieldKey;
+
+    protected override void OnInitialized()
+    {
+        ResetReauthUiState();
+    }
 
     private async Task BeginExportAsync()
     {
@@ -58,7 +67,8 @@ public partial class PrivacyDataPanel
 
         _exportChallengePhrase = string.Empty;
         _exportReauthError = null;
-        _hostedPassword = string.Empty;
+        _exportReauthPassword = string.Empty;
+        _exportPasswordFieldKey++;
         _showExportReauth = true;
     }
 
@@ -73,7 +83,8 @@ public partial class PrivacyDataPanel
         }
 
         _deleteChallengePhrase = string.Empty;
-        _hostedPassword = string.Empty;
+        _deleteReauthPassword = string.Empty;
+        _deletePasswordFieldKey++;
         _showDeleteReauth = true;
     }
 
@@ -90,7 +101,7 @@ public partial class PrivacyDataPanel
         _exportReauthError = null;
         if (IsHosted)
         {
-            string? hostedError = await ValidateHostedPasswordAsync();
+            string? hostedError = await ValidateHostedPasswordAsync(_exportReauthPassword);
             if (hostedError is not null)
             {
                 _exportReauthError = hostedError;
@@ -113,7 +124,7 @@ public partial class PrivacyDataPanel
         _deleteReauthError = null;
         if (IsHosted)
         {
-            string? hostedError = await ValidateHostedPasswordAsync();
+            string? hostedError = await ValidateHostedPasswordAsync(_deleteReauthPassword);
             if (hostedError is not null)
             {
                 _deleteReauthError = hostedError;
@@ -131,12 +142,6 @@ public partial class PrivacyDataPanel
         await DeleteAsync();
     }
 
-    private Task SetHostedPasswordAsync(string? value)
-    {
-        _hostedPassword = value ?? string.Empty;
-        return Task.CompletedTask;
-    }
-
     private Task SetExportChallengePhraseAsync(string? value)
     {
         _exportChallengePhrase = value ?? string.Empty;
@@ -149,14 +154,14 @@ public partial class PrivacyDataPanel
         return Task.CompletedTask;
     }
 
-    private async Task<string?> ValidateHostedPasswordAsync()
+    private async Task<string?> ValidateHostedPasswordAsync(string password)
     {
-        if (string.IsNullOrWhiteSpace(_hostedPassword))
+        if (string.IsNullOrWhiteSpace(password))
         {
             return "Enter your password to continue.";
         }
 
-        if (!await PasswordReauthenticationService.ValidatePasswordAsync(_hostedPassword))
+        if (!await PasswordReauthenticationService.ValidatePasswordAsync(password))
         {
             return "That password is incorrect. Try again.";
         }
@@ -175,7 +180,8 @@ public partial class PrivacyDataPanel
             if (result is null)
             {
                 ReauthenticationService.RevokeReauthentication();
-                _exportMessage = "Export cancelled  -  reauthentication required.";
+                _showExportReauth = false;
+                _exportMessage = "Export cancelled; reauthentication required.";
                 return;
             }
 
@@ -183,10 +189,13 @@ public partial class PrivacyDataPanel
             _downloadContentType = result.ContentType;
             _downloadBase64 = Convert.ToBase64String(result.Content);
             _exportMessage = string.Format(CultureInfo.InvariantCulture, "Export ready ({0}).", result.FileName);
+            ReauthenticationService.RevokeReauthentication();
+            ClearSensitiveReauthFields();
         }
         catch (Exception)
         {
             _exportMessage = "Export failed. Try again or contact your administrator.";
+            ReauthenticationService.RevokeReauthentication();
         }
         finally
         {
@@ -204,14 +213,19 @@ public partial class PrivacyDataPanel
             if (!deleted)
             {
                 ReauthenticationService.RevokeReauthentication();
+                _deleteMessage = "Deletion cancelled; reauthentication required.";
+                return;
             }
 
-            _deleteMessage = deleted
-                ? "All financial data has been deleted."
-                : "Deletion cancelled  -  reauthentication required.";
+            ReauthenticationService.RevokeReauthentication();
+            ClearSensitiveReauthFields();
+            _showDeleteReauth = false;
+            _confirmDelete = false;
+            _deleteMessage = "All financial data has been deleted.";
         }
         catch (Exception)
         {
+            ReauthenticationService.RevokeReauthentication();
             _deleteMessage = "Deletion failed. Try again or contact your administrator.";
         }
         finally
@@ -219,4 +233,24 @@ public partial class PrivacyDataPanel
             _busy = false;
         }
     }
+
+    private void ClearSensitiveReauthFields()
+    {
+        _exportReauthPassword = string.Empty;
+        _deleteReauthPassword = string.Empty;
+        _exportChallengePhrase = string.Empty;
+        _deleteChallengePhrase = string.Empty;
+        _exportPasswordFieldKey++;
+        _deletePasswordFieldKey++;
+    }
+
+    private void ResetReauthUiState()
+    {
+        _showExportReauth = false;
+        _showDeleteReauth = false;
+        _exportReauthError = null;
+        _deleteReauthError = null;
+        ClearSensitiveReauthFields();
+    }
+
 }
