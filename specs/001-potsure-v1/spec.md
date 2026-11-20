@@ -4,13 +4,13 @@
 
 **Created**: 2026-11-02
 
-**Status**: Implementation in progress  -  **Phase 23** (hosted Identity pivot, tasks **T143**–**T148**) open before v1.0.0 hosted acceptance
+**Status**: Implementation in progress  -  **Phase 35** (document store pivot, tasks **T207**–**T233**) is the **release gate** before v1.0.0 sign-off. Hosted Identity (**T143**–**T148**) is complete; persistence must follow [contracts/user-state-document.md](./contracts/user-state-document.md) via Aspire `userdata` blob consumption (constitution 1.2.0), not the historical SQL/EF path.
 
 **Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.2.0](../../.specify/memory/constitution.md).
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 
-**Last reviewed**: 2026-11-09  -  household plan model, pot modes, edit/delete for confirmed recurring items (**FR-M008c**) and mapped pots (**FR-M013c**); user override of inferred fixed vs variable amount behaviour (**FR-M008d**); hosted auth unchanged (2026-11-04).
+**Last reviewed**: 2026-11-20  -  commercial persistence pivot (per-user JSON in private blob storage; identity blobs separate); prior 2026-11-09 plan model clarifications unchanged for product behaviour.
 
 ## Clarifications
 
@@ -441,6 +441,10 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 - **FR-X005**: Advanced account rescue or credential recovery beyond standard Identity template pages MUST NOT be required or implied as shipped in v1 (e.g. one-time recovery keys at signup). The **ForgotPassword** account page MAY ship with the Blazor Identity template for v1.0.0; email delivery MAY use a no-op `IEmailSender` on self-host (operator SMTP is post-v1). v1 MUST NOT require passkey-only recovery paths.
 - **FR-X006**: A library of multiple saved budget plan profiles or saved report-range presets MUST NOT be offered in v1; only the single standing plan in **FR-M031** plus an in-session report date range in **FR-M031a** is in scope.
 
+### Persistence and isolation *(normative product constraints; storage layout in plan and contracts)*
+
+Hosted and Aspire-orchestrated deployments MUST persist each signed-in user’s financial state as a single JSON document per [contracts/user-state-document.md](./contracts/user-state-document.md) (`tenants/{userId}/state.json` in the private `userdata` container), with `schemaVersion` migrated in process on load. ASP.NET Core Identity account records and the hashed email index MUST use separate blobs in the same container, not embedded in the financial document. **FR-M025** per-user isolation and **FR-M006** / **FR-M023** portability and deletion apply to these blob families (financial document, identity user blob, email-index blob) in the documented order; export bundles remain user-selected portable formats from the standing plan and stored transactions. Encryption at rest (**FR-M027**) on hosted paths is satisfied by Azure Storage service encryption on the private container (see [plan.md](./plan.md)), re-validated in Phase 35 task **T230** after the SQL/EF pivot evidence. AppHost MUST expose the blob container to the web app only through the matching Aspire blob client integration (no hand-built storage connection strings when AppHost models the resource).
+
 ### Key Entities *(include if feature involves data)*
 
 - **User**: Person using Potsure; in hosted mode has an authenticated Identity account (email/password) with isolated data; in local-only mode operates without remote account.
@@ -476,7 +480,7 @@ As a user who may review on phone or keyboard-only, I navigate imports, confirma
 
 ### Measurable Outcomes
 
-**Validation ownership** (see [tasks.md](./tasks.md) release gate): **SC-001**, **SC-002**, and **SC-009** are moderated usability / release QA outcomes (no dedicated CI tasks). **SC-003** maps to quickstart Scenario 2 (step 4), integration tasks **T106** / **T140**–**T142**, and release evidence **T151**. **SC-004** maps to golden budgeting tests (**T016**, **T078**). **SC-006** maps to **T088**–**T089**, hosted reauth **T147**, and quickstart export/delete scenarios. **SC-008** maps to **T118**, **T129**, **T139**. **SC-005** closes when **T148** and hosted quickstart scenarios pass. **SC-007** requires **T150** (quickstart Scenario 9) plus UI tasks **T091**–**T094**.
+**Validation ownership** (see [tasks.md](./tasks.md) release gate): **SC-001**, **SC-002**, and **SC-009** are moderated usability / release QA outcomes (no dedicated CI tasks). **SC-003** maps to quickstart Scenario 2 (step 4), integration tasks **T106** / **T140**–**T142**, and release evidence **T151** (re-run import assignment tests on the document store after **T228**). **SC-004** maps to golden budgeting tests (**T016**, **T078**). **SC-006** maps to **T226**, quickstart Scenario 6, hosted reauth **T147**, and historical **T088**–**T089** (SQL-era evidence superseded for release sign-off until blob deletion passes **T226**). **SC-008** maps to **T118**, **T129**, **T139**. **SC-005** requires Identity gating (**T148**, **T205**) **and** document-store tenancy isolation (**T227**, quickstart Scenario 8c **Pass** via **T231**); SQL/EF isolation evidence alone is not release sign-off after the 2026-11-20 pivot. **SC-007** requires **T150** (quickstart Scenario 9) plus UI tasks **T091**–**T094**.
 
 - **SC-001**: At least 90% of users in moderated usability tests can upload a valid Monzo CSV and see imported transactions with zero unexplained silent drops (every row accounted for in success or reported error).
 - **SC-002**: Users can complete first-time setup (import, choose preset, enter estimated income with cadence, confirm at least one recurring item, view category health) in under 30 minutes with only one month of data, without requiring plan start/end dates or a fixed payday entry.

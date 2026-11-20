@@ -4,7 +4,7 @@
 
 **Governance**: [constitution v1.2.0](../../.specify/memory/constitution.md); agent workflow in [AGENTS.md](../../AGENTS.md) (Aspire consumption + central package versioning).
 
-**Re-plan note (2026-11-20)**: Commercial persistence pivot. Azure SQL cannot be created on the current subscription, so the running store is **no longer a database**. AppHost models **Azure Blob Storage** (Azurite locally). Each signed-in user is one tenant with one financial JSON document, plus separate identity blobs. EF Core, SQL containers, and `Potsure.MigrationsHost` leave the running path. A later database is a new implementation of the document store, not a reason to keep SQL wired now. Product behaviour (standing plan, reports, pots, Identity password sign-in) is unchanged. [tasks.md](./tasks.md) still describes the SQL implementation and must not be executed for new persistence work until a tasks pass replaces those items.
+**Re-plan note (2026-11-20)**: Commercial persistence pivot. Azure SQL cannot be created on the current subscription, so the running store is **no longer a database**. AppHost models **Azure Blob Storage** (Azurite locally). Each signed-in user is one tenant with one financial JSON document, plus separate identity blobs. EF Core, SQL containers, and `Potsure.MigrationsHost` leave the running path. A later database is a new implementation of the document store, not a reason to keep SQL wired now. Product behaviour (standing plan, reports, pots, Identity password sign-in) is unchanged. [tasks.md](./tasks.md) **Phase 35** (**T207**–**T233**) is the only active queue for persistence, AppHost blob wiring, and constitution 1.2.0 consumption gates; earlier `[X]` SQL/EF tasks are historical evidence only.
 
 **Re-plan note (2026-11-09)**: Standing **budget plan** (estimated income + cadence, no plan start/end dates); **report date range** for period-scoped reports (**FR-M031a**, default current calendar month, shared per browser tab, not persisted); **pot mapping modes** (category-only, three pots, several pots; **FR-M013**–**FR-M013c**); recurring **edit/delete** and **payment anchor** (**FR-M008c**); user **fixed vs variable** override (**FR-M008d**); **30.4375** day proration and **banker's** 2dp rounding (**FR-M017**, **FR-M036**); **max-of-ratios** required income (**FR-M018**); variable commitment uses **stored monthly estimate** not live rolling average; **FR-M019** / **FR-M035** persisted on plan. Identity, Monzo import, EF migration orchestration, and Azure/Aspire topology unchanged from 2026-11-04 unless plan-model work touches them.
 
@@ -95,7 +95,7 @@ specs/001-potsure-v1/
 │   └── user-state-document.md
 ├── spec.md
 ├── checklists/
-└── tasks.md             # Phase 2 (/speckit-tasks  -  complete)
+└── tasks.md             # Phase 2 (/speckit-tasks); Phase 35 pivot queue (2026-11-20) extends backlog
 ```
 
 ### Source Code (repository root)
@@ -253,4 +253,4 @@ There is no migration resource. The container being ready is enough for the web 
 
 ## Next steps
 
-Run **`/speckit-tasks`** so the backlog matches this persistence pivot before any implementation. Do not run **`/speckit-implement`** against the current [tasks.md](./tasks.md): it still tells the agent to keep Azure SQL, EF migrations, and `AddSqlServerDbContext`. Product tasks that do not touch the store remain valid as behaviour, but their persistence steps must be rewritten. Use **`/speckit-converge`** only if implementation discovers new spec gaps; re-run **`/speckit-analyze`** after the tasks pass.
+Run **`/speckit-implement`** on **Phase 35** only (**T207**–**T233** in [tasks.md](./tasks.md)). Phases **1–34** product behaviour is largely complete; do not extend Azure SQL, EF migrations, or `AddSqlServerDbContext` on the running path. Close release sign-off with quickstart Scenario **8c** on the blob path (**T231**), storage encryption docs (**T230**), and full test/format gates (**T232**, **T233**). Re-run **`/speckit-tasks`** only if the spec or this plan changes materially again. Use **`/speckit-converge`** if implementation discovers new spec gaps.
