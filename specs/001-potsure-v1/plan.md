@@ -185,7 +185,7 @@ sql (Azure SQL resource)
               └── web (WithReference database; WaitForCompletion migrations)
 ```
 
-- Prefer **Aspire 13.6 `AddEFMigrations`** on the `Potsure.Web` project resource (startup project for EF CLI) with `WithMigrationsProject` pointing at **`Potsure.Data`**, explicit `DbContext` type names `Potsure.Data.PotsureDbContext` and `Potsure.Data.PotsureDataProtectionDbContext`, `WithReference(database)`, `WaitFor(database)`, and `RunDatabaseUpdateOnStart()` for local `aspire run` / AppHost dev only.
+- Prefer **Aspire 17 `AddEFMigrations`** on **`Potsure.MigrationsHost`** (`schema-host` via `AddDotnetProject`) with `WithMigrationsProject` pointing at **`Potsure.Data`**, explicit `DbContext` type names `Potsure.Data.PotsureDbContext` and `Potsure.Data.PotsureDataProtectionDbContext`, `WithReference(database)`, `WaitFor(database)`, and `RunDatabaseUpdateOnStart()` for local `aspire start` / AppHost dev only.
 - Web resource: keep `WithReference(database)`; replace “web starts when database is healthy only” with **`WaitForCompletion(migrations)`** so schema exists before Blazor/Identity touch SQL.
 - AppHost references **`Potsure.Data`** for `WithMigrationsProject`  -  not a runtime dependency inversion (Data must not reference AppHost).
 - **Hosted publish**: `RunDatabaseUpdateOnStart` does not deploy; use `PublishAsMigrationScript()` / migration bundle and/or the controlled job documented in `docs/deployment-database.md` (single runner, no migrate-all-replicas).
@@ -216,7 +216,7 @@ dotnet ef database update \
   --startup-project src/Potsure.Web/Potsure.Web.csproj
 ```
 
-Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packages (same Aspire line as existing 13.6.4 integrations) when executing T111–T114 in [tasks.md](./tasks.md).
+Implement: add `Aspire.Hosting.EntityFrameworkCore` to AppHost via central packages (aligned with the pinned Aspire 17 line) when executing T111–T114 in [tasks.md](./tasks.md).
 
 ### Central package management (implement gate)
 

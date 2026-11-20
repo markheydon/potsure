@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,19 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.Dotnet" />
     <PackageReference Include="Aspire.Hosting.Azure.AppContainers" />
     <PackageReference Include="Aspire.Hosting.Azure.Sql" />
     <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj">
-      <IsAspireProjectResource>false</IsAspireProjectResource>
-    </ProjectReference>
-    <ProjectReference Include="..\Potsure.MigrationsHost\Potsure.MigrationsHost.csproj" />
-    <ProjectReference Include="..\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 
 </Project>

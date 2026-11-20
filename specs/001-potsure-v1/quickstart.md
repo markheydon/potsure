@@ -148,7 +148,7 @@ After deploy to dev/test ACA + Azure SQL free tier:
 
 ## Validation log
 
-Last run: 2026-11-09 (Release build/test; Phase 27 standing plan + convergence; `HostedIdentityHttpTests` POST register/sign-in cookie smoke per **T190**). **T100** records this log; **T185** refreshes Scenarios 3, 4b, 5, 7; **T150** Scenario 9 code-review pass; **T189** local `aspire run` re-smoke (see Scenario 8c row).
+Last run: 2026-11-20 (Aspire **17.0.0** upgrade; Release build/test; Scenario **8c** `aspire start` wait chain on devcontainer). **T100** records this log; prior 2026-11-09 entry covered Phase 27 convergence and **T190** hosted Identity HTTP smoke.
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
@@ -162,7 +162,7 @@ Last run: 2026-11-09 (Release build/test; Phase 27 standing plan + convergence; 
 | 7  -  Determinism | Pass | `DeterminismTests` in Release |
 | 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
 | 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c  -  EF migration ordering | Partial | **T189** (2026-11-09): `aspire run` started sql + schema-host; `schema-host` reported **FailedToStart** before ef-migrations finished within 180s in this devcontainer; graph wiring **T158** unchanged  -  re-smoke on a host with stable schema-host startup |
+| 8c  -  EF migration ordering | Pass | **2026-11-20** on Aspire **17.0.0**: `aspire start` then `aspire wait` for sql → schema-host → ef-data-protection-migrations → ef-migrations → web; `aspire describe --include-hidden` shows migration tools **Finished**. Reset stale SQL: `aspire secret delete Parameters:sql-password`, `aspire stop --force`, remove `potsure-sql-data` volume if SA login fails. |
 | 9  -  Accessibility smoke | Pass | **T150** code audit: import wizard + recurring + report focus/keyboard fixes (**T091**–**T094**); textual chart equivalents on category health and budget balance |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
 | Hosted Identity (Aspire local) | Pass | **T190**: `HostedIdentityHttpTests` POST register + password sign-in with session cookie; **T153**/**T155** DI + GET page smoke (**SC-005** / **T148**) |

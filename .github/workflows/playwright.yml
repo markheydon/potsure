@@ -32,10 +32,20 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Install Aspire CLI
+        env:
+          ASPIRE_VERSION: "17.0.0"
         run: curl -sSL https://aspire.dev/install.sh | bash
 
       - name: Add Aspire to PATH
         run: echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Aspire CLI 17.x
+        run: |
+          aspire --version | tee /tmp/aspire-version.txt
+          grep -E '^17\.' /tmp/aspire-version.txt
+
+      - name: Aspire doctor
+        run: aspire doctor --non-interactive
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq

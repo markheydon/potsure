@@ -43,6 +43,13 @@ updates:
         update-types:
           - minor
           - patch
+      aspnet:
+        patterns:
+          - Microsoft.AspNetCore.*
+          - Microsoft.EntityFrameworkCore.*
+        update-types:
+          - minor
+          - patch
       opentelemetry:
         patterns:
           - OpenTelemetry.*

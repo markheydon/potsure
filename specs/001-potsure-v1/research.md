@@ -107,7 +107,7 @@
 
 **Migration execution**:
 - **Reject** `Database.MigrateAsync()` (or `EnsureCreated`) on normal `Potsure.Web` startup  -  schema apply is deployment/orchestration, not request pipeline.
-- **Local Aspire**: Use built-in **`AddEFMigrations`** (Aspire **13.6.4** line) on the web project resource: `WithMigrationsProject` → **`Potsure.Data`**, fully qualified context `Potsure.Data.PotsureDbContext` (match AppHost registration), `WithReference(database)`, `WaitFor(database)`, `RunDatabaseUpdateOnStart()`. Web uses `WaitForCompletion(migrations)` so Blazor starts only after migrations finish successfully (finite `dotnet ef database update`, not a long-lived service). **T158** tracks Aspire `ef-tool-*` URL substitution defects separately from project choice.
+- **Local Aspire**: Use built-in **`AddEFMigrations`** (Aspire **17.0** line) on **`Potsure.MigrationsHost`** (`schema-host`): `WithMigrationsProject` → **`Potsure.Data`**, fully qualified context `Potsure.Data.PotsureDbContext` (match AppHost registration), `WithReference(database)`, `WaitFor(database)`, `RunDatabaseUpdateOnStart()`. Web uses `WaitForCompletion(migrations)` so Blazor starts only after migrations finish successfully (finite `dotnet ef database update`, not a long-lived service).
 - **Hosted / publish**: `RunDatabaseUpdateOnStart` is local-run only; continue **controlled single-runner** apply via CI or `dotnet ef database update` / published migration script per `docs/deployment-database.md`.
 - **Application seeding** (`BudgetProfileSeeder`, fixed category rows on profile create) remains **runtime** application logic  -  not executed inside the migration resource.
 
@@ -116,7 +116,7 @@
 **Rationale**: EF migrations review prompt; [Aspire EF Core migrations integration](https://aspire.dev/integrations/databases/efcore/migrations/); avoids custom migration worker boilerplate while giving AppHost an explicit migration dependency; matches constitution Aspire consumption (web still uses `AddSqlServerDbContext` at runtime).
 
 **Alternatives considered**:
-- Dedicated `Potsure.Migrations` executable  -  viable if `AddEFMigrations` fails with this project layout; prefer built-in integration first on 13.6.4.
+- **`Potsure.MigrationsHost`** is the chosen migration startup project (avoids Blazor `portForServing "web"` on the EF tool).
 - Web `WaitFor(database)` only (current AppHost)  -  **insufficient**; web can start before schema exists.
 - Migrations in Web project  -  rejected; EF model in **`Potsure.Data`** keeps module boundary clear (constitution III).
 
@@ -155,7 +155,7 @@
 
 **Runtime consumption (constitution 1.2.0)**: Web project registers SQL through the Aspire SQL Server client integration  -  `AddSqlServerDbContext<PotsureDbContext>("potsure")` matching the AppHost database reference name. Application startup MUST NOT bypass integration DI with manual connection strings when AppHost models SQL. EF Core design-time factory may read `appsettings`/environment for migration commands only.
 
-**Migration resource (review prompt)**: AppHost models `database → AddEFMigrations → web` with `WaitForCompletion`; inspect with `aspire describe --include-hidden` after implement. Do not upgrade Aspire major versions solely to gain `AddEFMigrations`  -  already available on pinned 13.6.4 hosting line.
+**Migration resource (review prompt)**: AppHost models `database → schema-host → AddEFMigrations → web` with `WaitForCompletion`; inspect with `aspire describe --include-hidden` after implement. Pinned on Aspire **17.0.0** with `AddDotnetProject` (AppHost uses `Microsoft.NET.Sdk`, not `Aspire.AppHost.Sdk`).
 
 **Rationale**: User prompt Azure/Aspire policy; constitution deployment governance and Aspire resource consumption mandate; AGENTS.md operational steps (`aspire` / `aspireify` skills for AppHost changes).
 

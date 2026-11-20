@@ -39,8 +39,10 @@ already models that resource. Wire AppHost project references and register clien
 integration documents - for example,
 [Add the SQL Server client](https://aspire.dev/integrations/databases/sql-server/sql-server-connect/#add-the-sql-server-client).
 
-Use the `aspire`, `aspireify`, and related skills under `.agents/skills/` when wiring or
-changing AppHost resources.
+Use the **Aspire agent skills plugin** (`aspire-skills/aspire` in [`.cursor/settings.json`](.cursor/settings.json))
+for `aspire`, `aspireify`, orchestration, monitoring, and deployment workflows when wiring or
+changing AppHost resources. Potsure-specific skills remain under `.agents/skills/`; do not
+restore copied `.agents/skills/aspire*` trees on Aspire 17+ (they override the plugin).
 
 ### Central package management
 
@@ -82,7 +84,7 @@ Project skills live in `.agents/skills/`.
 | `code-review` | PR or branch review before merge (see `.cursor/commands/loop-code-review.md`) |
 | `principal-engineering` | Non-trivial implementation, refactors, analyzer/build fixes, EF migrations, new abstractions - keep changes architecturally sound and root-cause based |
 | `blazor-blueprint` | BlazorBlueprint official llms docs (`Bb*` APIs). In this repo, host is `src/Potsure.Web/`. |
-| `aspire` (and related `aspire-*` skills) | AppHost exists or you are wiring/deploying Aspire resources |
+| Aspire skills plugin (`aspire`, `aspireify`, `aspire-orchestration`, and related) | AppHost exists or you are wiring/deploying Aspire resources |
 
 ## Task Routing
 

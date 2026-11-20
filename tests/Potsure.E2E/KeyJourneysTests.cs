@@ -38,7 +38,11 @@ public sealed class KeyJourneysTests
         {
             using IPlaywright playwright = await Playwright.CreateAsync();
             await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-            IPage page = await browser.NewPageAsync();
+            await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                IgnoreHTTPSErrors = true,
+            });
+            IPage page = await context.NewPageAsync();
 
             await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
 

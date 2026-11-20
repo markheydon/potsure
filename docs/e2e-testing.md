@@ -14,7 +14,7 @@ dotnet test Potsure.slnx --filter "FullyQualifiedName!~Potsure.E2E"
 
 ## Optional local full stack (Aspire)
 
-One command starts the AppHost (SQL container, EF migrations, hosted `web`), installs Chromium, discovers the `web` URL, and runs the journey tests:
+One command starts the AppHost with `aspire start --isolated` (SQL container, EF migrations, hosted `web`), installs Chromium, discovers the `web` URL from `aspire describe`, and runs the journey tests:
 
 ```bash
 ./scripts/run-e2e-playwright.sh
@@ -38,7 +38,7 @@ Optional environment variables:
 
 ## Manual local workflow
 
-1. Start the app (`aspire run --apphost src/Potsure.AppHost` or `dotnet run --project src/Potsure.Web` with SQL configured).
+1. Start the app (`aspire start --non-interactive --apphost src/Potsure.AppHost/Potsure.AppHost.csproj`, `aspire run`, or `dotnet run --project src/Potsure.Web` with SQL configured).
 2. Ensure migrations are applied (AppHost orchestrates this in development).
 3. Export `POTSURE_E2E_BASE_URL` to the web HTTP root (no trailing path).
 4. Install Playwright browsers once per machine:
