@@ -94,41 +94,47 @@
 
 ## Persistence and tenancy
 
-**Decision**: EF Core 10 + SQL Server (Azure SQL hosted, SQL container local via Aspire `RunAsContainer`); `UserId` on user-owned entities; global query filters + explicit ownership checks on mutations; migrations in source control; **idempotent reviewed SQL** or controlled migration job before public traffic (no concurrent migrate-all-replicas). Data Protection key ring in SQL via EF; reconcile with Aspire-generated DP resources to avoid duplicate stores.
+**Decision (2026-11-20)**: No database on the running path. Aspire `AddAzureStorage("storage").RunAsEmulator(...).AddBlobContainer("userdata", blobContainerName: "potsure-userdata")` locally and as an Azure Storage account when published. Web registers `AddAzureBlobContainerClient("userdata")` and uses the injected `BlobContainerClient` (Aspire.Hosting.Azure.Storage / Aspire.Azure.Storage.Blobs **17.0.0**, confirmed with `aspire docs`).
 
-**Rationale**: User prompt and FR-M025–M027; constitution IV.
+Each hosted login is one tenant:
 
-**Alternatives considered**:
-- SQLite for v1 local  -  deferred per prompt (future work).
+- `tenants/{userId}/state.json` holds every financial aggregate for that user.
+- `identity/users/{userId}.json` and `identity/email-index/{sha256}.json` hold the Identity account. The email hash avoids putting the address in the blob name.
+- `system/data-protection-keys.xml` holds the ASP.NET Core Data Protection key ring.
 
-## EF Core migration ownership and orchestration
+Writes of `state.json` use the blob ETag (`If-Match`). `schemaVersion` on the document replaces EF migrations: transform that file on load. Owner id comes only from `ICurrentOwnerAccessor`. Container is private; hosted access is managed identity; encryption at rest is Azure Storage service encryption; transport is HTTPS. Local-only mode (no AppHost) stores the same relative paths on disk.
 
-**Decision (current solution shape)**: Single `PotsureDbContext` in **`src/Potsure.Data/`** with migrations and model snapshot under `Migrations/PotsureDbContext/`. **No** separate migrations-only project. `Potsure.Web` is the EF **startup project** (Aspire SQL client + Identity registration); `Potsure.Data` is the migrations **project** for `dotnet ef` and AppHost `WithMigrationsProject`. Repositories and seeders remain in `Potsure.Infrastructure`.
+The store interface in Infrastructure is the seam for a future database. Until then, drop EF, SQL hosting, and `Potsure.MigrationsHost`.
 
-**Migration execution**:
-- **Reject** `Database.MigrateAsync()` (or `EnsureCreated`) on normal `Potsure.Web` startup  -  schema apply is deployment/orchestration, not request pipeline.
-- **Local Aspire**: Use built-in **`AddEFMigrations`** (Aspire **17.0** line) on **`Potsure.MigrationsHost`** (`schema-host`): `WithMigrationsProject` → **`Potsure.Data`**, fully qualified context `Potsure.Data.PotsureDbContext` (match AppHost registration), `WithReference(database)`, `WaitFor(database)`, `RunDatabaseUpdateOnStart()`. Web uses `WaitForCompletion(migrations)` so Blazor starts only after migrations finish successfully (finite `dotnet ef database update`, not a long-lived service).
-- **Hosted / publish**: `RunDatabaseUpdateOnStart` is local-run only; continue **controlled single-runner** apply via CI or `dotnet ef database update` / published migration script per `docs/deployment-database.md`.
-- **Application seeding** (`BudgetProfileSeeder`, fixed category rows on profile create) remains **runtime** application logic  -  not executed inside the migration resource.
-
-**Design-time**: Keep `IDesignTimeDbContextFactory` in `Potsure.Data/DesignTime/` with `UseSqlServer` from config/localdb fallback for standalone `dotnet ef` when AppHost is not running (constitution 1.2.0  -  not a runtime bypass).
-
-**Rationale**: EF migrations review prompt; [Aspire EF Core migrations integration](https://aspire.dev/integrations/databases/efcore/migrations/); avoids custom migration worker boilerplate while giving AppHost an explicit migration dependency; matches constitution Aspire consumption (web still uses `AddSqlServerDbContext` at runtime).
+**Rationale**: The current Azure subscription cannot create Azure SQL at all, and free database offers are unavailable. A storage account is a normal Aspire resource (`aspire integration search storage` → `Aspire.Hosting.Azure.Storage` 17.0.0), works on the Consumption hosting path, and matches one JSON file per user. Whole-document read/write is acceptable for one Monzo account per user and keeps import atomic (one conditional replace). Constitution IV still requires encryption, authentication, and isolation; those move to the private container and owner-scoped names rather than SQL TDE and EF filters.
 
 **Alternatives considered**:
-- **`Potsure.MigrationsHost`** is the chosen migration startup project (avoids Blazor `portForServing "web"` on the EF tool).
-- Web `WaitFor(database)` only (current AppHost)  -  **insufficient**; web can start before schema exists.
-- Migrations in Web project  -  rejected; EF model in **`Potsure.Data`** keeps module boundary clear (constitution III).
+- Keep Azure SQL / EF (previous decision, 2026-11-03)  -  rejected for this period because the subscription cannot provision it.
+- SQLite file, including a SQLite file inside a blob  -  rejected. It is still a database, and a database file in blob storage locks badly across replicas.
+- Azure Table or Cosmos  -  rejected. Table storage is not the JSON document the product needs; Cosmos is another database product with its own cost and quota.
+- Azure Files share  -  rejected. Aspire's blob container client, private container, and managed identity are a tighter fit for one object per user than a mounted share.
+- One JSON file per transaction  -  rejected. It recreates queries and multi-object commits without a database.
+- Email address as the blob name  -  rejected. Names show up in storage diagnostics; a SHA-256 index keeps lookup O(1) without listing the container.
+
+## Document evolution (replaces EF migrations)
+
+**Decision**: No EF Core and no migration resource. `state.json` carries `schemaVersion`. Loading a document applies ordered transforms until it matches the current version, then writes it back with `If-Match`. New users start at the current version when their file is created. Default categories are part of that first write, not a schema job.
+
+**Rationale**: There is no shared database schema to migrate. A startup pass over every blob would block the site and is unnecessary for one file per user.
+
+**Alternatives considered**:
+- Keep `AddEFMigrations` and `Potsure.MigrationsHost`  -  rejected with the SQL removal. The 2026-11-03 EF orchestration notes are withdrawn.
+- Migrate every blob at web startup  -  rejected. Failures for one user must not stop sign-in for others.
 
 ## Upload and export pipeline
 
-**Decision**: No Blob Storage for raw statements in v1; stream parse with bounded buffers/temp files; atomic commit of normalised rows; cleanup on success/failure/cancel. Export: user chooses versioned JSON bundle or CSV ZIP (transactions + plan/metadata CSV) per spec clarification.
+**Decision**: Do not store raw statement files. Stream parse with bounded buffers and temp files, then commit by one conditional replace of `state.json`. Cleanup on success, failure, and cancel. Export stays a versioned JSON bundle or CSV ZIP (transactions plus plan metadata) per spec clarification. The Azure Blob container is the system of record for normalised documents, not an upload drop.
 
 **Rationale**: User prompt upload policy; FR-M022.
 
 ## Identity
 
-**Decision**: **ASP.NET Core Identity** on SQL Server using the existing `PotsureDbContext` / `ApplicationUser`, **cookie authentication**, and standard Identity password hashing (no plaintext passwords). Hosted financial data access remains gated by **`ICurrentOwnerAccessor`**, EF **global query filters**, and **`HostedFinancialDataAuthorizationMiddleware`**. **Primary v1 sign-in**: email + password (`PasswordSignInAsync`). **UX**: adopt the .NET 10 Blazor Server Identity **account template** structure (`Components/Account/Pages` for Login, Register, ForgotPassword, Manage, etc.; `MapAdditionalIdentityEndpoints`; `IdentityRedirectManager`; `IdentityRevalidatingAuthenticationStateProvider`), with behaviour aligned to [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) and adapted for Potsure deployment modes. **Presentation**: explicit implement task to convert template markup to **BlazorBlueprint v4** (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide icons per house patterns). **Passkeys**: deferred beyond v1.0.0 acceptance; when added later, optional on login/register/manage (template-style passkey submit), **not** mandatory and **not** passkey-only hosted login. Remove v1 path dependence on custom passkey-only endpoints and passkey-only enrolment UI. **Reauthentication** before export, permanent deletion, and sensitive manage actions: confirm current **password** (preferred) or typed-phrase pattern per amended spec  -  **no passkey step-up** for v1 acceptance. **Local-only** mode unchanged (no Identity pages; not network-exposed) per FR-M024.
+**Decision**: **ASP.NET Core Identity** with a custom user store on the identity blobs in [contracts/user-state-document.md](./contracts/user-state-document.md), **cookie authentication**, and standard Identity password hashing (no plaintext passwords). Hosted financial data access remains gated by **`ICurrentOwnerAccessor`** (blob names derived only from that id) and **`HostedFinancialDataAuthorizationMiddleware`**. There is no EF global query filter. **Primary v1 sign-in**: email + password (`PasswordSignInAsync`). **UX**: adopt the .NET 10 Blazor Server Identity **account template** structure (`Components/Account/Pages` for Login, Register, ForgotPassword, Manage, etc.; `MapAdditionalIdentityEndpoints`; `IdentityRedirectManager`; `IdentityRevalidatingAuthenticationStateProvider`), with behaviour aligned to [penny-for-your-stocks](https://github.com/markheydon/penny-for-your-stocks) and adapted for Potsure deployment modes. **Presentation**: explicit implement task to convert template markup to **BlazorBlueprint v4** (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide icons per house patterns). **Passkeys**: deferred beyond v1.0.0 acceptance; when added later, optional on login/register/manage (template-style passkey submit), **not** mandatory and **not** passkey-only hosted login. Remove v1 path dependence on custom passkey-only endpoints and passkey-only enrolment UI. **Reauthentication** before export, permanent deletion, and sensitive manage actions: confirm current **password** (preferred) or typed-phrase pattern per amended spec  -  **no passkey step-up** for v1 acceptance. **Local-only** mode unchanged (no Identity pages; not network-exposed) per FR-M024.
 
 **Email (`IEmailSender<ApplicationUser>`)**: Register a development/self-host **no-op or logging sender** for v1 (acceptable for local Aspire and Penny-style self-host without SMTP). Production hosted deployments document operator configuration of a real mail provider later; email confirmation and password reset flows may be limited until then  -  **does not block** v1 plan when `RequireConfirmedAccount` remains disabled for self-host parity.
 
@@ -151,21 +157,22 @@
 
 ## Aspire AppHost and deployment stages
 
-**Decision**: Single AppHost modelling web project, ACA environment, Azure SQL (`AddAzureSqlServer`, `RunAsContainer` locally, `AddDatabase`, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp`); explicit SKU/replica/CPU/memory per stage (dev/test min 0 max 1; first public min 1; commercial 2+ replicas after approval). UK South; validate pricing/free offers at deploy time; no ACA Express; no App Insights by default on private dev.
+**Decision (2026-11-20)**: Single AppHost modelling the web project, an ACA environment, and Azure Blob Storage (`AddAzureStorage`, `RunAsEmulator` with `WithDataVolume` locally, `AddBlobContainer("userdata")`, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp`). No SQL resource. ACA replica/CPU/memory guidance is unchanged (dev/test 0–1; first public min 1; commercial 2+ after approval). UK South. No ACA Express. No App Insights by default on private dev. Storage stays on the default Standard hot SKU.
 
-**Runtime consumption (constitution 1.2.0)**: Web project registers SQL through the Aspire SQL Server client integration  -  `AddSqlServerDbContext<PotsureDbContext>("potsure")` matching the AppHost database reference name. Application startup MUST NOT bypass integration DI with manual connection strings when AppHost models SQL. EF Core design-time factory may read `appsettings`/environment for migration commands only.
+**Runtime consumption (constitution 1.2.0)**: Web registers `AddAzureBlobContainerClient("userdata")`, matching the AppHost container resource name. Startup must not build a storage connection string when AppHost models the container. Local-only mode does not run under AppHost and uses a data directory with the same relative layout.
 
-**Migration resource (review prompt)**: AppHost models `database → schema-host → AddEFMigrations → web` with `WaitForCompletion`; inspect with `aspire describe --include-hidden` after implement. Pinned on Aspire **17.0.0** with `AddDotnetProject` (AppHost uses `Microsoft.NET.Sdk`, not `Aspire.AppHost.Sdk`).
+**Startup order**: `storage` → `userdata` → `web`. No hidden migration resource. Pinned on Aspire **17.0.0** with `AddDotnetProject` (AppHost uses `Microsoft.NET.Sdk`, not `Aspire.AppHost.Sdk`).
 
-**Rationale**: User prompt Azure/Aspire policy; constitution deployment governance and Aspire resource consumption mandate; AGENTS.md operational steps (`aspire` / `aspireify` skills for AppHost changes).
+**Rationale**: Same Aspire consumption rule as the SQL design, applied to the resource the subscription can actually provision. APIs checked with `aspire docs get set-up-azure-blob-storage-in-the-apphost` and `aspire docs get connect-to-azure-blob-storage`.
 
 **Alternatives considered**:
-- AKS / Functions / Redis / SignalR / Blob / Key Vault  -  deferred per release gates until measured need.
-- Manual `UseSqlServer(connectionString)` in `Program.cs` from configuration  -  rejected at runtime; breaks AppHost parity and violates constitution 1.2.0.
+- AKS / Functions / Redis / SignalR / Key Vault  -  still deferred.
+- Hand-written blob connection strings in `Program.cs`  -  rejected when AppHost models the container.
+- The previous Azure SQL graph (`AddAzureSqlServer`, `AddEFMigrations`)  -  withdrawn 2026-11-20.
 
 ## OpenTelemetry
 
-**Decision**: Public stages → Application Insights / Log Analytics via OpenTelemetry; sample successful traces; retain errors; ~0.1 GB/day cap, 30–31 day retention; **exclude** bodies, uploads, payee text, account refs, exports, sensitive SQL parameters.
+**Decision**: Public stages → Application Insights / Log Analytics via OpenTelemetry; sample successful traces; retain errors; ~0.1 GB/day cap, 30–31 day retention; **exclude** bodies, uploads, payee text, account refs, exports, and document JSON.
 
 **Rationale**: User prompt network/telemetry section; constitution IV (no raw statements in logs).
 

@@ -1,15 +1,16 @@
 # Data Model: Potsure v1
 
 **Feature**: `001-potsure-v1`  
-**Date**: 2026-11-09 (standing plan pivot; schema orchestration note: 2026-11-03)
+**Date**: 2026-11-20 (persistence pivot). Conceptual aggregates last revised 2026-11-09.
 
-Conceptual model aligned with spec key entities, planning prompt, and FR-M001–M037 plus **FR-M008c**, **FR-M008d**, **FR-M013**–**FR-M013c**, **FR-M031a**. Physical EF mapping is an implementation concern; invariants below are normative for v1.
+Conceptual model aligned with spec key entities and FR-M001–M037 plus **FR-M008c**, **FR-M008d**, **FR-M013**–**FR-M013c**, **FR-M031a**. Invariants below stay normative. The physical store is one JSON document per user in Azure Blob Storage, specified in [contracts/user-state-document.md](./contracts/user-state-document.md).
 
 ## Schema evolution
 
-- Physical tables map from aggregates below via EF Core in `Potsure.Data` / `Potsure.Infrastructure` (implement layout).
-- Schema changes ship as **versioned EF migrations** in source control (not ad hoc DDL at runtime).
-- **Applying** migrations is an orchestration/deployment step (Aspire `AddEFMigrations` locally; controlled job when hosted)  -  see [plan.md](plan.md) and [research.md](research.md). Runtime services seed **application** data (e.g. default budget categories on profile create) separately from schema migration.
+- Aggregates below are fields of `tenants/{userId}/state.json`, not tables.
+- The document has an integer `schemaVersion` (current: **1**). Older documents are transformed in memory when loaded, then written back. There is no EF migration and no shared schema job.
+- The first write for a user creates the standing plan defaults (including the fixed categories). That is application seeding, not a migration.
+- Identity credentials are **not** inside `state.json`. They live in the identity blobs in the same contract. A future database must preserve that split or an equivalent access boundary.
 
 ## Ownership and scope
 
@@ -243,4 +244,4 @@ RecurringExpense 0──* Assignment (pattern defaults)
 
 ## Deletion
 
-Transactional wipe of user financial rows, assignments, patterns, transactions, pots, profile; hosted **Identity** account data per operator policy (email/password v1; optional passkeys post–v1.0.0); retain non-financial audit marker only (user prompt reliability/deletion).
+Delete that user's `state.json`, then the email-index blob, then `identity/users/{userId}.json`. Repeating a delete that finds a blob already gone is success. Do not delete `system/data-protection-keys.xml` as part of one user's deletion. Retain a non-financial audit marker only (operator deletion record, not statement content). Hosted Identity removal follows the same blob deletes (email/password v1; optional passkeys post–v1.0.0).

@@ -5,11 +5,13 @@ description: "Task list for Potsure v1 implementation"
 
 # Tasks: Potsure v1
 
-**Plan sync**: 2026-11-09 (standing budget plan: estimated income + cadence, no plan period dates; report date range **FR-M031a**; pot mapping modes **FR-M013**–**FR-M013c**; **30.4375** proration and banker's rounding **FR-M036**; recurring edit/delete and payment anchor **FR-M008c**; fixed vs variable override **FR-M008d**). Prior sync 2026-11-04: hosted Identity pivot; 2026-11-03: Aspire SQL client, EF `AddEFMigrations`.
+**Plan sync**: 2026-11-20 (commercial persistence pivot: per-user JSON in Azure Blob Storage via Aspire `AddBlobContainer("userdata")`; document `schemaVersion` replaces EF migrations; remove SQL, EF running path, and `Potsure.MigrationsHost`). Prior sync 2026-11-09: standing budget plan, report date range **FR-M031a**, pot modes, proration **FR-M036**, recurring lifecycle **FR-M008c**/**FR-M008d**; 2026-11-04: hosted Identity; 2026-11-03: EF orchestration (**historical**  -  superseded by Phase 35).
+
+**Implementation queue (2026-11-20)**: Phases **1–34** are largely complete against the **SQL/EF store**. **Phase 35** is the active queue: migrate AppHost, web, Infrastructure, Identity, and tests to [contracts/user-state-document.md](./contracts/user-state-document.md). Product behaviour tasks stay valid; persistence wiring must follow Phase 35 before v1.0.0 release sign-off. Completed `[X]` on SQL tasks (**T007**, **T017**–**T020**, **T107**–**T116**, **T158**, Phase 27 EF bullets) is **historical evidence only**  -  do not extend EF for new work.
 
 **Tasks gate (2026-11-09)**: Phases **1–26** reflect work through the Identity pivot and pre-pivot **BudgetPeriod** model. **Phase 27** is the primary **implementation queue** for the 2026-11-09 plan pivot; quickstart Scenarios 3, 4b, and 7 remain **Partial** until Phase 27 completes. **`[X]` on T012**–**T016**, **T074**, and **T078** is pre-pivot evidence only; **SC-004** / **FR-M036** acceptance requires **T163**–**T167** and **T184** after Phase 27. Superseded passkey tasks (**T022**, **T042**, **T132**, **T136**) are **N/A** (replaced by **T143**–**T147**); leave unchecked.
 
-**Analyze gate (2026-11-09)**: EF model/migrations canonical project is **`Potsure.Data`** per [plan.md](./plan.md); AppHost already uses `WithMigrationsProject` → Data (**T112**/**T113** descriptions below corrected for audit traceability).
+**Analyze gate (2026-11-20)**: Canonical financial store is **`UserStateDocument`** in blob `tenants/{userId}/state.json` per [contracts/user-state-document.md](./contracts/user-state-document.md). Historical EF references in Phases **1–2** and **27** are audit trail only; implement **Phase 35**.
 
 **Input**: Design documents from `/specs/001-potsure-v1/`
 
@@ -17,7 +19,7 @@ description: "Task list for Potsure v1 implementation"
 
 **Governance**: [constitution v1.2.0](../../.specify/memory/constitution.md) (Aspire resource consumption, central package versioning); operational steps in [AGENTS.md](../../AGENTS.md).
 
-**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, plus Playwright E2E for key journeys. Constitution 1.2.0 adds dependency hygiene (Scenario 8b), Aspire SQL client consumption smoke, and **EF migration ordering** (Scenario 8c) in quickstart local run. Test tasks are included with those areas (not strict TDD ordering unless noted). **E2E acceptance**: convergence tasks **T125**, **T128**, and **T133** remain **partial** until **T149** passes; keyboard audit via **T150** (quickstart Scenario 9). Do not treat `[X]` on partial convergence tasks alone as v1.0.0 release evidence.
+**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, plus Playwright E2E for key journeys. Constitution 1.2.0 adds dependency hygiene (Scenario 8b) and **blob container readiness** (Scenario 8c, superseding EF migration ordering) in quickstart local run. Test tasks are included with those areas (not strict TDD ordering unless noted). **E2E acceptance**: **T149** / **T150** / **T151** closed release evidence; **re-run** tenancy and import integration tests after Phase 35 (**T224**–**T225**).
 
 **Superseded tasks**: Items marked **Superseded 2026-11-04** and left **unchecked** (**T022**, **T042**, **T132**, **T136**) are not v1.0.0 acceptance evidence; implement **Phase 23** (**T143**–**T148**), **T147**, and release evidence **T149**–**T151** instead.
 
@@ -338,7 +340,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Phase Dependencies
 
-- **Phase 1 Setup** → **Phase 2 Foundational** → user story phases **3–14** → **Phase 15 Polish** → convergence **Phases 16–26** → **Phase 27 (2026-11-09 pivot)** before v1.0.0 release sign-off
+- **Phase 1 Setup** → **Phase 2 Foundational** → user story phases **3–14** → **Phase 15 Polish** → convergence **Phases 16–34** → **Phase 27 (2026-11-09 standing plan)** → **Phase 35 (2026-11-20 document store)** before v1.0.0 release sign-off
 - **Phase 4 (US11)** can start after T021–T023 but should complete before hosted demo of later stories; **Phase 23 (T143–T148)** must complete for constitution 1.2.0 hosted acceptance after the Identity pivot
 - **Phase 5 (US3)** can proceed in parallel with late US1 work once T017 profile entities exist (after T017)
 
@@ -359,7 +361,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 | US10 | Persistence populated | Export/delete |
 | US12 | Core UI pages exist | Polish pass |
 
-Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 → **Phase 27** (standing plan + report range + proration) → US2 → US6 → US7. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): **Phase 27** complete (**T159**–**T186**), US10, US11 (**Phase 23**), FR-M037 (`T071`), hosted encryption (`T102`), Aspire SQL (`T107`–`T108`), EF migration orchestration (`T111`–`T116`, **`T158`** Scenario 8c **Pass**), dependency hygiene (`T110`), Playwright E2E (`T149`), **SC-003** (`T151`), **T155** hosted HTTP Identity smoke, quickstart (`T100`, **T150**, **T185**), and pot modes Scenario 4b.
+Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 35 minimal path (**T209**–**T221**, **T224**, **T227**) → US1 import smoke → US3 plan income → US6 category health. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): **Phase 35** complete (**T207**–**T233**), prior phases **1–34** (product behaviour), hosted encryption on storage (**T230**), Scenario **8c** **Pass** (**T231**), dependency hygiene (**T232**), Playwright E2E (**T149**), **SC-003** (**T151**), hosted Identity (**Phase 23**, **T205**), quickstart validation (**T150**, **T185**), pot modes Scenario 4b.
 
 ### Parallel Opportunities
 
@@ -370,6 +372,7 @@ Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 1 → 2 → US1 
 - US12: T091, T092 parallel
 - After Phase 2, teams may parallelise **US4+US5** while another works **US7** once US2+US3 land
 - **Phase 23**: **T143** and **T146** touch Identity registration and pages  -  sequence before **T144**/**T145**; **T148** can run in parallel once **T143**–**T147** land
+- **Phase 35**: **T207**, **T212**, **T229** in parallel after package pin; **T211**/**T212** before **T215**; **T209** after **T221** removes SQL from web; **T227**–**T229** after **T215**–**T216**
 
 ---
 
@@ -397,7 +400,7 @@ T032 src/Potsure.Statements/MonzoCsvParser.cs
 
 ### v1.0.0 release (full Must scope)
 
-Before tagging v1.0.0, complete **Phase 27** (**T159**–**T186**, standing plan pivot), Phase 4 (`T102`, `T043`–`T045`), **Phase 23** (`T143`–`T148`), Phase 13 (US10; **T147**), one-offs (`T071`), Aspire + migrations (`T107`–`T116`, **`T158`**, **`T186`**), US2 **FR-S004** (`T117`), Phase 15 (`T100`–`T101`, `T110`, `T115`, `T118`, **T149**–**T151**, **`T155`**), and remaining P1/P2 stories.
+Before tagging v1.0.0, complete **Phase 35** (**T207**–**T233**, document store pivot), then re-validate quickstart Scenarios **1**–**8c** on the blob path. Prior work in Phases **1–34** (including **Phase 27** standing plan and **Phase 23** Identity) remains release evidence for product rules; SQL persistence artefacts must not remain on the running path.
 
 ### Incremental Delivery
 
@@ -417,10 +420,10 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - Income split percents **must sum to 100%** on save (FR-M010); splits are **display-only** for allocations and FR-M018
 - **Under/over** = allocation − actual activity; recorded funding **must not** enter under/over (FR-M017)
 - De-dupe normalisation rules quoted in T031 must match FR-M004 verbatim
-- Do not add Redis, Blob staging, or Key Vault in v1 unless release gates change (research.md)
-- AppHost is the source of truth for SQL configuration; use `aspire` / `aspireify` skills when changing AppHost wiring (AGENTS.md)
-- EF schema apply: AppHost `AddEFMigrations` + `WaitForCompletion` on web  -  not `MigrateAsync` at web startup; app seeding (`BudgetProfileSeeder`) stays in web/runtime, not the migration job (plan.md EF migrations architecture; [data-model.md](./data-model.md) schema evolution)
-- Hosted schema: `PublishAsMigrationScript()` / controlled job (`T116`)  -  not `RunDatabaseUpdateOnStart` on publish
+- Do not add Redis, raw statement blob staging, or Key Vault in v1 unless release gates change (research.md)
+- AppHost is the source of truth for the **userdata** blob container; use `aspire` / `aspireify` skills when changing AppHost wiring (AGENTS.md)
+- Document evolution: `schemaVersion` on `state.json` with in-process transform on load (**T217**); no `AddEFMigrations` and no startup pass over every user (plan.md 2026-11-20; [contracts/user-state-document.md](./contracts/user-state-document.md))
+- Hosted persistence: private container, managed identity, Storage Blob Data Contributor; no account key in the image
 - **Hosted Identity pivot (2026-11-04)**: passkey-only tasks **T022**, **T042**, **T132**, **T136** are **unchecked** and **superseded**; implement **T143**–**T148** before re-asserting SC-005 / hosted quickstart acceptance
 - Optional WebAuthn passkeys: deferred post–v1.0.0 (template-style optional submit), not mandatory sign-in
 - Retire placeholder `src/Potsure/` when T002 completes
@@ -679,3 +682,71 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T205 [P] [US11] Extend `tests/Potsure.Web.Tests/HostedIdentityHttpTests.cs` to assert hosted **fallback auth** gates financial routes: unauthenticated GET to `/import` (or equivalent Blazor report page) challenges to sign-in, and a client with the session cookie from POST login can load that route successfully per **SC-005**, **Constitution IV**, and partial **T204** (partial)
 - [X] T206 [US2] In `ExpensePatternService.SaveAsync`, persist nullable payment anchors on update: when `PaymentAnchorDate` is null (including variable saves), clear `PaymentAnchorDate` and reset `PaymentAnchorUserOverride` instead of leaving stale fixed anchors on the entity per **FR-M008c**, data-model **PaymentAnchorDate**, and **T203** (partial)
+
+---
+
+## Phase 35: Document store pivot (2026-11-20)
+
+**Purpose**: Replace Azure SQL / EF with per-user JSON in a private Azure Blob container per [plan.md](./plan.md) (2026-11-20), [research.md](./research.md), and [contracts/user-state-document.md](./contracts/user-state-document.md). **Blocks v1.0.0 release sign-off** until AppHost, web, Identity, repositories, deletion, export, docs, and Scenario **8c** pass on the blob path.
+
+**Goal**: One `tenants/{userId}/state.json` per user with `schemaVersion` **1**, identity blobs separate, `If-Match` saves, Azurite locally, managed identity hosted; no `AddSqlServerDbContext`, no `AddEFMigrations`, no `Potsure.MigrationsHost`.
+
+**Independent Test**: quickstart Scenario **8c** (**Pass**); register two hosted users; each sees only their documents; import commits with ETag mismatch on concurrent save; Scenario **6** delete removes all three blob families; `HostedEncryptionAcceptanceTests` reflects storage encryption (**FR-M027**).
+
+**Supersedes (historical, do not re-implement)**: **T007**, **T019**–**T020**, **T107**–**T116**, **T158**, **T186**, **T189**, Phase 27 EF migration bullets **T160**, **T173** EF migration clause  -  product logic from those phases remains; storage mechanism changes here.
+
+### Packages and solution
+
+- [ ] T207 [P] Add `Aspire.Hosting.Azure.Storage` and `Aspire.Azure.Storage.Blobs` at latest stable Aspire **17.x** in `Directory.Packages.props`; reference from `src/Potsure.AppHost/Potsure.AppHost.csproj` and `src/Potsure.Web/Potsure.Web.csproj` per plan.md central package management (constitution 1.2.0)
+- [ ] T208 [P] Remove `src/Potsure.MigrationsHost/` project reference from `Potsure.slnx` and delete the project after web no longer references it; remove `Aspire.Hosting.EntityFrameworkCore` from AppHost when unused
+
+### AppHost (Aspire blob resource)
+
+- [ ] T209 Replace `AddAzureSqlServer` / `AddDatabase` / `schema-host` / `AddEFMigrations` in `src/Potsure.AppHost/AppHost.cs` with `AddAzureStorage("storage").RunAsEmulator(azurite => azurite.WithDataVolume("potsure-userdata").WithLifetime(ContainerLifetime.Persistent))` and `AddBlobContainer("userdata", blobContainerName: "potsure-userdata")`; web `WithReference(userdata)`, `WaitFor(userdata)`, `WithComputeEnvironment(aca)`, `PublishAsAzureContainerApp` unchanged per plan.md
+- [ ] T210 Pin web HTTP endpoint and dashboard ports in AppHost `Properties/launchSettings.json` per quickstart local run; confirm no hidden migration resources in `aspire describe`
+
+### Document types (`Potsure.Data`)
+
+- [ ] T211 Define `UserStateDocument` and nested aggregate DTOs in `src/Potsure.Data/Documents/` matching [data-model.md](./data-model.md) fields (standing `BudgetProfile`, exactly three `BudgetCategoryKind` rows, `ForecastHorizonMonths` **1–12** default **3**, `ActualIncomeWindowMonths` **1–12** default **3**, transactions, patterns, assignments, upload metadata); include `schemaVersion` integer (current **1**; missing treated as **0** per contract)
+- [ ] T212 [P] Define identity account and email-index record types in `src/Potsure.Data/Documents/IdentityUserDocument.cs` and `EmailIndexDocument.cs` per [contracts/user-state-document.md](./contracts/user-state-document.md) (hashed password only; no plaintext)
+- [ ] T213 Remove `PotsureDbContext`, EF configurations, `Migrations/`, and design-time SQL factory from `src/Potsure.Data/` after Infrastructure repositories no longer depend on EF entities
+
+### Document store (`Potsure.Infrastructure`)
+
+- [ ] T214 Define `IUserDocumentStore` / `IUserStateRepository` seams in `src/Potsure.Infrastructure/Persistence/`; keep `BlobContainerClient` inside store implementation only (contract boundaries)
+- [ ] T215 Implement `BlobUserDocumentStore` in `src/Potsure.Infrastructure/Persistence/BlobUserDocumentStore.cs` for `tenants/{userId}/state.json` with UTF-8 JSON, `If-Match` conditional upload on save, and reject `userId` containing `/`, `\`, or `..` before blob name construction
+- [ ] T216 Implement `FileUserDocumentStore` for local-only mode using the same relative paths under the configured data directory per contract
+- [ ] T217 Implement `DocumentSchemaMigrator` in `src/Potsure.Infrastructure/Persistence/DocumentSchemaMigrator.cs` applying ordered in-process transforms from `schemaVersion` **0** → **1** on load, then write-back with concurrency token
+- [ ] T218 Replace `BudgetProfileSeeder` SQL seeding with first-document creation in the store: default `AllocationPreset.FiftyThirtyTwenty`, `PotMappingMode.CategoryOnly`, three fixed categories, GBP only, on first financial access per data-model
+
+### Identity blob store
+
+- [ ] T219 Implement custom ASP.NET Core Identity `IUserStore<ApplicationUser>` (plus password, email, security stamp, lockout interfaces as enabled) over `identity/users/{userId}.json` and `identity/email-index/{sha256}.json` in `src/Potsure.Infrastructure/Identity/BlobIdentityUserStore.cs`; email index SHA-256 is lowercase hex of trimmed upper-invariant email per contract
+- [ ] T220 Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` to remove `AddEntityFrameworkStores` / SQL user tables; register blob identity store; keep cookie auth and password hasher unchanged
+
+### Web composition
+
+- [ ] T221 Register `builder.AddAzureBlobContainerClient("userdata")` in `src/Potsure.Web/Program.cs` when AppHost-hosted; remove `AddSqlServerDbContext<PotsureDbContext>` and `AddSqlServerDbContext<PotsureDataProtectionDbContext>`; replace SQL health check with app readiness that does not require SQL
+- [ ] T222 Configure Data Protection `PersistKeysToAzureBlobStorage` at blob `system/data-protection-keys.xml` (hosted/AppHost) or equivalent file path (local-only) per contract
+- [ ] T223 Wire `ICurrentOwnerAccessor` as the only source of `userId` for blob name construction in repositories; remove EF global query filters from the running path
+
+### Feature repositories and pipelines
+
+- [ ] T224 [US1] Refactor `StatementImportService` in `src/Potsure.Infrastructure/Features/Import/StatementImportService.cs` to load document → mutate in memory → single conditional `state.json` replace (no raw CSV blob); clear temp files on all exits per research.md
+- [ ] T225 [US1] [US2] [US3] [US4] [US5] [US6] [US7] [US8] [US9] [US10] Migrate Infrastructure feature services and repositories under `src/Potsure.Infrastructure/` from EF `PotsureDbContext` to document load/save through `IUserStateRepository` (import, recurrence, plan, reports, export snapshot builder)
+- [ ] T226 [US10] Update `UserDataDeletionService` in `src/Potsure.Infrastructure/Deletion/UserDataDeletionService.cs` to delete in order: `tenants/{userId}/state.json`, email-index blob, `identity/users/{userId}.json`; idempotent when blobs already absent; do not delete `system/data-protection-keys.xml` per data-model Deletion
+
+### Tests
+
+- [ ] T227 [P] [US11] Update `tests/Potsure.Infrastructure.Tests/TenancyIsolationTests.cs` for two users against Azurite or file store fixture: user A cannot read user B `state.json`
+- [ ] T228 [P] [US1] [US2] Update `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (and related import fixtures) to use document store test harness instead of in-memory or SQL `PotsureDbContext`
+- [ ] T229 [P] Add `UserDocumentStoreTests` in `tests/Potsure.Infrastructure.Tests/` asserting `If-Match` failure on stale ETag and `schemaVersion` **0** upgrade on load
+
+### Documentation, encryption, and release
+
+- [ ] T230 [US11] Replace `docs/deployment-database.md` with `docs/deployment-storage.md` (private container, Azurite volume, managed identity, no `dotnet ef`); update `docs/self-host.md`, `docs/local-only-mode.md`, and `docs/encryption.md` to cite Azure Storage service encryption instead of SQL TDE (**FR-M027**, supersedes **T102** SQL wording)
+- [ ] T231 [P] Re-run quickstart Scenario **8c** (storage → userdata → web; no `sql` / `ef-migrations` in `aspire describe`) and set validation log row to **Pass** in `specs/001-potsure-v1/quickstart.md`
+- [ ] T232 Run `dotnet package list --outdated`, remove centrally unused SQL/EF packages when pivot is complete (explicit instruction or as part of T207 closure), upgrade compatible versions, then `dotnet test Potsure.slnx -c Release` full suite per constitution 1.2.0 (**T110** gate after pivot)
+- [ ] T233 Run `dotnet format Potsure.slnx --verify-no-changes`, Release build `-warnaserror`, and full `dotnet test Potsure.slnx -c Release` for Phase 35 completion (**T101** gate)
+
+**Checkpoint**: AppHost starts with Azurite only; web uses injected `BlobContainerClient`; hosted register creates identity blobs; first financial page creates `state.json`; quickstart Scenarios **1**–**7** and **8c** pass on document store; SQL projects and packages removed from the running path.

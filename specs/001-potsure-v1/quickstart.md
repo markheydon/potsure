@@ -6,7 +6,7 @@
 ## Prerequisites
 
 - .NET 10 SDK (`global.json`).
-- Docker (SQL Server container via Aspire AppHost locally).
+- Docker (Azurite via Aspire AppHost locally). No SQL Server.
 - Anonymised Monzo CSV golden fixtures in `tests/` (never personal exports in repo).
 - Optional: hosted stage credentials (not required for local validation).
 
@@ -20,14 +20,12 @@ aspire run --apphost src/Potsure.AppHost
 - Open the dashboard at the URL above (login token in the console may change each run; the host/port should not).
 - **GitHub Codespaces / dev tunnels**: open the forwarded **web** URL from the Aspire dashboard (not `https://localhost:7049` from `launchSettings.json`). Hosted mode honours `X-Forwarded-*` headers in Development so post-login redirects stay on your forwarded host.
 - Launch web resource; `appsettings.Development.json` defaults to **LocalOnly** for account-free validation when you run the web project directly. The AppHost sets `Deployment__Mode=Hosted` on the web resource so local Aspire runs exercise **hosted Identity** (email/password register and sign-in  -  not passkey enrolment; see `docs/local-only-mode.md`).
-- SQL container and `potsure` database healthy before migrations run.
-- **Local SQL persistence**: AppHost mounts a Docker data volume (`potsure-sql-data`) and keeps the SQL container **persistent** across normal Aspire stop/start, so registered users and imported data survive typical dev sessions. EF migrations still run on start but are no-ops when the schema is current.
-- **Reset local database**: remove the volume when you need a clean slate, for example `docker volume rm potsure-sql-data` after stopping Aspire (also remove the SQL container if it still references the volume). If AppHost user-secrets are reset while the volume still holds an old SA password, SQL login may fail until you remove the volume and let Aspire recreate it.
-- **Do not use `aspire stop --force` casually**: it permanently deletes persistent resource instances, including the local SQL data volume managed by Aspire.
-- After a **manual** database wipe, antiforgery warnings in logs from old browser cookies are expected (see **BL-008** in [`plan/FEEDBACK.md`](../../plan/FEEDBACK.md); feedback notes only, not product direction).
-- **Schema apply**: AppHost **ef-migrations** resource runs `dotnet ef database update` on start (`RunDatabaseUpdateOnStart`); web waits with `WaitForCompletion(migrations)`  -  no manual `database update` needed for local cold start (Scenario 8c / **T115**).
-- **Aspire consumption smoke**: Web starts without a hand-authored SQL connection string in `Program.cs`; database access uses Aspire client registration aligned with AppHost reference name `potsure` (constitution 1.2.0). Re-run after **Phase 23** Identity wiring (**T144**–**T146**) changes `Program.cs`.
-- **Migration ordering smoke** (post T111–T114): In the Aspire dashboard, the EF migrations resource reaches **Finished/Active** before the web resource starts; web must not crash on missing tables on cold SQL container. Hidden migration resource visible via `aspire describe --include-hidden` if needed.
+- Azurite (`storage`) and the `userdata` blob container healthy before web starts (`WaitFor`). There is no migration resource.
+- **Local document persistence**: AppHost mounts a Docker data volume (`potsure-userdata`) and keeps the Azurite container **persistent** across normal Aspire stop/start, so registered users and imported JSON documents survive typical dev sessions.
+- **Reset local documents**: stop Aspire, then remove the `potsure-userdata` volume. There is no SQL password to rotate.
+- **Do not use `aspire stop --force` casually**: it permanently deletes persistent resource instances, including the local Azurite volume managed by Aspire.
+- After a **manual** wipe, antiforgery warnings in logs from old browser cookies are expected (see **BL-008** in [`plan/FEEDBACK.md`](../../plan/FEEDBACK.md); feedback notes only, not product direction).
+- **Aspire consumption smoke**: Web starts without a hand-authored storage connection string in `Program.cs`. Document access uses `AddAzureBlobContainerClient("userdata")` aligned with the AppHost container name (constitution 1.2.0). See [contracts/user-state-document.md](./contracts/user-state-document.md).
 
 ## Hosted Identity bootstrap (Aspire / hosted mode)
 
@@ -117,16 +115,17 @@ dotnet test Potsure.slnx -c Release
 
 **Expect**: Outdated packages reviewed/upgraded where compatible; full test suite green after version bumps (AGENTS.md  -  not `--no-build` only).
 
-## Scenario 8c  -  EF migration orchestration (Aspire local)
+## Scenario 8c  -  Blob container readiness (Aspire local)
 
-1. Stop AppHost; remove local SQL container/volume if reproducing cold start (optional).
-2. Start AppHost (`dotnet run --project src/Potsure.AppHost/Potsure.AppHost.csproj`).
-3. Observe dashboard ordering: `potsure` database healthy → migration resource runs and **completes** → web becomes healthy.
-4. Confirm no `Database.MigrateAsync` (or similar) in `Potsure.Web` startup  -  schema apply is AppHost-only locally per [plan.md](plan.md).
+Supersedes the EF migration ordering scenario (last passed 2026-11-20 against SQL). Re-run after the document-store implementation.
 
-**Expect**: Web health check passes on empty database without manual `dotnet ef database update` when migration resource is wired; `dotnet ef migrations add` still works with `--project src/Potsure.Data/Potsure.Data.csproj` and Web startup per plan (**T186** aligns operator docs).
+1. Stop AppHost. Remove the Azurite volume only when you want an empty store.
+2. Start AppHost (`aspire start --non-interactive --apphost src/Potsure.AppHost`, or the repo's usual `aspire run` from the dashboard).
+3. `aspire wait storage` and `aspire wait userdata`, then `aspire wait web`.
+4. Confirm AppHost has no `sql`, `schema-host`, or `ef-migrations` resources (`aspire describe`).
+5. Confirm `Potsure.Web` does not call `AddSqlServerDbContext` or `Database.MigrateAsync`.
 
-**T158 fix (2026-11-09)**: `AddEFMigrations` attaches to `Potsure.MigrationsHost` (`schema-host`) instead of Blazor `web`, avoiding `portForServing "web"` on the EF tool. Re-run Scenario 8c steps after `aspire run` to confirm **Pass** in the validation log.
+**Expect**: Web health check passes when the container is empty (no user documents yet). Registering a user creates identity blobs only. The first financial page creates `tenants/{userId}/state.json`. A second save uses the blob ETag. Two users cannot read each other's documents.
 
 ## Scenario 9  -  Accessibility smoke (US12)
 
@@ -141,10 +140,11 @@ dotnet test Potsure.slnx -c Release
 
 ## Hosted stage smoke (optional)
 
-After deploy to dev/test ACA + Azure SQL free tier:
+After deploy to dev/test ACA + Azure Storage (no Azure SQL):
 
-- Cold start acceptable; health probe does not hammer DB (auto-pause).
-- Identity sign-in (email/password) required before financial data; passkeys not required for acceptance; OTel excludes payee/upload bodies.
+- Cold start acceptable. Health probe checks the app, not a SQL connection.
+- Container remains private. The app uses managed identity, not an account key in the image.
+- Identity sign-in (email/password) required before financial data; passkeys not required for acceptance; OTel excludes payee text, uploads, and document JSON.
 
 ## Validation log
 
@@ -162,7 +162,7 @@ Last run: 2026-11-20 (Aspire **17.0.0** upgrade; Release build/test; Scenario **
 | 7  -  Determinism | Pass | `DeterminismTests` in Release |
 | 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
 | 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c  -  EF migration ordering | Pass | **2026-11-20** on Aspire **17.0.0**: `aspire start` then `aspire wait` for sql → schema-host → ef-data-protection-migrations → ef-migrations → web; `aspire describe --include-hidden` shows migration tools **Finished**. Reset stale SQL: `aspire secret delete Parameters:sql-password`, `aspire stop --force`, remove `potsure-sql-data` volume if SA login fails. |
+| 8c  -  Blob container readiness | Not run | Supersedes the 2026-11-20 SQL migration **Pass** (`sql` → `ef-migrations` → web). Re-run the rewritten Scenario 8c after the document store lands. The old Pass is not evidence for the blob design. |
 | 9  -  Accessibility smoke | Pass | **T150** code audit: import wizard + recurring + report focus/keyboard fixes (**T091**–**T094**); textual chart equivalents on category health and budget balance |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
 | Hosted Identity (Aspire local) | Pass | **T190**: `HostedIdentityHttpTests` POST register + password sign-in with session cookie; **T153**/**T155** DI + GET page smoke (**SC-005** / **T148**) |
