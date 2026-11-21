@@ -4,6 +4,7 @@ using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Reporting;
 using Potsure.Web.Resources;
 
@@ -11,6 +12,9 @@ namespace Potsure.Web.Features.Plan.Pages;
 
 public partial class PlanSettings
 {
+    [Inject]
+    private PotsureUserStateContext UserState { get; set; } = null!;
+
     [Inject]
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
 
@@ -39,6 +43,7 @@ public partial class PlanSettings
     {
         try
         {
+            await UserState.EnsureLoadedAsync();
             await ProfileSeeder.EnsureProfileAsync();
             StandingPlanIncomeReadModel? standingPlan = await StandingPlanIncomeService.GetAsync();
             AllocationPreset? preset = await PresetService.GetSelectedPresetAsync();

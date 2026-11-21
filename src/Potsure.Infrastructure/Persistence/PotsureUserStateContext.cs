@@ -78,7 +78,9 @@ public sealed class PotsureUserStateContext
             return;
         }
 
-        EnsureLoadedAsync().GetAwaiter().GetResult();
+        // ConfigureAwait(false) avoids deadlocking Blazor Server circuits when LINQ
+        // extensions call AsQueryable() before the async query preparation path runs.
+        EnsureLoadedAsync().ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -72,11 +72,7 @@ public sealed class DocumentSet<T>
         List.Clear();
     }
 
-    public IQueryable<T> AsQueryable()
-    {
-        OnMutation();
-        return List.AsQueryable();
-    }
+    public IQueryable<T> AsQueryable() => List.AsQueryable();
 
     private static Guid? TryReadGuidId(T entity)
     {

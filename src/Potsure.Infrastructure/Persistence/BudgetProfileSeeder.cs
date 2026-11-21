@@ -24,6 +24,7 @@ public sealed class BudgetProfileSeeder(
         bool persistChanges = true,
         CancellationToken cancellationToken = default)
     {
+        await dbContext.EnsureLoadedAsync(cancellationToken);
         BudgetProfileEntity? existing = await dbContext.BudgetProfiles
             .Include(p => p.Categories)
             .SingleOrDefaultAsync(cancellationToken);
