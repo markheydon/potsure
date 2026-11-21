@@ -69,6 +69,6 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
-# Test files: allow underscore-separated method names (e.g. Method_State_Expected)
-[**/*Tests.cs]
+# Test projects: allow underscore-separated method names (e.g. Method_State_Expected)
+[tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
