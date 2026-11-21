@@ -1,16 +1,19 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Persistence.Repositories;
 
 public sealed class StatementUploadRepository(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
-    public async Task<StatementUploadEntity> CreatePendingAsync(string fileName, CancellationToken cancellationToken)
+    public async Task<StatementUploadEntity> CreatePendingAsync(
+        string fileName,
+        bool persistChanges = true,
+        CancellationToken cancellationToken = default)
     {
         StatementUploadEntity upload = new()
         {
@@ -21,7 +24,11 @@ public sealed class StatementUploadRepository(
             CreatedAt = DateTimeOffset.UtcNow,
         };
         dbContext.StatementUploads.Add(upload);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (persistChanges)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return upload;
     }
 
@@ -29,7 +36,8 @@ public sealed class StatementUploadRepository(
         Guid uploadId,
         ImportStatistics statistics,
         IReadOnlyList<string> skippedReasons,
-        CancellationToken cancellationToken)
+        bool persistChanges = true,
+        CancellationToken cancellationToken = default)
     {
         StatementUploadEntity upload = await dbContext.StatementUploads
             .SingleAsync(u => u.Id == uploadId, cancellationToken);
@@ -40,7 +48,10 @@ public sealed class StatementUploadRepository(
         upload.DedupedCount = statistics.DedupedCount;
         upload.TransferExcludedCount = statistics.TransferExcludedCount;
         upload.SkippedReasonsJson = JsonSerializer.Serialize(skippedReasons);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (persistChanges)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task FailAsync(Guid uploadId, CancellationToken cancellationToken)
@@ -52,7 +63,10 @@ public sealed class StatementUploadRepository(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task SaveRememberedColumnMappingJsonAsync(string mappingJson, CancellationToken cancellationToken)
+    public async Task SaveRememberedColumnMappingJsonAsync(
+        string mappingJson,
+        bool persistChanges = true,
+        CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity? profile = await dbContext.BudgetProfiles.SingleOrDefaultAsync(cancellationToken);
         if (profile is null)
@@ -61,7 +75,10 @@ public sealed class StatementUploadRepository(
         }
 
         profile.RememberedColumnMappingJson = mappingJson;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (persistChanges)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<string?> GetRememberedColumnMappingJsonAsync(CancellationToken cancellationToken)

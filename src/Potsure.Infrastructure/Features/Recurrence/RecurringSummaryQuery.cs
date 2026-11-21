@@ -1,10 +1,9 @@
 using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
-
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Features.Recurrence;
@@ -46,7 +45,7 @@ public sealed record RecurringSummaryReadModel(
 /// Read model separating confirmed patterns from suggestions (FR-M021).
 /// </summary>
 public sealed class RecurringSummaryQuery(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     RecurrenceReviewService reviewService)
 {

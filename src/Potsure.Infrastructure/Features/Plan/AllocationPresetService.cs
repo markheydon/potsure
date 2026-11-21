@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -10,7 +10,7 @@ namespace Potsure.Infrastructure.Features.Plan;
 /// Switches allocation preset and recalculates category allocations from unchanged budgeted income (FR-M011).
 /// </summary>
 public sealed class AllocationPresetService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     /// <summary>

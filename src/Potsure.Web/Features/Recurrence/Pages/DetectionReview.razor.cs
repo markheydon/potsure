@@ -2,15 +2,14 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Recurrence;
-
 using Potsure.Web.Resources;
 
 namespace Potsure.Web.Features.Recurrence.Pages;
@@ -36,7 +35,7 @@ public partial class DetectionReview
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
 
     [Inject]
-    private PotsureDbContext DbContext { get; set; } = null!;
+    private PotsureUserStateContext DbContext { get; set; } = null!;
 
     [Inject]
     private BankPotService PotService { get; set; } = null!;

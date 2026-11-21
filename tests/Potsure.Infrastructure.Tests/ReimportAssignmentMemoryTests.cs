@@ -1,14 +1,13 @@
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Features.Import;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Tests;
@@ -25,11 +24,11 @@ public sealed class ReimportAssignmentMemoryTests
         ServiceProvider provider = BuildProvider(owner);
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
 
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         TransactionAttributionService attribution = scope.ServiceProvider.GetRequiredService<TransactionAttributionService>();
         BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
 
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
         BudgetCategoryEntity needs = await db.BudgetCategories.SingleAsync(
             c => c.Kind == BudgetCategoryKind.Needs,
             TestContext.Current.CancellationToken);
@@ -78,6 +77,7 @@ public sealed class ReimportAssignmentMemoryTests
             expense.Id,
             TestContext.Current.CancellationToken);
         Assert.Equal(1, firstPass);
+        debit = await db.Transactions.SingleAsync(t => t.Id == debit.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(debit.CategoryId);
 
         BudgetCategoryEntity wants = await db.BudgetCategories.SingleAsync(
@@ -96,7 +96,7 @@ public sealed class ReimportAssignmentMemoryTests
             TestContext.Current.CancellationToken);
         Assert.Equal(0, secondPass);
 
-        await db.Entry(debit).ReloadAsync(TestContext.Current.CancellationToken);
+        debit = await db.Transactions.SingleAsync(t => t.Id == debit.Id, TestContext.Current.CancellationToken);
         Assert.Equal(wants.Id, debit.CategoryId);
 
         AssignmentEntity assignment = await db.Assignments.SingleAsync(
@@ -113,11 +113,11 @@ public sealed class ReimportAssignmentMemoryTests
         ServiceProvider provider = BuildProvider(owner);
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
 
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         TransactionAttributionService attribution = scope.ServiceProvider.GetRequiredService<TransactionAttributionService>();
         BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
 
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
         BudgetCategoryEntity needs = await db.BudgetCategories.SingleAsync(
             c => c.Kind == BudgetCategoryKind.Needs,
             TestContext.Current.CancellationToken);
@@ -203,7 +203,7 @@ public sealed class ReimportAssignmentMemoryTests
         int secondImportPass = await attribution.AttributeAllConfirmedExpensesAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1, secondImportPass);
 
-        await db.Entry(firstDebit).ReloadAsync(TestContext.Current.CancellationToken);
+        firstDebit = await db.Transactions.SingleAsync(t => t.Id == firstDebit.Id, TestContext.Current.CancellationToken);
         Assert.Equal(wants.Id, firstDebit.CategoryId);
     }
 
@@ -220,12 +220,12 @@ public sealed class ReimportAssignmentMemoryTests
         ServiceProvider provider = BuildProvider(owner);
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
 
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         StatementImportService importService = scope.ServiceProvider.GetRequiredService<StatementImportService>();
         TransactionAttributionService attribution = scope.ServiceProvider.GetRequiredService<TransactionAttributionService>();
         BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
 
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
         BudgetCategoryEntity needs = await db.BudgetCategories.SingleAsync(
             c => c.Kind == BudgetCategoryKind.Needs,
             TestContext.Current.CancellationToken);
@@ -280,7 +280,7 @@ public sealed class ReimportAssignmentMemoryTests
         Assert.Equal(1, secondImport.DedupedCount);
         Assert.Equal(1, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
 
-        await db.Entry(importedDebit).ReloadAsync(TestContext.Current.CancellationToken);
+        importedDebit = await db.Transactions.SingleAsync(t => t.Id == importedDebit.Id, TestContext.Current.CancellationToken);
         Assert.Equal(wants.Id, importedDebit.CategoryId);
 
         AssignmentEntity assignment = await db.Assignments.SingleAsync(
@@ -289,16 +289,9 @@ public sealed class ReimportAssignmentMemoryTests
         Assert.Equal("manual", assignment.Tag);
     }
 
-    private static ServiceProvider BuildProvider(string ownerKey)
+    private static ServiceProvider BuildProvider(string owner)
     {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase($"potsure-attribution-{Guid.NewGuid()}")
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
-        return services.BuildServiceProvider();
+        return DocumentStoreTestHarness.BuildProvider(owner);
     }
 
     private sealed class FixedOwnerAccessor(string ownerKey) : ICurrentOwnerAccessor

@@ -1,15 +1,18 @@
 using System.Globalization;
+using Azure.Extensions.AspNetCore.DataProtection.Blobs;
+using Azure.Storage.Blobs;
 using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Potsure.Data;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
+using Potsure.Infrastructure.Identity;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Tenancy;
 using Potsure.Web.Components;
 using Potsure.Web.Components.Account;
@@ -35,6 +38,43 @@ DeploymentModeOptions deployment = builder.Configuration
 
 DeploymentModeStartupValidation.EnsureValid(deployment);
 
+builder.Services.Configure<DocumentStoreOptions>(
+    builder.Configuration.GetSection(DocumentStoreOptions.SectionName));
+
+bool useBlobPersistence = !string.IsNullOrEmpty(builder.Configuration.GetConnectionString("userdata"));
+
+if (useBlobPersistence)
+{
+    builder.AddAzureBlobContainerClient("userdata");
+    builder.Services.AddSingleton<IUserDocumentStore, BlobUserDocumentStore>();
+    builder.Services.AddSingleton<IIdentityDocumentStore, BlobIdentityDocumentStore>();
+}
+else
+{
+    builder.Services.AddPotsureFileDocumentStores();
+}
+
+IDataProtectionBuilder dataProtection = builder.Services.AddDataProtection();
+if (useBlobPersistence)
+{
+    builder.Services.AddSingleton(sp =>
+    {
+        BlobContainerClient container = sp.GetRequiredService<BlobContainerClient>();
+        return container.GetBlobClient(UserDocumentPathValidator.DataProtectionBlobName());
+    });
+    dataProtection.PersistKeysToAzureBlobStorage(sp =>
+        sp.GetRequiredService<BlobClient>());
+}
+else
+{
+    string keysDirectory = Path.Combine(
+        builder.Configuration.GetSection(DocumentStoreOptions.SectionName).Get<DocumentStoreOptions>()?.DataDirectory
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Potsure", "data"),
+        "system");
+    Directory.CreateDirectory(keysDirectory);
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
+}
+
 if (deployment.Mode == DeploymentMode.LocalOnly)
 {
     builder.Services.AddSingleton<ICurrentOwnerAccessor, LocalOnlyOwnerAccessor>();
@@ -52,15 +92,9 @@ builder.Services.AddScoped<ReauthenticationService>();
 builder.Services.AddScoped<PasswordReauthenticationService>();
 builder.Services.AddScoped<Potsure.Infrastructure.Features.Export.IExportReauthenticationGate, ExportReauthenticationGateAdapter>();
 builder.Services.AddPotsureInfrastructureServices();
-builder.AddSqlServerDbContext<PotsureDbContext>("potsure");
-builder.AddSqlServerDbContext<PotsureDataProtectionDbContext>(
-    "potsure",
-    configureDbContextOptions: options =>
-        options.UseSqlServer(
-            sql => sql.MigrationsHistoryTable("__EFDataProtectionMigrationsHistory")));
 
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<PotsureDbContext>("sql", tags: ["ready"]);
+    .AddCheck("potsure-ready", () => HealthCheckResult.Healthy(), tags: ["ready"]);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

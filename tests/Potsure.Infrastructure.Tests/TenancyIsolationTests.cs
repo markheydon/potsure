@@ -1,11 +1,10 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
-using Potsure.Infrastructure;
+using Potsure.Infrastructure.Persistence;
+using Potsure.Infrastructure.Tenancy;
 
 namespace Potsure.Infrastructure.Tests;
 
@@ -26,19 +25,18 @@ public sealed class TenancyIsolationTests
     }
 
     [Fact]
-    public async Task DbContext_QueryFiltersHideOtherOwnersRows()
+    public async Task DocumentStore_UserACannotReadUserBState()
     {
         const string ownerA = "owner-a";
         const string ownerB = "owner-b";
-        string databaseName = $"potsure-tenancy-{Guid.NewGuid()}";
 
-        ServiceProvider providerA = BuildProvider(ownerA, databaseName);
-        ServiceProvider providerB = BuildProvider(ownerB, databaseName);
+        using ServiceProvider providerA = DocumentStoreTestHarness.BuildProvider(ownerA);
+        using ServiceProvider providerB = DocumentStoreTestHarness.BuildProvider(ownerB);
 
         Guid transactionId;
         await using (AsyncServiceScope seedScope = providerA.CreateAsyncScope())
         {
-            PotsureDbContext db = seedScope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+            PotsureUserStateContext db = seedScope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
             TransactionEntity entity = new()
             {
                 Id = Guid.NewGuid(),
@@ -58,7 +56,7 @@ public sealed class TenancyIsolationTests
 
         await using (AsyncServiceScope scopeA = providerA.CreateAsyncScope())
         {
-            PotsureDbContext db = scopeA.ServiceProvider.GetRequiredService<PotsureDbContext>();
+            PotsureUserStateContext db = scopeA.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
             Assert.Equal(1, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
             Assert.True(await db.Transactions.AnyAsync(
                 t => t.Id == transactionId,
@@ -67,28 +65,8 @@ public sealed class TenancyIsolationTests
 
         await using (AsyncServiceScope scopeB = providerB.CreateAsyncScope())
         {
-            PotsureDbContext db = scopeB.ServiceProvider.GetRequiredService<PotsureDbContext>();
+            PotsureUserStateContext db = scopeB.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
             Assert.Equal(0, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
         }
     }
-
-    private static ServiceProvider BuildProvider(string ownerKey, string databaseName)
-    {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase(databaseName)
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
-        return services.BuildServiceProvider();
-    }
-
-    private sealed class FixedOwnerAccessor(string ownerKey) : ICurrentOwnerAccessor
-    {
-        public string OwnerKey => ownerKey;
-
-        public bool IsAuthenticated => true;
-    }
-
 }

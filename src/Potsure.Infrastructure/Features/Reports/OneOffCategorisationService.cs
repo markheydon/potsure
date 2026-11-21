@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Reports;
 
@@ -15,7 +15,7 @@ public sealed record OneOffCategorisationRequest(
 /// One-off transaction categorisation affecting actuals only (FR-M037).
 /// </summary>
 public sealed class OneOffCategorisationService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     BudgetProfileSeeder profileSeeder)
 {
@@ -35,7 +35,7 @@ public sealed class OneOffCategorisationService(
         OneOffCategorisationRequest request,
         CancellationToken cancellationToken = default)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         TransactionEntity transaction = await dbContext.Transactions
             .SingleAsync(t => t.Id == request.TransactionId, cancellationToken);
         EntityOwnershipValidator.EnsureOwnedBy(transaction.OwnerKey, ownerAccessor.OwnerKey);

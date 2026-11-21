@@ -697,56 +697,66 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 ### Packages and solution
 
-- [ ] T207 [P] Add `Aspire.Hosting.Azure.Storage` and `Aspire.Azure.Storage.Blobs` at latest stable Aspire **17.x** in `Directory.Packages.props`; reference from `src/Potsure.AppHost/Potsure.AppHost.csproj` and `src/Potsure.Web/Potsure.Web.csproj` per plan.md central package management (constitution 1.2.0)
-- [ ] T208 [P] Remove `src/Potsure.MigrationsHost/` project reference from `Potsure.slnx` and delete the project after web no longer references it; remove `Aspire.Hosting.EntityFrameworkCore` from AppHost when unused
+- [X] T207 [P] Add `Aspire.Hosting.Azure.Storage` and `Aspire.Azure.Storage.Blobs` at latest stable Aspire **17.x** in `Directory.Packages.props`; reference from `src/Potsure.AppHost/Potsure.AppHost.csproj` and `src/Potsure.Web/Potsure.Web.csproj` per plan.md central package management (constitution 1.2.0)
+- [X] T208 [P] Remove `src/Potsure.MigrationsHost/` project reference from `Potsure.slnx` and delete the project after web no longer references it; remove `Aspire.Hosting.EntityFrameworkCore` from AppHost when unused
 
 ### AppHost (Aspire blob resource)
 
-- [ ] T209 Replace `AddAzureSqlServer` / `AddDatabase` / `schema-host` / `AddEFMigrations` in `src/Potsure.AppHost/AppHost.cs` with `AddAzureStorage("storage").RunAsEmulator(azurite => azurite.WithDataVolume("potsure-userdata").WithLifetime(ContainerLifetime.Persistent))` and `AddBlobContainer("userdata", blobContainerName: "potsure-userdata")`; web `WithReference(userdata)`, `WaitFor(userdata)`, `WithComputeEnvironment(aca)`, `PublishAsAzureContainerApp` unchanged per plan.md
-- [ ] T210 Pin web HTTP endpoint and dashboard ports in AppHost `Properties/launchSettings.json` per quickstart local run; confirm no hidden migration resources in `aspire describe`
+- [X] T209 Replace `AddAzureSqlServer` / `AddDatabase` / `schema-host` / `AddEFMigrations` in `src/Potsure.AppHost/AppHost.cs` with `AddAzureStorage("storage").RunAsEmulator(azurite => azurite.WithDataVolume("potsure-userdata").WithLifetime(ContainerLifetime.Persistent))` and `AddBlobContainer("userdata", blobContainerName: "potsure-userdata")`; web `WithReference(userdata)`, `WaitFor(userdata)`, `WithComputeEnvironment(aca)`, `PublishAsAzureContainerApp` unchanged per plan.md
+- [X] T210 Pin web HTTP endpoint and dashboard ports in AppHost `Properties/launchSettings.json` per quickstart local run; confirm no hidden migration resources in `aspire describe`
 
 ### Document types (`Potsure.Data`)
 
-- [ ] T211 Define `UserStateDocument` and nested aggregate DTOs in `src/Potsure.Data/Documents/` matching [data-model.md](./data-model.md) fields (standing `BudgetProfile`, exactly three `BudgetCategoryKind` rows, `ForecastHorizonMonths` **1–12** default **3**, `ActualIncomeWindowMonths` **1–12** default **3**, transactions, patterns, assignments, upload metadata); include `schemaVersion` integer (current **1**; missing treated as **0** per contract)
-- [ ] T212 [P] Define identity account and email-index record types in `src/Potsure.Data/Documents/IdentityUserDocument.cs` and `EmailIndexDocument.cs` per [contracts/user-state-document.md](./contracts/user-state-document.md) (hashed password only; no plaintext)
-- [ ] T213 Remove `PotsureDbContext`, EF configurations, `Migrations/`, and design-time SQL factory from `src/Potsure.Data/` after Infrastructure repositories no longer depend on EF entities
+- [X] T211 Define `UserStateDocument` and nested aggregate DTOs in `src/Potsure.Data/Documents/` matching [data-model.md](./data-model.md) fields (standing `BudgetProfile`, exactly three `BudgetCategoryKind` rows, `ForecastHorizonMonths` **1–12** default **3**, `ActualIncomeWindowMonths` **1–12** default **3**, transactions, patterns, assignments, upload metadata); include `schemaVersion` integer (current **1**; missing treated as **0** per contract)
+- [X] T212 [P] Define identity account and email-index record types in `src/Potsure.Data/Documents/IdentityUserDocument.cs` and `EmailIndexDocument.cs` per [contracts/user-state-document.md](./contracts/user-state-document.md) (hashed password only; no plaintext)
+- [X] T213 Remove `PotsureDbContext`, EF configurations, `Migrations/`, and design-time SQL factory from `src/Potsure.Data/` after Infrastructure repositories no longer depend on EF entities
 
 ### Document store (`Potsure.Infrastructure`)
 
-- [ ] T214 Define `IUserDocumentStore` / `IUserStateRepository` seams in `src/Potsure.Infrastructure/Persistence/`; keep `BlobContainerClient` inside store implementation only (contract boundaries)
-- [ ] T215 Implement `BlobUserDocumentStore` in `src/Potsure.Infrastructure/Persistence/BlobUserDocumentStore.cs` for `tenants/{userId}/state.json` with UTF-8 JSON, `If-Match` conditional upload on save, and reject `userId` containing `/`, `\`, or `..` before blob name construction
-- [ ] T216 Implement `FileUserDocumentStore` for local-only mode using the same relative paths under the configured data directory per contract
-- [ ] T217 Implement `DocumentSchemaMigrator` in `src/Potsure.Infrastructure/Persistence/DocumentSchemaMigrator.cs` applying ordered in-process transforms from `schemaVersion` **0** → **1** on load, then write-back with concurrency token
-- [ ] T218 Replace `BudgetProfileSeeder` SQL seeding with first-document creation in the store: default `AllocationPreset.FiftyThirtyTwenty`, `PotMappingMode.CategoryOnly`, three fixed categories, GBP only, on first financial access per data-model
+- [X] T214 Define `IUserDocumentStore` / `IUserStateRepository` seams in `src/Potsure.Infrastructure/Persistence/`; keep `BlobContainerClient` inside store implementation only (contract boundaries)
+- [X] T215 Implement `BlobUserDocumentStore` in `src/Potsure.Infrastructure/Persistence/BlobUserDocumentStore.cs` for `tenants/{userId}/state.json` with UTF-8 JSON, `If-Match` conditional upload on save, and reject `userId` containing `/`, `\`, or `..` before blob name construction
+- [X] T216 Implement `FileUserDocumentStore` for local-only mode using the same relative paths under the configured data directory per contract
+- [X] T217 Implement `DocumentSchemaMigrator` in `src/Potsure.Infrastructure/Persistence/DocumentSchemaMigrator.cs` applying ordered in-process transforms from `schemaVersion` **0** → **1** on load, then write-back with concurrency token
+- [X] T218 Replace `BudgetProfileSeeder` SQL seeding with first-document creation in the store: default `AllocationPreset.FiftyThirtyTwenty`, `PotMappingMode.CategoryOnly`, three fixed categories, GBP only, on first financial access per data-model
 
 ### Identity blob store
 
-- [ ] T219 Implement custom ASP.NET Core Identity `IUserStore<ApplicationUser>` (plus password, email, security stamp, lockout interfaces as enabled) over `identity/users/{userId}.json` and `identity/email-index/{sha256}.json` in `src/Potsure.Infrastructure/Identity/BlobIdentityUserStore.cs`; email index SHA-256 is lowercase hex of trimmed upper-invariant email per contract
-- [ ] T220 Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` to remove `AddEntityFrameworkStores` / SQL user tables; register blob identity store; keep cookie auth and password hasher unchanged
+- [X] T219 Implement custom ASP.NET Core Identity `IUserStore<ApplicationUser>` (plus password, email, security stamp, lockout interfaces as enabled) over `identity/users/{userId}.json` and `identity/email-index/{sha256}.json` in `src/Potsure.Infrastructure/Identity/BlobIdentityUserStore.cs`; email index SHA-256 is lowercase hex of trimmed upper-invariant email per contract
+- [X] T220 Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` to remove `AddEntityFrameworkStores` / SQL user tables; register blob identity store; keep cookie auth and password hasher unchanged
 
 ### Web composition
 
-- [ ] T221 Register `builder.AddAzureBlobContainerClient("userdata")` in `src/Potsure.Web/Program.cs` when AppHost-hosted; remove `AddSqlServerDbContext<PotsureDbContext>` and `AddSqlServerDbContext<PotsureDataProtectionDbContext>`; replace SQL health check with app readiness that does not require SQL
-- [ ] T222 Configure Data Protection `PersistKeysToAzureBlobStorage` at blob `system/data-protection-keys.xml` (hosted/AppHost) or equivalent file path (local-only) per contract
-- [ ] T223 Wire `ICurrentOwnerAccessor` as the only source of `userId` for blob name construction in repositories; remove EF global query filters from the running path
+- [X] T221 Register `builder.AddAzureBlobContainerClient("userdata")` in `src/Potsure.Web/Program.cs` when AppHost-hosted; remove `AddSqlServerDbContext<PotsureDbContext>` and `AddSqlServerDbContext<PotsureDataProtectionDbContext>`; replace SQL health check with app readiness that does not require SQL
+- [X] T222 Configure Data Protection `PersistKeysToAzureBlobStorage` at blob `system/data-protection-keys.xml` (hosted/AppHost) or equivalent file path (local-only) per contract
+- [X] T223 Wire `ICurrentOwnerAccessor` as the only source of `userId` for blob name construction in repositories; remove EF global query filters from the running path
 
 ### Feature repositories and pipelines
 
-- [ ] T224 [US1] Refactor `StatementImportService` in `src/Potsure.Infrastructure/Features/Import/StatementImportService.cs` to load document → mutate in memory → single conditional `state.json` replace (no raw CSV blob); clear temp files on all exits per research.md
-- [ ] T225 [US1] [US2] [US3] [US4] [US5] [US6] [US7] [US8] [US9] [US10] Migrate Infrastructure feature services and repositories under `src/Potsure.Infrastructure/` from EF `PotsureDbContext` to document load/save through `IUserStateRepository` (import, recurrence, plan, reports, export snapshot builder). **Suggested order**: (1) plan/profile and category pot services, (2) recurrence and assignment memory, (3) report calculators and read models, (4) export snapshot builder — complete all areas before **T233**; split into follow-up tasks only if parallel ownership needs clearer boundaries.
-- [ ] T226 [US10] Update `UserDataDeletionService` in `src/Potsure.Infrastructure/Deletion/UserDataDeletionService.cs` to delete in order: `tenants/{userId}/state.json`, email-index blob, `identity/users/{userId}.json`; idempotent when blobs already absent; do not delete `system/data-protection-keys.xml` per data-model Deletion
+- [X] T224 [US1] Refactor `StatementImportService` in `src/Potsure.Infrastructure/Features/Import/StatementImportService.cs` to load document → mutate in memory → single conditional `state.json` replace (no raw CSV blob); clear temp files on all exits per research.md
+- [X] T225 [US1] [US2] [US3] [US4] [US5] [US6] [US7] [US8] [US9] [US10] Migrate Infrastructure feature services and repositories under `src/Potsure.Infrastructure/` from EF `PotsureDbContext` to document load/save through `IUserStateRepository` (import, recurrence, plan, reports, export snapshot builder). **Suggested order**: (1) plan/profile and category pot services, (2) recurrence and assignment memory, (3) report calculators and read models, (4) export snapshot builder — complete all areas before **T233**; split into follow-up tasks only if parallel ownership needs clearer boundaries.
+- [X] T226 [US10] Update `UserDataDeletionService` in `src/Potsure.Infrastructure/Deletion/UserDataDeletionService.cs` to delete in order: `tenants/{userId}/state.json`, email-index blob, `identity/users/{userId}.json`; idempotent when blobs already absent; do not delete `system/data-protection-keys.xml` per data-model Deletion
 
 ### Tests
 
-- [ ] T227 [P] [US11] Update `tests/Potsure.Infrastructure.Tests/TenancyIsolationTests.cs` for two users against Azurite or file store fixture: user A cannot read user B `state.json`
-- [ ] T228 [P] [US1] [US2] Update `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (and related import fixtures) to use document store test harness instead of in-memory or SQL `PotsureDbContext`
-- [ ] T229 [P] Add `UserDocumentStoreTests` in `tests/Potsure.Infrastructure.Tests/` asserting `If-Match` failure on stale ETag and `schemaVersion` **0** upgrade on load
+- [X] T227 [P] [US11] Update `tests/Potsure.Infrastructure.Tests/TenancyIsolationTests.cs` for two users against Azurite or file store fixture: user A cannot read user B `state.json`
+- [X] T228 [P] [US1] [US2] Update `tests/Potsure.Infrastructure.Tests/ReimportAssignmentMemoryTests.cs` (and related import fixtures) to use document store test harness instead of in-memory or SQL `PotsureDbContext`
+- [X] T229 [P] Add `UserDocumentStoreTests` in `tests/Potsure.Infrastructure.Tests/` asserting `If-Match` failure on stale ETag and `schemaVersion` **0** upgrade on load
 
 ### Documentation, encryption, and release
 
-- [ ] T230 [US11] Replace `docs/deployment-database.md` with `docs/deployment-storage.md` (private container, Azurite volume, managed identity, no `dotnet ef`); update `docs/self-host.md`, `docs/local-only-mode.md`, and `docs/encryption.md` to cite Azure Storage service encryption instead of SQL TDE (**FR-M027**, supersedes **T102** SQL wording)
-- [ ] T231 [P] Re-run quickstart Scenario **8c** (storage → userdata → web; no `sql` / `ef-migrations` in `aspire describe`) and set validation log row to **Pass** in `specs/001-potsure-v1/quickstart.md`
-- [ ] T232 Run `dotnet package list --outdated`, remove centrally unused SQL/EF packages when pivot is complete (explicit instruction or as part of T207 closure), upgrade compatible versions, then `dotnet test Potsure.slnx -c Release` full suite per constitution 1.2.0 (**T110** gate after pivot)
-- [ ] T233 Run `dotnet format Potsure.slnx --verify-no-changes`, Release build `-warnaserror`, and full `dotnet test Potsure.slnx -c Release` for Phase 35 completion (**T101** gate)
+- [X] T230 [US11] Replace `docs/deployment-database.md` with `docs/deployment-storage.md` (private container, Azurite volume, managed identity, no `dotnet ef`); update `docs/self-host.md`, `docs/local-only-mode.md`, and `docs/encryption.md` to cite Azure Storage service encryption instead of SQL TDE (**FR-M027**, supersedes **T102** SQL wording)
+- [X] T231 [P] Re-run quickstart Scenario **8c** (storage → userdata → web; no `sql` / `ef-migrations` in `aspire describe`) and set validation log row to **Pass** in `specs/001-potsure-v1/quickstart.md`
+- [X] T232 Run `dotnet package list --outdated`, remove centrally unused SQL/EF packages when pivot is complete (explicit instruction or as part of T207 closure), upgrade compatible versions, then `dotnet test Potsure.slnx -c Release` full suite per constitution 1.2.0 (**T110** gate after pivot)
+- [X] T233 Run `dotnet format Potsure.slnx --verify-no-changes`, Release build `-warnaserror`, and full `dotnet test Potsure.slnx -c Release` for Phase 35 completion (**T101** gate)
 
 **Checkpoint**: AppHost starts with Azurite only; web uses injected `BlobContainerClient`; hosted register creates identity blobs; first financial page creates `state.json`; quickstart Scenarios **1**–**7** and **8c** pass on document store; SQL projects and packages removed from the running path.
+
+## Phase 36: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` (2026-11-21, post Phase 35 document store pivot) between spec intent, plan decisions, constitution mandates, and present codebase behaviour.
+
+- [X] T234 CRITICAL Wire hosted account self-delete (`DeletePersonalData.razor` / `BlobIdentityUserStore.DeleteAsync`) to remove `tenants/{userId}/state.json` before or with identity blob deletes using `UserDataDeletionService.DeleteHostedUserBlobsAsync` (state → email-index → identity user) per [data-model.md](./data-model.md) Deletion, UI “all associated data” copy, and **Constitution IV** (contradicts)
+- [X] T235 Add `tests/Potsure.Infrastructure.Tests/HostedEncryptionAcceptanceTests.cs` (or equivalent) asserting hosted encryption documentation and web host configuration hooks for HTTPS ingress and Azure Storage service encryption per `docs/encryption.md`, **T230**, **FR-M027**, and **Constitution II** (missing)
+- [X] T236 Add integration test coverage that hosted account removal deletes `state.json`, email-index, and identity user blobs with no retrievable financial aggregates per **T226**, `contracts/user-state-document.md` Deletion, and **SC-006** (partial)
+- [X] T237 Refresh quickstart validation log Scenario **8b** notes to remove obsolete `Aspire.Hosting.EntityFrameworkCore` wording after the blob pivot per **T232** and **Constitution V** (partial)
+- [X] T238 Run `dotnet package list --outdated`, upgrade compatible central pins (for example `Azure.Extensions.AspNetCore.DataProtection.Blobs`), then full `dotnet test Potsure.slnx -c Release` per constitution 1.2.0 central package versioning after **T232** (partial)

@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -16,7 +16,7 @@ public sealed record CategoryPotBreakdownLine(
 /// Optional mapped-pot detail for report UIs when pots are configured (US6/US7/US8).
 /// </summary>
 public sealed class CategoryPotBreakdownQuery(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<IReadOnlyList<CategoryPotBreakdownLine>> ListAsync(

@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Recurrence;
 
@@ -43,7 +43,7 @@ public sealed record SplitExpensePart(
 /// Merge and split workflows with explicit category, pot, and tag resolution (FR-M008).
 /// </summary>
 public sealed class PatternMergeSplitService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ExpensePatternService expensePatternService,
     ICurrentOwnerAccessor ownerAccessor)
 {

@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -11,7 +11,7 @@ namespace Potsure.Infrastructure.Features.Reports;
 /// Auto-attribution of debits to confirmed expense patterns and credits to income patterns (FR-M010a, FR-M010b).
 /// </summary>
 public sealed class TransactionAttributionService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     /// <summary>

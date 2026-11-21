@@ -1,6 +1,6 @@
 # Local-only mode
 
-Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core Identity accounts. Financial data is scoped to a fixed owner key (`local`, see `LocalOnlyOwnerAccessor.LocalOwnerKey`) enforced by EF Core global query filters.
+Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core Identity accounts. Financial data is scoped to a fixed owner key (`local`, see `LocalOnlyOwnerAccessor.LocalOwnerKey`) and stored under the configured document data directory (`DocumentStore:DataDirectory`).
 
 ## Configuration
 
@@ -15,10 +15,10 @@ Local-only mode runs Potsure as a **single-user** instance without ASP.NET Core 
 
 ## Behaviour
 
-- No passkey or sign-in pages are required to reach plan, import, and report pages.
+- No sign-in pages are required to reach plan, import, and report pages.
 - `ICurrentOwnerAccessor` resolves to `LocalOnlyOwnerAccessor` with a stable profile key.
 - Financial API and page protection for hosted mode does not apply; physical access to the machine remains the primary control.
-- Data Protection keys persist to the same SQL database as the application.
+- Data Protection keys persist under the same data directory as identity and tenant files (see `docs/deployment-storage.md`).
 
 ## Network exposure (FR-M024)
 
@@ -28,4 +28,4 @@ With `BindPublicEndpoints` set to `false`, `Program.cs` clears default URLs and 
 
 ## When to use hosted mode instead
 
-Choose hosted mode when multiple users need isolated plans, passkey authentication, and HTTPS ingress managed by your platform (see `docs/self-host.md` and `docs/encryption.md`).
+Choose hosted mode when multiple users need isolated plans, Identity authentication, and HTTPS ingress managed by your platform (see `docs/self-host.md` and `docs/encryption.md`).

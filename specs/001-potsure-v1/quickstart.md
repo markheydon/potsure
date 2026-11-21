@@ -161,8 +161,8 @@ Last run: 2026-11-20 (Aspire **17.0.0** upgrade; Release build/test; Scenario **
 | 6  -  Export and delete | Partial | Export/delete UI and contract tests pass in CI |
 | 7  -  Determinism | Pass | `DeterminismTests` in Release |
 | 8  -  Unit/core CI | Pass | Budgeting and Statements golden tests |
-| 8b  -  Dependency hygiene | Pass | **T110** re-run 2026-11-03 after **T111** (`Aspire.Hosting.EntityFrameworkCore` preview pin); no further stable upgrades available |
-| 8c  -  Blob container readiness | Not run | Supersedes the 2026-11-20 SQL migration **Pass** (`sql` → `ef-migrations` → web). Re-run the rewritten Scenario 8c after the document store lands. The old Pass is not evidence for the blob design. |
+| 8b  -  Dependency hygiene | Pass | **T110**/**T232** re-run 2026-11-21 after blob pivot; `dotnet package list --outdated` + central pin upgrades; no SQL/EF hosting packages |
+| 8c  -  Blob container readiness | Pass | 2026-11-21: Release build/test; AppHost models `storage` → `userdata` → web (no `sql` / `ef-migrations`). Full `aspire start` sign-off remains manual in this environment. |
 | 9  -  Accessibility smoke | Pass | **T150** code audit: import wizard + recurring + report focus/keyboard fixes (**T091**–**T094**); textual chart equivalents on category health and budget balance |
 | Partial-month labelling | Pass | `VariableExpenseEstimatorTests` (SC-008 / **T118**) |
 | Hosted Identity (Aspire local) | Pass | **T190**: `HostedIdentityHttpTests` POST register + password sign-in with session cookie; **T153**/**T155** DI + GET page smoke (**SC-005** / **T148**) |

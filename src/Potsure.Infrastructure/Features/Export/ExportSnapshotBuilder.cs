@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Export;
 
@@ -10,7 +10,7 @@ namespace Potsure.Infrastructure.Features.Export;
 /// Loads the current owner's financial data into an export snapshot.
 /// </summary>
 public sealed class ExportSnapshotBuilder(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<UserFinancialExportSnapshot> BuildAsync(CancellationToken cancellationToken = default)

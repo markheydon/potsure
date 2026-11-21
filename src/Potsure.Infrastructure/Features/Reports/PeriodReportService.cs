@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Plan;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -12,7 +12,7 @@ namespace Potsure.Infrastructure.Features.Reports;
 /// Loads persisted plan data and builds period reports for the current owner.
 /// </summary>
 public sealed class PeriodReportService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<PeriodSummary> GetPeriodSummaryAsync(

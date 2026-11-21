@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Potsure.Data;
 
 namespace Potsure.Web.Tests;
 
@@ -91,12 +90,7 @@ public sealed class HostedIdentityHttpTests : IClassFixture<PotsureWebApplicatio
         Assert.Equal(HttpStatusCode.OK, import.StatusCode);
     }
 
-    private async Task EnsureDatabaseCreatedAsync()
-    {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
-        await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
-    }
+    private static Task EnsureDatabaseCreatedAsync() => Task.CompletedTask;
 
     private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client, string path)
     {

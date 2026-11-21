@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Features.Recurrence;
@@ -20,7 +20,7 @@ public sealed record RecurrenceReviewItem(
 /// <summary>
 /// Loads suggested and persisted recurrence patterns for review UI (US2, US9).
 /// </summary>
-public sealed class RecurrenceReviewService(PotsureDbContext dbContext)
+public sealed class RecurrenceReviewService(PotsureUserStateContext dbContext)
 {
     /// <summary>
     /// Returns merged suggested and confirmed patterns for the review screen.

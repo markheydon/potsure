@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -23,7 +23,7 @@ public sealed record UpdatePlannedFundingRequest(
 /// Planned future funding distinct from recorded funding and imports (US5).
 /// </summary>
 public sealed class PlannedFundingService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     BudgetProfileSeeder profileSeeder)
 {
@@ -79,7 +79,7 @@ public sealed class PlannedFundingService(
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         return await dbContext.BudgetProfiles
             .Include(p => p.Categories)
             .Include(p => p.Pots)

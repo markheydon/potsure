@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -12,7 +12,7 @@ namespace Potsure.Infrastructure.Features.Reports;
 public static class CommitmentPaymentAnchorResolver
 {
     public static async Task<IReadOnlyDictionary<Guid, DateOnly>> ResolveExpenseAnchorsAsync(
-        PotsureDbContext dbContext,
+        PotsureUserStateContext dbContext,
         IReadOnlyList<RecurringExpenseEntity> expenses,
         CancellationToken cancellationToken)
     {
@@ -99,7 +99,7 @@ public static class CommitmentPaymentAnchorResolver
     }
 
     public static async Task<IReadOnlyDictionary<Guid, DateOnly>> ResolveIncomeAnchorsAsync(
-        PotsureDbContext dbContext,
+        PotsureUserStateContext dbContext,
         IReadOnlyList<IncomeSourceEntity> sources,
         CancellationToken cancellationToken)
     {

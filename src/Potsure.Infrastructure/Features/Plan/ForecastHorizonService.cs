@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -9,7 +9,7 @@ namespace Potsure.Infrastructure.Features.Plan;
 /// Forecast horizon setting on the budget profile (FR-M035).
 /// </summary>
 public sealed class ForecastHorizonService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     BudgetProfileSeeder profileSeeder)
 {
@@ -45,7 +45,7 @@ public sealed class ForecastHorizonService(
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         BudgetProfileEntity profile = await dbContext.BudgetProfiles.SingleAsync(cancellationToken);
         EntityOwnershipValidator.EnsureOwnedBy(profile.OwnerKey, ownerAccessor.OwnerKey);
         return profile;

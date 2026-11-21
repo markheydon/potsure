@@ -1,9 +1,9 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
@@ -33,7 +33,7 @@ public partial class RecurringSummary
     private BankPotService PotService { get; set; } = null!;
 
     [Inject]
-    private PotsureDbContext DbContext { get; set; } = null!;
+    private PotsureUserStateContext DbContext { get; set; } = null!;
 
     private bool _loading = true;
     private string? _error;

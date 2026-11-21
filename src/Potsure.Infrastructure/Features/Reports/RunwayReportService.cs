@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Plan;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -12,7 +12,7 @@ namespace Potsure.Infrastructure.Features.Reports;
 /// Loads persisted data and builds runway projection output for the UI.
 /// </summary>
 public sealed class RunwayReportService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<(IReadOnlyList<RunwayProjectionLine> Lines, UncertaintyFlags Flags)> GetRunwayAsync(

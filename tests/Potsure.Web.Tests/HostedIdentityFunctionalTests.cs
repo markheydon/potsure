@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Potsure.Data;
 using Potsure.Data.Identity;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Web.Configuration;
 
 namespace Potsure.Web.Tests;
@@ -34,13 +33,11 @@ public sealed class HostedIdentityFunctionalTests
 
     private static ServiceProvider BuildHostedProvider()
     {
+        string dataDirectory = Path.Combine(Path.GetTempPath(), "potsure-hosted-identity", Guid.NewGuid().ToString());
         ServiceCollection services = new();
         IConfiguration configuration = new ConfigurationBuilder().Build();
         services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor("hosted-smoke-owner"));
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase($"potsure-hosted-identity-{Guid.NewGuid()}")
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+        services.AddPotsureFileDocumentStores(options => options.DataDirectory = dataDirectory);
         services.AddHostedIdentity(configuration);
         return services.BuildServiceProvider();
     }

@@ -1,9 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure;
 using Potsure.Infrastructure.Features.Recurrence;
@@ -66,7 +64,7 @@ public sealed class PaymentAnchorRefreshTests
         ServiceProvider provider = BuildProvider(owner);
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
 
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         ExpensePatternService expenseService = scope.ServiceProvider.GetRequiredService<ExpensePatternService>();
 
         BudgetCategoryEntity category = new()
@@ -123,26 +121,12 @@ public sealed class PaymentAnchorRefreshTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(1, updated);
-        await db.Entry(expense).ReloadAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(new DateOnly(2026, 3, 12), expense.PaymentAnchorDate);
+        RecurringExpenseEntity reloaded = await db.RecurringExpenses.SingleAsync(
+            e => e.Id == expense.Id,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(new DateOnly(2026, 3, 12), reloaded.PaymentAnchorDate);
     }
 
-    private static ServiceProvider BuildProvider(string ownerKey)
-    {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase($"potsure-payment-anchor-{Guid.NewGuid()}")
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
-        return services.BuildServiceProvider();
-    }
-
-    private sealed class FixedOwnerAccessor(string ownerKey) : ICurrentOwnerAccessor
-    {
-        public string OwnerKey => ownerKey;
-
-        public bool IsAuthenticated => true;
-    }
+    private static ServiceProvider BuildProvider(string ownerKey) =>
+        DocumentStoreTestHarness.BuildProvider(ownerKey);
 }

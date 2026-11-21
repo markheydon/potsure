@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Reports;
 
@@ -16,7 +16,7 @@ public sealed record IncomeAttributedTransactionRow(
 /// <summary>
 /// Lists income credits the user may attribute or override (FR-M010b).
 /// </summary>
-public sealed class IncomeAttributedTransactionQuery(PotsureDbContext dbContext)
+public sealed class IncomeAttributedTransactionQuery(PotsureUserStateContext dbContext)
 {
     public async Task<IReadOnlyList<IncomeAttributedTransactionRow>> ListForReportRangeAsync(
         DateOnly start,

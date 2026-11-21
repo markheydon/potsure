@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Azure.Storage.Blobs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Potsure.Budgeting\Potsure.Budgeting.csproj" />
     <ProjectReference Include="..\Potsure.Data\Potsure.Data.csproj" />
     <ProjectReference Include="..\Potsure.Recurrence\Potsure.Recurrence.csproj" />

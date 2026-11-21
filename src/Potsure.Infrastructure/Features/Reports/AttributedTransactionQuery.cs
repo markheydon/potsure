@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Reports;
 
@@ -18,7 +18,7 @@ public sealed record AttributedTransactionRow(
 /// <summary>
 /// Lists attributed expense debits the user may override (FR-M010a).
 /// </summary>
-public sealed class AttributedTransactionQuery(PotsureDbContext dbContext)
+public sealed class AttributedTransactionQuery(PotsureUserStateContext dbContext)
 {
     public async Task<IReadOnlyList<AttributedTransactionRow>> ListForReportRangeAsync(
         DateOnly start,

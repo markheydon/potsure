@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Persistence;
 
@@ -10,7 +10,7 @@ namespace Potsure.Infrastructure.Persistence;
 /// Creates the budget profile and fixed three category rows (FR-M012).
 /// </summary>
 public sealed class BudgetProfileSeeder(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     private static readonly BudgetCategoryKind[] FixedCategoryKinds =
@@ -20,7 +20,9 @@ public sealed class BudgetProfileSeeder(
         BudgetCategoryKind.SavingsAndDebt,
     ];
 
-    public async Task<BudgetProfileEntity> EnsureProfileAsync(CancellationToken cancellationToken = default)
+    public async Task<BudgetProfileEntity> EnsureProfileAsync(
+        bool persistChanges = true,
+        CancellationToken cancellationToken = default)
     {
         BudgetProfileEntity? existing = await dbContext.BudgetProfiles
             .Include(p => p.Categories)
@@ -31,10 +33,12 @@ public sealed class BudgetProfileSeeder(
             return existing;
         }
 
-        return await CreateProfileAsync(cancellationToken);
+        return await CreateProfileAsync(persistChanges, cancellationToken);
     }
 
-    public async Task<BudgetProfileEntity> CreateProfileAsync(CancellationToken cancellationToken = default)
+    public async Task<BudgetProfileEntity> CreateProfileAsync(
+        bool persistChanges = true,
+        CancellationToken cancellationToken = default)
     {
         string ownerKey = ownerAccessor.OwnerKey;
 
@@ -53,7 +57,11 @@ public sealed class BudgetProfileSeeder(
         }
 
         dbContext.BudgetProfiles.Add(profile);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (persistChanges)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return profile;
     }
 

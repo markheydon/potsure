@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Potsure.Data;
 using Potsure.Data.Identity;
+using Potsure.Infrastructure.Identity;
 using Potsure.Web.Components.Account;
 
 namespace Potsure.Web.Configuration;
 
 /// <summary>
-/// Registers ASP.NET Core Identity with optional passkeys and SQL persistence for hosted mode (FR-M025).
+/// Registers ASP.NET Core Identity with optional passkeys and blob persistence for hosted mode (FR-M025).
 /// </summary>
 public static class HostedIdentityConfiguration
 {
@@ -45,8 +45,7 @@ public static class HostedIdentityConfiguration
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<PotsureDbContext>()
+            .AddUserStore<BlobIdentityUserStore>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
 

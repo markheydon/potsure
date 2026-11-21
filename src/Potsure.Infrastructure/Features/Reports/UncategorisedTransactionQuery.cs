@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Reports;
@@ -16,7 +16,7 @@ public sealed record UncategorisedTransactionRow(
 /// <summary>
 /// Lists transactions the user can assign via one-off categorisation (FR-M037, FR-M017b).
 /// </summary>
-public sealed class UncategorisedTransactionQuery(PotsureDbContext dbContext)
+public sealed class UncategorisedTransactionQuery(PotsureUserStateContext dbContext)
 {
     public async Task<IReadOnlyList<UncategorisedTransactionRow>> ListForReportRangeAsync(
         DateOnly start,

@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Recurrence;
 
@@ -21,7 +21,7 @@ public sealed record SaveIncomeSourceRequest(
 /// Persists confirmed income patterns with display-only split validation (FR-M010).
 /// </summary>
 public sealed class IncomePatternService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     private const decimal SplitTolerance = 0.01m;

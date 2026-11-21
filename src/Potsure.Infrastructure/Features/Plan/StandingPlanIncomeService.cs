@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -21,7 +21,7 @@ public sealed record UpdateStandingPlanIncomeRequest(
 /// CRUD for standing plan estimated income and cadence (FR-M031).
 /// </summary>
 public sealed class StandingPlanIncomeService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<StandingPlanIncomeReadModel?> GetAsync(CancellationToken cancellationToken = default)

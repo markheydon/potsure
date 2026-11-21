@@ -1,13 +1,14 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
-using Potsure.Data;
+using Potsure.Data.Documents;
 using Potsure.Data.Entities;
-using Potsure.Data.Tenancy;
-using Potsure.Infrastructure;
+using Potsure.Data.Identity;
+using Potsure.Data.Persistence;
 using Potsure.Infrastructure.Deletion;
 using Potsure.Infrastructure.Features.Export;
+using Potsure.Infrastructure.Identity;
+using Potsure.Infrastructure.Persistence;
+using Potsure.Infrastructure.Persistence.Repositories;
 
 namespace Potsure.Infrastructure.Tests;
 
@@ -20,12 +21,14 @@ public sealed class UserDataDeletionTests
     public async Task DeleteAllFinancialDataAsync_WhenReauthenticationDeclined_ReturnsFalseWithoutDeleting()
     {
         const string owner = "owner-a";
-        ServiceProvider provider = BuildProvider(owner, new DenyReauthenticationGate());
+        ServiceProvider provider = DocumentStoreTestHarness.BuildProvider(
+            owner,
+            reauthenticationGate: new DenyReauthenticationGate());
 
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         UserDataDeletionService deletion = scope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
         bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
@@ -35,49 +38,110 @@ public sealed class UserDataDeletionTests
     }
 
     [Fact]
-    public async Task DeleteAllFinancialDataAsync_OnSqlServer_AfterSeededProfile_RemovesFinancialRows()
+    public async Task DeleteAllFinancialDataAsync_RemovesStateBlobForOwner()
     {
-        string? connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__potsure");
-        if (string.IsNullOrWhiteSpace(connectionString))
+        const string owner = "owner-delete";
+        string root = Path.Combine(Path.GetTempPath(), "potsure-delete", Guid.NewGuid().ToString());
+        ServiceProvider provider = DocumentStoreTestHarness.BuildProvider(
+            owner,
+            dataDirectory: root,
+            reauthenticationGate: new AllowReauthenticationGate());
+
+        await using (AsyncServiceScope scope = provider.CreateAsyncScope())
         {
-            Assert.Skip(
-                "Set ConnectionStrings__potsure to run SQL-backed deletion (ExecuteDelete requires relational provider).");
+            BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
+            await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
         }
 
-        const string owner = "owner-delete-sql";
-        ServiceProvider provider = BuildSqlProvider(owner, connectionString);
+        await using (AsyncServiceScope deleteScope = provider.CreateAsyncScope())
+        {
+            UserDataDeletionService deletion = deleteScope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
+            bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
+            Assert.True(deleted);
+        }
 
-        await using AsyncServiceScope scope = provider.CreateAsyncScope();
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
-        BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
+        string statePath = Path.Combine(root, "tenants", owner, "state.json");
+        Assert.False(File.Exists(statePath));
+    }
 
-        UserDataDeletionService deletion = scope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
-        bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
+    [Fact]
+    public async Task DeleteHostedUserBlobsAsync_RemovesStateIdentityAndEmailIndex()
+    {
+        const string userId = "hosted-user-delete";
+        const string email = "delete-me@example.com";
+        string root = Path.Combine(Path.GetTempPath(), "potsure-hosted-delete", Guid.NewGuid().ToString());
 
-        Assert.True(deleted);
-        Assert.Equal(0, await db.BudgetProfiles.CountAsync(TestContext.Current.CancellationToken));
+        ServiceProvider provider = DocumentStoreTestHarness.BuildProvider(
+            userId,
+            dataDirectory: root,
+            reauthenticationGate: new AllowReauthenticationGate());
+
+        await using (AsyncServiceScope seedScope = provider.CreateAsyncScope())
+        {
+            PotsureUserStateContext db = seedScope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
+            BudgetProfileSeeder seeder = seedScope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
+            await seeder.EnsureProfileAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+            IIdentityDocumentStore identity = seedScope.ServiceProvider.GetRequiredService<IIdentityDocumentStore>();
+            await identity.SaveUserAsync(
+                new IdentityUserDocument
+                {
+                    Id = userId,
+                    UserName = email,
+                    NormalizedUserName = email.ToUpperInvariant(),
+                    Email = email,
+                    NormalizedEmail = email.ToUpperInvariant(),
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    ConcurrencyStamp = Guid.NewGuid().ToString(),
+                },
+                ifMatchEtag: null,
+                TestContext.Current.CancellationToken);
+            string emailHash = IdentityEmailHasher.HashEmailForIndex(email);
+            await identity.SaveEmailIndexAsync(
+                emailHash,
+                new EmailIndexDocument { UserId = userId },
+                ifMatchEtag: null,
+                TestContext.Current.CancellationToken);
+        }
+
+        await using (AsyncServiceScope deleteScope = provider.CreateAsyncScope())
+        {
+            UserDataDeletionService deletion = deleteScope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
+            await deletion.DeleteHostedUserBlobsAsync(
+                new ApplicationUserIdentityDeletionRequest(userId, email),
+                TestContext.Current.CancellationToken);
+        }
+
+        string statePath = Path.Combine(root, "tenants", userId, "state.json");
+        string identityPath = Path.Combine(root, UserDocumentPathValidator.IdentityUserBlobName(userId));
+        string emailIndexPath = Path.Combine(
+            root,
+            UserDocumentPathValidator.EmailIndexBlobName(IdentityEmailHasher.HashEmailForIndex(email)));
+
+        Assert.False(File.Exists(statePath));
+        Assert.False(File.Exists(identityPath));
+        Assert.False(File.Exists(emailIndexPath));
     }
 
     [Fact]
     public async Task DeleteAllFinancialDataAsync_RemovesOnlyCurrentOwnerData()
     {
-        string? connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__potsure");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            Assert.Skip(
-                "Set ConnectionStrings__potsure to run SQL-backed deletion isolation (ExecuteDelete requires relational provider).");
-        }
-
         const string ownerA = "owner-a";
         const string ownerB = "owner-b";
+        string root = Path.Combine(Path.GetTempPath(), "potsure-delete-iso", Guid.NewGuid().ToString());
 
-        ServiceProvider providerA = BuildSqlProvider(ownerA, connectionString);
-        ServiceProvider providerB = BuildSqlProvider(ownerB, connectionString);
+        using ServiceProvider providerA = DocumentStoreTestHarness.BuildProvider(
+            ownerA,
+            dataDirectory: Path.Combine(root, "a"),
+            reauthenticationGate: new AllowReauthenticationGate());
+        using ServiceProvider providerB = DocumentStoreTestHarness.BuildProvider(
+            ownerB,
+            dataDirectory: Path.Combine(root, "b"),
+            reauthenticationGate: new AllowReauthenticationGate());
 
         await using (AsyncServiceScope seedScope = providerA.CreateAsyncScope())
         {
-            PotsureDbContext db = seedScope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+            PotsureUserStateContext db = seedScope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
             StatementUploadEntity upload = CreateUpload(ownerA);
             db.StatementUploads.Add(upload);
             db.Transactions.Add(new TransactionEntity
@@ -96,9 +160,22 @@ public sealed class UserDataDeletionTests
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        await using (AsyncServiceScope deleteScope = providerA.CreateAsyncScope())
+        {
+            UserDataDeletionService deletion = deleteScope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
+            bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
+            Assert.True(deleted);
+        }
+
+        await using (AsyncServiceScope verifyScope = providerB.CreateAsyncScope())
+        {
+            PotsureUserStateContext db = verifyScope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
+            Assert.Equal(0, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
+        }
+
         await using (AsyncServiceScope seedScope = providerB.CreateAsyncScope())
         {
-            PotsureDbContext db = seedScope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+            PotsureUserStateContext db = seedScope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
             StatementUploadEntity upload = CreateUpload(ownerB);
             db.StatementUploads.Add(upload);
             db.Transactions.Add(new TransactionEntity
@@ -115,83 +192,8 @@ public sealed class UserDataDeletionTests
                 UploadBatchId = upload.Id,
             });
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        }
-
-        await using (AsyncServiceScope deleteScope = providerA.CreateAsyncScope())
-        {
-            UserDataDeletionService deletion = deleteScope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
-            bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
-            Assert.True(deleted);
-        }
-
-        await using (AsyncServiceScope verifyScope = providerB.CreateAsyncScope())
-        {
-            PotsureDbContext db = verifyScope.ServiceProvider.GetRequiredService<PotsureDbContext>();
             Assert.Equal(1, await db.Transactions.CountAsync(TestContext.Current.CancellationToken));
         }
-
-        await using (AsyncServiceScope cleanupScope = providerA.CreateAsyncScope())
-        {
-            PotsureDbContext db = cleanupScope.ServiceProvider.GetRequiredService<PotsureDbContext>();
-            await db.Transactions.Where(t => t.OwnerKey == ownerA || t.OwnerKey == ownerB)
-                .ExecuteDeleteAsync(TestContext.Current.CancellationToken);
-        }
-    }
-
-    [Fact]
-    public async Task DeleteAllFinancialDataAsync_WhenSqlRetryStrategyEnabled_CompletesInTransaction()
-    {
-        string? connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__potsure");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            Assert.Skip(
-                "Set ConnectionStrings__potsure to run SQL-backed deletion (ExecuteDelete requires relational provider).");
-        }
-
-        const string owner = "owner-delete-retry";
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(owner));
-        services.AddSingleton<IExportReauthenticationGate>(new AllowReauthenticationGate());
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
-        ServiceProvider provider = services.BuildServiceProvider();
-
-        await using AsyncServiceScope scope = provider.CreateAsyncScope();
-        BudgetProfileSeeder seeder = scope.ServiceProvider.GetRequiredService<BudgetProfileSeeder>();
-        await seeder.EnsureProfileAsync(TestContext.Current.CancellationToken);
-
-        UserDataDeletionService deletion = scope.ServiceProvider.GetRequiredService<UserDataDeletionService>();
-        bool deleted = await deletion.DeleteAllFinancialDataAsync(TestContext.Current.CancellationToken);
-
-        Assert.True(deleted);
-    }
-
-    private static ServiceProvider BuildSqlProvider(string ownerKey, string connectionString)
-    {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddSingleton<IExportReauthenticationGate>(new AllowReauthenticationGate());
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options.UseSqlServer(connectionString));
-        return services.BuildServiceProvider();
-    }
-
-    private static ServiceProvider BuildProvider(
-        string ownerKey,
-        IExportReauthenticationGate gate,
-        string? databaseName = null)
-    {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddSingleton(gate);
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase(databaseName ?? $"potsure-deletion-{Guid.NewGuid()}")
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
-        return services.BuildServiceProvider();
     }
 
     private static StatementUploadEntity CreateUpload(string ownerKey) =>
@@ -203,13 +205,6 @@ public sealed class UserDataDeletionTests
             Status = StatementUploadStatus.Completed,
             CreatedAt = DateTimeOffset.UtcNow,
         };
-
-    private sealed class FixedOwnerAccessor(string ownerKey) : ICurrentOwnerAccessor
-    {
-        public string OwnerKey => ownerKey;
-
-        public bool IsAuthenticated => true;
-    }
 
     private sealed class DenyReauthenticationGate : IExportReauthenticationGate
     {

@@ -1,6 +1,6 @@
 # Encryption
 
-Potsure v1 expects encryption **in transit** for hosted deployments and **at rest** for the SQL Server database. Local-only loopback binding reduces transit exposure but does not remove the need to protect database files at rest on your machine.
+Potsure v1 expects encryption **in transit** for hosted deployments and **at rest** for persisted user data. Local-only loopback binding reduces transit exposure but does not remove the need to protect files on disk.
 
 ## In transit (hosted)
 
@@ -20,20 +20,20 @@ Potsure v1 expects encryption **in transit** for hosted deployments and **at res
 
 | Control | Implementation | Verification |
 |---------|----------------|--------------|
-| Azure SQL TDE | Azure SQL Server resource in AppHost (`AddAzureSqlServer`) | Confirm TDE enabled on the logical server in Azure Portal or policy audit |
-| Data Protection keys | Persisted to SQL via `PersistKeysToDbContext` | Keys table present after first run |
-| Secrets | Connection strings via Aspire/configuration, not committed to source | Repository secret scan clean |
+| Azure Blob Storage encryption | Private `userdata` container (see [deployment-storage.md](./deployment-storage.md)) | Confirm storage account encryption with Microsoft-managed keys in Azure Portal |
+| Data Protection keys | `system/data-protection-keys.xml` in the userdata container (hosted) or local file (local-only) | Blob or file present after first run |
+| Secrets | Blob access via Aspire/managed identity, not committed to source | Repository secret scan clean |
 
 ### At rest checklist
 
-- [ ] Database encrypted at rest (TDE or equivalent for self-managed SQL).
-- [ ] Backups encrypted with the same policy as the primary database.
+- [ ] Storage account encrypted at rest (service encryption).
+- [ ] Container access is private; no anonymous access.
 - [ ] Export files stored offline by the user are handled according to their own device encryption practices.
 
 ## Local-only note
 
-Loopback binding limits network transit; protect the SQL instance or files with OS-level disk encryption and restricted file permissions.
+Loopback binding limits network transit; protect the data directory under `DocumentStore:DataDirectory` with OS-level disk encryption and restricted file permissions.
 
 ## Acceptance tests
 
-Automated acceptance checks in `tests/Potsure.Infrastructure.Tests/HostedEncryptionAcceptanceTests.cs` assert that documentation, AppHost, and web host sources include the expected HTTPS and Azure SQL configuration hooks. Complete the manual checklists above before production hosted cut-over (FR-M027, constitution IV).
+Automated acceptance checks in `tests/Potsure.Infrastructure.Tests/HostedEncryptionAcceptanceTests.cs` assert that documentation and web host sources include the expected HTTPS and storage configuration hooks. Complete the manual checklists above before production hosted cut-over (FR-M027, constitution IV).

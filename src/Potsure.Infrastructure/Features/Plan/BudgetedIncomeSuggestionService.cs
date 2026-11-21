@@ -1,10 +1,10 @@
 using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Reporting;
 
 namespace Potsure.Infrastructure.Features.Plan;
@@ -20,7 +20,7 @@ public sealed record EstimatedIncomeSuggestion(
 /// Optional estimated income suggestion from confirmed income patterns (FR-M031); never auto-applied.
 /// </summary>
 public sealed class BudgetedIncomeSuggestionService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<EstimatedIncomeSuggestion?> GetSuggestionAsync(

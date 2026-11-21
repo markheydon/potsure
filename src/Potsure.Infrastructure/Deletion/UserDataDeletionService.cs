@@ -1,8 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using Potsure.Data;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Export;
+using Potsure.Infrastructure.Identity;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Deletion;
 
@@ -10,7 +9,9 @@ namespace Potsure.Infrastructure.Deletion;
 /// Permanently deletes all financial data for the current owner (FR-M023).
 /// </summary>
 public sealed class UserDataDeletionService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext userState,
+    IUserDocumentStore documentStore,
+    IIdentityDocumentStore identityStore,
     ICurrentOwnerAccessor ownerAccessor,
     IExportReauthenticationGate reauthenticationGate)
 {
@@ -22,25 +23,19 @@ public sealed class UserDataDeletionService(
         }
 
         string ownerKey = ownerAccessor.OwnerKey;
-        IExecutionStrategy executionStrategy = dbContext.Database.CreateExecutionStrategy();
-        await executionStrategy.ExecuteAsync(async () =>
+        await UserStateExecutionStrategy.ExecuteAsync(async () =>
         {
-            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
-                await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-            await dbContext.Assignments.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.Transactions.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.StatementUploads.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.RecurringExpenses.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.IncomeSources.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.BankPots.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.BudgetCategories.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.BudgetProfiles.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-            await dbContext.MonzoAccounts.Where(e => e.OwnerKey == ownerKey).ExecuteDeleteAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
+            await documentStore.DeleteStateAsync(ownerKey, cancellationToken);
+            userState.ClearAllFinancialData();
         });
 
         return true;
     }
+
+    public Task DeleteHostedUserBlobsAsync(
+        ApplicationUserIdentityDeletionRequest request,
+        CancellationToken cancellationToken = default) =>
+        HostedUserBlobDeletion.DeleteAsync(request, documentStore, identityStore, cancellationToken);
 }
+
+public sealed record ApplicationUserIdentityDeletionRequest(string UserId, string? Email);

@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Recurrence;
 
 namespace Potsure.Infrastructure.Features.Recurrence;
@@ -39,7 +39,7 @@ public static class ExpenseAmountKindParser
 }
 
 public sealed class ExpensePatternService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor)
 {
     public async Task<RecurringExpenseEntity> SaveAsync(

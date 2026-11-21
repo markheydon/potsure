@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -23,7 +23,7 @@ public sealed record UpdateRecordedFundingRequest(
 /// User-declared funding already set aside (FR-M015, FR-M016).
 /// </summary>
 public sealed class RecordedFundingService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     BudgetProfileSeeder profileSeeder)
 {
@@ -79,7 +79,7 @@ public sealed class RecordedFundingService(
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         return await dbContext.BudgetProfiles
             .Include(p => p.Categories)
             .Include(p => p.Pots)

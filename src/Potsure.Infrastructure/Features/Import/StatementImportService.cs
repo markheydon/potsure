@@ -1,13 +1,12 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Repositories;
 using Potsure.Statements;
 
@@ -33,7 +32,7 @@ public sealed record StatementImportPreview(
     IReadOnlyList<string> PreviewErrors);
 
 public sealed class StatementImportService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     StatementUploadRepository uploadRepository,
     ICurrentOwnerAccessor ownerAccessor,
     TransactionAttributionService attributionService,
@@ -136,7 +135,7 @@ public sealed class StatementImportService(
                 await csvStream.CopyToAsync(tempStream, cancellationToken);
             }
 
-            upload = await uploadRepository.CreatePendingAsync(fileName, cancellationToken);
+            upload = await uploadRepository.CreatePendingAsync(fileName, persistChanges: false, cancellationToken);
 
             await using FileStream readStream = File.OpenRead(tempPath);
             readStream.Seek(0, SeekOrigin.Begin);
@@ -239,28 +238,28 @@ public sealed class StatementImportService(
                 dedupe.DuplicateCount,
                 transferExcluded);
 
-            IExecutionStrategy executionStrategy = dbContext.Database.CreateExecutionStrategy();
-            await executionStrategy.ExecuteAsync(async () =>
+            await UserStateExecutionStrategy.ExecuteAsync(async () =>
             {
-                await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
-                    await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
                 dbContext.Transactions.AddRange(entities);
                 EnsureMonzoAssociation(userConfirmedAccount, fileDerivedFingerprint, ref association);
-
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await uploadRepository.CompleteAsync(upload.Id, statistics, skippedReasons, cancellationToken);
+                await uploadRepository.CompleteAsync(
+                    upload.Id,
+                    statistics,
+                    skippedReasons,
+                    persistChanges: false,
+                    cancellationToken);
+                await profileSeeder.EnsureProfileAsync(persistChanges: false, cancellationToken);
 
                 Dictionary<string, string> mapToRemember = columnMap is { Count: > 0 }
                     ? columnMap.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal)
                     : BuildDefaultColumnMap(layout);
                 RememberedMonzoColumnMapping remembered = new(layout.FileHeaders, mapToRemember);
-                await profileSeeder.EnsureProfileAsync(cancellationToken);
                 await uploadRepository.SaveRememberedColumnMappingJsonAsync(
                     JsonSerializer.Serialize(remembered),
+                    persistChanges: false,
                     cancellationToken);
 
-                await transaction.CommitAsync(cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
                 committed = true;
             });
 

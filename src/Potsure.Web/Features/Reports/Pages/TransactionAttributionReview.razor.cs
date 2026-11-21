@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
+using Potsure.Data.Persistence;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Reports;
 using Potsure.Web.Resources;
@@ -27,7 +27,7 @@ public partial class TransactionAttributionReview : IDisposable
     private BankPotService PotService { get; set; } = null!;
 
     [Inject]
-    private PotsureDbContext DbContext { get; set; } = null!;
+    private PotsureUserStateContext DbContext { get; set; } = null!;
 
     [Inject]
     private ReportDateRangeSessionState DateRangeState { get; set; } = null!;

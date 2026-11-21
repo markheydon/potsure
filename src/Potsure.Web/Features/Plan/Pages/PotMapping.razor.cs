@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
 using Potsure.Data;
+using Potsure.Data.Persistence;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Web.Resources;
 
@@ -16,7 +16,7 @@ public partial class PotMapping
     private BudgetProfileSeeder ProfileSeeder { get; set; } = null!;
 
     [Inject]
-    private PotsureDbContext DbContext { get; set; } = null!;
+    private PotsureUserStateContext DbContext { get; set; } = null!;
 
     private bool _loading = true;
     private string? _loadError;

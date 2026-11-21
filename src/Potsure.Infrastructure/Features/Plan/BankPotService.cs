@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Potsure.Budgeting;
-using Potsure.Data;
 using Potsure.Data.Entities;
+using Potsure.Data.Persistence;
 using Potsure.Data.Tenancy;
+using Potsure.Infrastructure.Persistence;
 
 namespace Potsure.Infrastructure.Features.Plan;
 
@@ -39,7 +39,7 @@ public sealed record DeleteBankPotRequest(
 /// CRUD for bank pots mapped exactly one category each (FR-M013).
 /// </summary>
 public sealed class BankPotService(
-    PotsureDbContext dbContext,
+    PotsureUserStateContext dbContext,
     ICurrentOwnerAccessor ownerAccessor,
     BudgetProfileSeeder profileSeeder)
 {
@@ -48,7 +48,7 @@ public sealed class BankPotService(
     /// </summary>
     public async Task<IReadOnlyList<BankPotReadModel>> ListAsync(CancellationToken cancellationToken = default)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         string ownerKey = ownerAccessor.OwnerKey;
 
         List<BankPotEntity> pots = await dbContext.BankPots
@@ -146,7 +146,9 @@ public sealed class BankPotService(
 
             if (request.FundingDisposition == BankPotFundingDisposition.RollToCategory)
             {
-                BudgetCategoryEntity category = RequireCategory(profile, entity.CategoryId);
+                BudgetCategoryEntity category = await dbContext.BudgetCategories.SingleAsync(
+                    c => c.Id == entity.CategoryId,
+                    cancellationToken);
                 category.RecordedFundingDirectAmount += entity.RecordedFundingAmount;
             }
         }
@@ -154,6 +156,7 @@ public sealed class BankPotService(
         await ClearPotReferencesAsync(request.PotId, cancellationToken);
 
         dbContext.BankPots.Remove(entity);
+        profile.Pots.RemoveAll(p => p.Id == entity.Id);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -276,8 +279,9 @@ public sealed class BankPotService(
 
     private async Task<BudgetProfileEntity> LoadProfileAsync(CancellationToken cancellationToken)
     {
-        await profileSeeder.EnsureProfileAsync(cancellationToken);
+        await profileSeeder.EnsureProfileAsync(cancellationToken: cancellationToken);
         return await dbContext.BudgetProfiles
+            .AsQueryable()
             .Include(p => p.Categories)
             .Include(p => p.Pots)
             .ThenInclude(p => p.Category)

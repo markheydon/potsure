@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
 using Potsure.Data;
@@ -22,7 +20,7 @@ public sealed class RecurrenceReviewServiceTests
         ServiceProvider provider = BuildProvider(owner);
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
 
-        PotsureDbContext db = scope.ServiceProvider.GetRequiredService<PotsureDbContext>();
+        PotsureUserStateContext db = scope.ServiceProvider.GetRequiredService<PotsureUserStateContext>();
         RecurrenceReviewService review = scope.ServiceProvider.GetRequiredService<RecurrenceReviewService>();
 
         BudgetCategoryEntity needs = new()
@@ -85,22 +83,6 @@ public sealed class RecurrenceReviewServiceTests
         Assert.Equal(rejected.Id, coffee.PersistedId);
     }
 
-    private static ServiceProvider BuildProvider(string ownerKey)
-    {
-        ServiceCollection services = new();
-        services.AddSingleton<ICurrentOwnerAccessor>(new FixedOwnerAccessor(ownerKey));
-        services.AddPotsureInfrastructureServices();
-        services.AddDbContext<PotsureDbContext>(options =>
-            options
-                .UseInMemoryDatabase($"potsure-recurrence-review-{Guid.NewGuid()}")
-                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
-        return services.BuildServiceProvider();
-    }
-
-    private sealed class FixedOwnerAccessor(string ownerKey) : ICurrentOwnerAccessor
-    {
-        public string OwnerKey => ownerKey;
-
-        public bool IsAuthenticated => true;
-    }
+    private static ServiceProvider BuildProvider(string ownerKey) =>
+        DocumentStoreTestHarness.BuildProvider(ownerKey);
 }

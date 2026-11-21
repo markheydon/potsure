@@ -1,15 +1,13 @@
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Potsure.Data;
-using Potsure.Data.Tenancy;
 using Potsure.Infrastructure.Deletion;
 using Potsure.Infrastructure.Features.Export;
 using Potsure.Infrastructure.Features.Import;
 using Potsure.Infrastructure.Features.Plan;
 using Potsure.Infrastructure.Features.Recurrence;
 using Potsure.Infrastructure.Features.Reports;
+using Potsure.Infrastructure.Identity;
+using Potsure.Infrastructure.Persistence;
 using Potsure.Infrastructure.Persistence.Repositories;
 
 namespace Potsure.Infrastructure;
@@ -46,17 +44,23 @@ public static class DependencyInjection
         services.AddScoped<ExportService>();
         services.AddScoped<UserDataDeletionService>();
 
-        services.AddDataProtection()
-            .PersistKeysToDbContext<PotsureDataProtectionDbContext>();
+        services.AddScoped<PotsureUserStateContext>();
 
         return services;
     }
 
-    public static IServiceCollection AddPotsureDbContext(
+    public static IServiceCollection AddPotsureFileDocumentStores(
         this IServiceCollection services,
-        Action<DbContextOptionsBuilder> configure)
+        Action<DocumentStoreOptions>? configure = null)
     {
-        services.AddDbContext<PotsureDbContext>(configure);
+        services.AddOptions<DocumentStoreOptions>();
+        if (configure is not null)
+        {
+            services.Configure(configure);
+        }
+
+        services.AddSingleton<IUserDocumentStore, FileUserDocumentStore>();
+        services.AddSingleton<IIdentityDocumentStore, FileIdentityDocumentStore>();
         return services;
     }
 }
