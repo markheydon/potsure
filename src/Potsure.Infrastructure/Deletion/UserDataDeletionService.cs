@@ -26,7 +26,7 @@ public sealed class UserDataDeletionService(
         await UserStateExecutionStrategy.ExecuteAsync(async () =>
         {
             await documentStore.DeleteStateAsync(ownerKey, cancellationToken);
-            userState.ClearAllFinancialData();
+            await userState.ReloadFromStoreAsync(cancellationToken);
         });
 
         return true;

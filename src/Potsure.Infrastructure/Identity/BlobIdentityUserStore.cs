@@ -43,21 +43,28 @@ public sealed class BlobIdentityUserStore(
     public async Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         IdentityUserDocument document = ToDocument(user);
+        string? emailIndexHash = null;
         try
         {
-            await documentStore.SaveUserAsync(document, ifMatchEtag: null, cancellationToken);
             if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                string hash = IdentityEmailHasher.HashEmailForIndex(user.Email);
+                emailIndexHash = IdentityEmailHasher.HashEmailForIndex(user.Email);
                 await documentStore.SaveEmailIndexAsync(
-                    hash,
+                    emailIndexHash,
                     new EmailIndexDocument { UserId = user.Id },
                     ifMatchEtag: null,
                     cancellationToken);
             }
+
+            await documentStore.SaveUserAsync(document, ifMatchEtag: null, cancellationToken);
         }
         catch (DocumentStoreConcurrencyException)
         {
+            if (emailIndexHash is not null)
+            {
+                await documentStore.DeleteEmailIndexAsync(emailIndexHash, cancellationToken);
+            }
+
             return IdentityResult.Failed(new IdentityError
             {
                 Code = "DuplicateUserName",
@@ -85,13 +92,46 @@ public sealed class BlobIdentityUserStore(
             return IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
         }
 
+        string? reservedIndexHash = null;
+        bool emailIndexChanged = false;
+        string? oldNormalized = loaded.User.NormalizedEmail ?? loaded.User.Email;
+        string? newNormalized = user.NormalizedEmail ?? user.Email;
+        if (!string.Equals(oldNormalized, newNormalized, StringComparison.OrdinalIgnoreCase))
+        {
+            emailIndexChanged = true;
+        }
+
         IdentityUserDocument document = ToDocument(user);
         try
         {
+            if (emailIndexChanged)
+            {
+                if (!string.IsNullOrWhiteSpace(newNormalized))
+                {
+                    reservedIndexHash = IdentityEmailHasher.HashEmailForIndex(newNormalized);
+                    await documentStore.SaveEmailIndexAsync(
+                        reservedIndexHash,
+                        new EmailIndexDocument { UserId = user.Id },
+                        ifMatchEtag: null,
+                        cancellationToken);
+                }
+
+                if (!string.IsNullOrWhiteSpace(oldNormalized))
+                {
+                    string oldHash = IdentityEmailHasher.HashEmailForIndex(oldNormalized);
+                    await documentStore.DeleteEmailIndexAsync(oldHash, cancellationToken);
+                }
+            }
+
             await documentStore.SaveUserAsync(document, loaded.ETag, cancellationToken);
         }
         catch (DocumentStoreConcurrencyException)
         {
+            if (reservedIndexHash is not null)
+            {
+                await documentStore.DeleteEmailIndexAsync(reservedIndexHash, cancellationToken);
+            }
+
             return IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
         }
 
