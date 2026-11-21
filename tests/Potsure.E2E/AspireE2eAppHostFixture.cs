@@ -49,6 +49,10 @@ public sealed class AspireE2eAppHostFixture : IAsyncLifetime, IAsyncDisposable
             .WaitAsync(StartupTimeout, cancellationToken);
 
         await application.ResourceNotifications
+            .WaitForResourceHealthyAsync("userdata", cancellationToken)
+            .WaitAsync(StartupTimeout, cancellationToken);
+
+        await application.ResourceNotifications
             .WaitForResourceHealthyAsync("web", cancellationToken)
             .WaitAsync(StartupTimeout, cancellationToken);
 

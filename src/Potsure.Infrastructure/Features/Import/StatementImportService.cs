@@ -124,6 +124,8 @@ public sealed class StatementImportService(
         IReadOnlyDictionary<string, string>? columnMap = null,
         CancellationToken cancellationToken = default)
     {
+        await dbContext.EnsureLoadedAsync(cancellationToken);
+
         string? tempPath = null;
         StatementUploadEntity? upload = null;
         bool committed = false;

@@ -94,7 +94,8 @@ public sealed class KeyJourneysTests(AspireE2eAppHostFixture appHost)
             if (await exportFailed.IsVisibleAsync())
             {
                 failed = true;
-                Assert.Fail("Export failed on the privacy page.");
+                string exportDetails = await PlaywrightE2eDiagnostics.DescribePageStateAsync(page);
+                Assert.Fail($"Export failed on the privacy page.{Environment.NewLine}{exportDetails}");
             }
         }
         catch (Exception ex) when (ex is PlaywrightException or TimeoutException)

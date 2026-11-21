@@ -137,6 +137,12 @@ if (deployment.Mode == DeploymentMode.Hosted)
 
 var app = builder.Build();
 
+if (useBlobPersistence)
+{
+    BlobContainerClient blobContainer = app.Services.GetRequiredService<BlobContainerClient>();
+    blobContainer.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

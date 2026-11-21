@@ -15,11 +15,10 @@ public sealed class ExportSnapshotBuilder(
 {
     public async Task<UserFinancialExportSnapshot> BuildAsync(CancellationToken cancellationToken = default)
     {
+        await dbContext.EnsureLoadedAsync(cancellationToken);
+
         BudgetProfileEntity profile = await dbContext.BudgetProfiles
             .AsNoTracking()
-            .Include(p => p.Categories)
-            .Include(p => p.Pots)
-            .Include(p => p.MonzoAccount)
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new InvalidOperationException("No budget profile exists to export.");
 
