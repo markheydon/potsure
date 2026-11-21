@@ -127,6 +127,7 @@ public sealed class StatementImportService(
         string? tempPath = null;
         StatementUploadEntity? upload = null;
         bool committed = false;
+        bool importBatchMutated = false;
         try
         {
             tempPath = Path.GetTempFileName();
@@ -240,6 +241,7 @@ public sealed class StatementImportService(
 
             await UserStateExecutionStrategy.ExecuteAsync(async () =>
             {
+                importBatchMutated = true;
                 dbContext.Transactions.AddRange(entities);
                 EnsureMonzoAssociation(userConfirmedAccount, fileDerivedFingerprint, ref association);
                 await uploadRepository.CompleteAsync(
@@ -312,7 +314,12 @@ public sealed class StatementImportService(
 
             if (upload is not null && !committed)
             {
-                await uploadRepository.FailAsync(upload.Id, cancellationToken);
+                if (importBatchMutated)
+                {
+                    await dbContext.ReloadFromStoreAsync(cancellationToken);
+                }
+
+                await PersistFailedUploadAsync(upload, cancellationToken);
             }
 
             throw;
@@ -324,6 +331,29 @@ public sealed class StatementImportService(
                 File.Delete(tempPath);
             }
         }
+    }
+
+    private async Task PersistFailedUploadAsync(StatementUploadEntity upload, CancellationToken cancellationToken)
+    {
+        StatementUploadEntity? existing = await dbContext.StatementUploads
+            .SingleOrDefaultAsync(u => u.Id == upload.Id, cancellationToken);
+        if (existing is null)
+        {
+            dbContext.StatementUploads.Add(new StatementUploadEntity
+            {
+                Id = upload.Id,
+                OwnerKey = upload.OwnerKey,
+                FileName = upload.FileName,
+                Status = StatementUploadStatus.Failed,
+                CreatedAt = upload.CreatedAt,
+            });
+        }
+        else
+        {
+            existing.Status = StatementUploadStatus.Failed;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private void EnsureMonzoAssociation(

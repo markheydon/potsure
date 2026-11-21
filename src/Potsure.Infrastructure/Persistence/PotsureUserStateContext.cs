@@ -51,6 +51,17 @@ public sealed class PotsureUserStateContext
             return;
         }
 
+        await LoadFromStoreAsync(cancellationToken);
+    }
+
+    public async Task ReloadFromStoreAsync(CancellationToken cancellationToken = default)
+    {
+        loaded = false;
+        await LoadFromStoreAsync(cancellationToken);
+    }
+
+    private async Task LoadFromStoreAsync(CancellationToken cancellationToken)
+    {
         string userId = ownerAccessor.OwnerKey;
         DocumentLoadResult result = await documentStore.LoadAsync(userId, cancellationToken);
         document = result.Document;
