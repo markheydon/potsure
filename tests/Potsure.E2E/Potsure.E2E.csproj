@@ -6,6 +6,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.Playwright" />
@@ -15,8 +16,10 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Aspire.Hosting.Testing" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Potsure.AppHost\Potsure.AppHost.csproj" />
     <ProjectReference Include="..\..\src\Potsure.Web\Potsure.Web.csproj" />
   </ItemGroup>
 </Project>

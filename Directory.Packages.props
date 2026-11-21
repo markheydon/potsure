@@ -11,6 +11,7 @@
     <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="17.0.0" />
     <PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Dotnet" Version="17.0.0" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="17.0.0" />
   </ItemGroup>
 
   <!-- BlazorBlueprint UI -->

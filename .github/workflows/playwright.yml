@@ -39,16 +39,8 @@ jobs:
       - name: Add Aspire to PATH
         run: echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
-      - name: Verify Aspire CLI 17.x
-        run: |
-          aspire --version | tee /tmp/aspire-version.txt
-          grep -E '^17\.' /tmp/aspire-version.txt
-
-      - name: Aspire doctor
-        run: aspire doctor --non-interactive
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Prepare Aspire CLI bundle
+        run: aspire setup --non-interactive
 
       - name: Run Playwright E2E (Aspire AppHost)
         run: bash scripts/run-e2e-playwright.sh
@@ -59,4 +51,12 @@ jobs:
         with:
           name: playwright-test-results
           path: TestResults/E2E/*.trx
+          if-no-files-found: ignore
+
+      - name: Upload Playwright traces
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: playwright-traces/*.zip
           if-no-files-found: ignore

@@ -3,18 +3,16 @@ using Microsoft.Playwright;
 
 namespace Potsure.E2E;
 
-public sealed class PlanSettingsPageTests
+[Collection(AspireE2eAppHostSuite.Name)]
+public sealed class PlanSettingsPageTests(AspireE2eAppHostFixture appHost)
 {
     [Fact]
     public async Task PlanSettings_LoadsAfterSignIn_WhenBaseUrlConfigured()
     {
-        string? baseUrl = Environment.GetEnvironmentVariable("POTSURE_E2E_BASE_URL");
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            Assert.Skip("Set POTSURE_E2E_BASE_URL to run Playwright journeys (see docs/e2e-testing.md).");
-        }
+        string baseUrl = appHost.WebBaseUrl.ToString().TrimEnd('/');
 
-        string trimmed = baseUrl.TrimEnd('/');
+        const string testName = nameof(PlanSettings_LoadsAfterSignIn_WhenBaseUrlConfigured);
+        bool failed = false;
 
         using IPlaywright playwright = await Playwright.CreateAsync();
         await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
@@ -22,16 +20,38 @@ public sealed class PlanSettingsPageTests
         {
             IgnoreHTTPSErrors = true,
         });
-        IPage page = await context.NewPageAsync();
+        await PlaywrightE2eDiagnostics.StartTracingAsync(context, testName);
 
-        await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
-        string origin = PlaywrightSession.GetPageOrigin(page);
+        try
+        {
+            IPage page = await context.NewPageAsync();
 
-        await page.GotoAsync($"{origin}/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await PlaywrightSession.EnsureCanReachImportAsync(page, baseUrl);
+            string origin = PlaywrightSession.GetPageOrigin(page);
 
-        await page.GetByRole(AriaRole.Link, new() { Name = "Plan settings" }).ClickAsync();
+            await page.GotoAsync($"{origin}/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
 
-        await Assertions.Expect(page).ToHaveURLAsync(new Regex("/plan/?$"));
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save plan" }).WaitForAsync(new() { Timeout = 45_000 });
+            await page.GetByRole(AriaRole.Link, new() { Name = "Plan settings" }).ClickAsync();
+
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex("/plan/?$"));
+            await page.GetByRole(AriaRole.Button, new() { Name = "Save plan" }).WaitForAsync(new() { Timeout = 45_000 });
+        }
+        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+        {
+            failed = true;
+            IPage? page = context.Pages.Count > 0 ? context.Pages[0] : null;
+            string details = page is null
+                ? string.Empty
+                : await PlaywrightE2eDiagnostics.DescribePageStateAsync(page);
+
+            Assert.Fail($"Playwright journey failed: {ex.Message}{Environment.NewLine}{details}");
+        }
+        finally
+        {
+            await PlaywrightE2eDiagnostics.StopTracingOnFailureAsync(
+                context,
+                PlaywrightE2eDiagnostics.SanitizeTraceFileName(testName),
+                failed);
+        }
     }
 }

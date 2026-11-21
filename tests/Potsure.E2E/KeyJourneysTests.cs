@@ -4,20 +4,14 @@ namespace Potsure.E2E;
 
 /// <summary>
 /// Playwright journeys: import → recurring → category health → export (constitution II).
-/// Set <c>POTSURE_E2E_BASE_URL</c>  -  see <c>docs/e2e-testing.md</c>.
 /// </summary>
-public sealed class KeyJourneysTests
+[Collection(AspireE2eAppHostSuite.Name)]
+public sealed class KeyJourneysTests(AspireE2eAppHostFixture appHost)
 {
     [Fact]
     public async Task KeyJourney_ImportRecurringCategoryHealthExport_WhenBaseUrlConfigured()
     {
-        string? baseUrl = Environment.GetEnvironmentVariable("POTSURE_E2E_BASE_URL");
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            Assert.Skip("Set POTSURE_E2E_BASE_URL to run Playwright journeys (see docs/e2e-testing.md).");
-        }
-
-        string trimmed = baseUrl.TrimEnd('/');
+        string baseUrl = appHost.WebBaseUrl.ToString().TrimEnd('/');
         string fixturePath = Path.GetFullPath(
             Path.Combine(
                 AppContext.BaseDirectory,
@@ -34,17 +28,22 @@ public sealed class KeyJourneysTests
             Assert.Fail($"Monzo fixture not found at {fixturePath}");
         }
 
+        const string testName = nameof(KeyJourney_ImportRecurringCategoryHealthExport_WhenBaseUrlConfigured);
+        bool failed = false;
+
+        using IPlaywright playwright = await Playwright.CreateAsync();
+        await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightE2eDiagnostics.StartTracingAsync(context, testName);
+
         try
         {
-            using IPlaywright playwright = await Playwright.CreateAsync();
-            await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-            await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
-            {
-                IgnoreHTTPSErrors = true,
-            });
             IPage page = await context.NewPageAsync();
 
-            await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
+            await PlaywrightSession.EnsureCanReachImportAsync(page, baseUrl);
             string origin = PlaywrightSession.GetPageOrigin(page);
 
             await ImportJourney.UploadMonzoFixtureAndImportAsync(page, fixturePath);
@@ -94,12 +93,26 @@ public sealed class KeyJourneysTests
 
             if (await exportFailed.IsVisibleAsync())
             {
+                failed = true;
                 Assert.Fail("Export failed on the privacy page.");
             }
         }
         catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
         {
-            Assert.Fail($"Playwright journey failed: {ex.Message}");
+            failed = true;
+            IPage? page = context.Pages.Count > 0 ? context.Pages[0] : null;
+            string details = page is null
+                ? string.Empty
+                : await PlaywrightE2eDiagnostics.DescribePageStateAsync(page);
+
+            Assert.Fail($"Playwright journey failed: {ex.Message}{Environment.NewLine}{details}");
+        }
+        finally
+        {
+            await PlaywrightE2eDiagnostics.StopTracingOnFailureAsync(
+                context,
+                PlaywrightE2eDiagnostics.SanitizeTraceFileName(testName),
+                failed);
         }
     }
 }

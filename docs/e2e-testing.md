@@ -2,53 +2,42 @@
 
 Potsure ships smoke and journey tests in `tests/Potsure.E2E/` using [Playwright for .NET](https://playwright.dev/dotnet/).
 
-## When tests run
+The E2E project references `Potsure.AppHost` and uses [Aspire.Hosting.Testing](https://aspire.dev/testing/write-your-first-test/) (`DistributedApplicationTestingBuilder`) to start the distributed application, wait until the `web` resource is healthy, and obtain the live URL with `GetEndpoint("web")`. Playwright navigates to that endpoint. No `POTSURE_E2E_BASE_URL` and no hard-coded ports.
 
-By default, `KeyJourneysTests` **skip** when `POTSURE_E2E_BASE_URL` is unset (`Assert.Skip`) so local `dotnet test Potsure.slnx` reports them as skipped rather than silently passing.
-
-To run unit and integration tests without loading the E2E project logic in your filter:
+To run unit and integration tests without starting the AppHost:
 
 ```bash
 dotnet test Potsure.slnx --filter "FullyQualifiedName!~Potsure.E2E"
 ```
 
-## Optional local full stack (Aspire)
+## Local full stack (recommended)
 
-One command starts the AppHost with `aspire start --isolated` (SQL container, EF migrations, hosted `web`), installs Chromium, discovers the `web` URL from `aspire describe`, and runs the journey tests:
+One command builds the E2E project, installs Chromium (with Linux system dependencies when needed), and runs journeys:
 
 ```bash
 ./scripts/run-e2e-playwright.sh
 ```
 
-Requirements: Docker running, [Aspire CLI](https://aspire.dev/get-started/install-cli/), `jq`, and PowerShell (`pwsh`) for the Playwright install script.
-
-If the app is already running, skip AppHost lifecycle:
-
-```bash
-export POTSURE_E2E_BASE_URL=http://127.0.0.1:5191
-./scripts/run-e2e-playwright.sh --use-existing-base-url
-```
+Requirements: Docker running (Azurite emulator for hosted blob storage), the Aspire CLI (so the AppHost CLI bundle resolves at build time), and PowerShell (`pwsh`) for the Playwright install script.
 
 Optional environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `POTSURE_APPHOST` | Path to AppHost `.csproj` (default: `src/Potsure.AppHost/Potsure.AppHost.csproj`) |
 | `POTSURE_E2E_EMAIL` / `POTSURE_E2E_PASSWORD` | Fixed hosted Identity credentials for debugging (default: ephemeral register per run, password `Password1`) |
+| `PLAYWRIGHT_TRACE_DIR` | Directory for failure trace zip files (default: repository `playwright-traces/`) |
 
 ## Manual local workflow
 
-1. Start the app (`aspire start --non-interactive --apphost src/Potsure.AppHost/Potsure.AppHost.csproj`, `aspire run`, or `dotnet run --project src/Potsure.Web` with SQL configured).
-2. Ensure migrations are applied (AppHost orchestrates this in development).
-3. Export `POTSURE_E2E_BASE_URL` to the web HTTP root (no trailing path).
-4. Install Playwright browsers once per machine:
+1. Ensure Docker is running.
+2. Build and install browsers:
 
    ```bash
    dotnet build tests/Potsure.E2E/Potsure.E2E.csproj -c Release
-   pwsh tests/Potsure.E2E/bin/Release/net10.0/playwright.ps1 install
+   pwsh tests/Potsure.E2E/bin/Release/net10.0/playwright.ps1 install --with-deps
    ```
 
-5. Run the E2E project:
+3. Run the E2E project:
 
    ```bash
    dotnet test tests/Potsure.E2E/Potsure.E2E.csproj -c Release
@@ -56,7 +45,9 @@ Optional environment variables:
 
 ## CI
 
-[`.github/workflows/playwright.yml`](../.github/workflows/playwright.yml) runs on every pull request and push to `main` (alongside [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). It invokes `scripts/run-e2e-playwright.sh`, which uses the Aspire CLI to start `Potsure.AppHost`, waits for the `web` resource, sets `POTSURE_E2E_BASE_URL` from `aspire describe`, and runs `tests/Potsure.E2E`.
+[`.github/workflows/playwright.yml`](../.github/workflows/playwright.yml) runs on every pull request and push to `main` (alongside [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). It invokes `scripts/run-e2e-playwright.sh`, which matches the manual flow above.
+
+On failure, CI uploads Playwright traces from `playwright-traces/` (open with `pwsh .../playwright.ps1 show-trace <file>.zip` or [trace.playwright.dev](https://trace.playwright.dev)).
 
 Configure branch protection on `main` to require both **CI** and **Playwright E2E** when you want merges blocked on browser journeys.
 
