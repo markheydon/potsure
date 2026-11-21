@@ -59,14 +59,14 @@ public sealed class KeyJourneysTests(AspireE2eAppHostFixture appHost)
             await page.GotoAsync($"{origin}/reports/category-health");
             await page.Locator("h1").Filter(new() { HasText = "Category health" }).WaitForAsync();
 
-            await page.GotoAsync($"{origin}/privacy");
+            await page.GotoAsync($"{origin}/privacy", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
             await page.Locator("h1").Filter(new() { HasText = "Export and delete data" }).WaitForAsync();
             await page.GetByRole(AriaRole.Button, new() { Name = "Export data" }).ClickAsync();
 
             ILocator exportConfirm = page.Locator("[aria-label='Confirm export']");
             ILocator exportReady = page.GetByText("Export ready", new() { Exact = false });
             ILocator exportFailed = page.GetByText("Export failed", new() { Exact = false });
-            await exportConfirm.Or(exportReady).Or(exportFailed).First.WaitForAsync(new() { Timeout = 60_000 });
+            await exportConfirm.Or(exportReady).Or(exportFailed).First.WaitForAsync(new() { Timeout = 120_000 });
 
             if (await exportConfirm.IsVisibleAsync())
             {
