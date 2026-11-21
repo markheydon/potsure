@@ -78,7 +78,7 @@ internal static class ImportJourney
             await WaitForImportBusyToFinishAsync(page);
         }
 
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Import complete" })
+        await page.GetByRole(AriaRole.Button, new() { Name = "Import another file" })
             .Or(page.GetByText("Import failed", new() { Exact = false }))
             .First.WaitForAsync(new() { Timeout = 120_000 });
 
