@@ -1,0 +1,15 @@
+﻿@page "/not-found"
+@attribute [AllowAnonymous]
+@layout MainLayout
+@rendermode InteractiveServer
+
+<PageTitle>Page not found</PageTitle>
+
+<BbEmpty Size="EmptySize.Large"
+         Title="Page not found"
+         Description="Sorry, the content you are looking for does not exist.">
+    <Icon><LucideIcon Name="file-search" Size="32" /></Icon>
+    <ChildContent>
+        <BbButton Href="/">Return to dashboard</BbButton>
+    </ChildContent>
+</BbEmpty>

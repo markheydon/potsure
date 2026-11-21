@@ -1,0 +1,37 @@
+﻿<div class="bb:flex bb:flex-col bb:gap-4 bb:sm:flex-row">
+    <BbSectionHeader Title="@Title"
+                     Description="@Description"
+                     HeadingLevel="@HeadingLevel"
+                     Separator="@Separator"
+                     Class="@HeaderClass"
+                     AdditionalAttributes="@AdditionalAttributes" />
+    @if (Actions is not null)
+    {
+        <div class="bb:flex bb:flex-wrap bb:gap-2">@Actions</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    [Parameter]
+    public int HeadingLevel { get; set; } = 1;
+
+    [Parameter]
+    public bool Separator { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+
+    [Parameter]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string HeaderClass => string.IsNullOrWhiteSpace(Class) ? "bb:flex-1 bb:min-w-0" : $"bb:flex-1 bb:min-w-0 {Class}";
+}

@@ -1,0 +1,26 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+
+<nav aria-label="Manage account" class="bb:flex bb:flex-wrap bb:gap-2">
+    <BbButton Href="Account/Manage" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Profile</BbButton>
+    <BbButton Href="Account/Manage/Email" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Email</BbButton>
+    <BbButton Href="Account/Manage/ChangePassword" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Password</BbButton>
+    @if (hasExternalLogins)
+    {
+        <BbButton Href="Account/Manage/ExternalLogins" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">External logins</BbButton>
+    }
+    <BbButton Href="Account/Manage/TwoFactorAuthentication" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Two-factor authentication</BbButton>
+    <BbButton Href="Account/Manage/Passkeys" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Passkeys</BbButton>
+    <BbButton Href="Account/Manage/PersonalData" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Personal data</BbButton>
+</nav>
+
+@code {
+    private bool hasExternalLogins;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+    }
+}

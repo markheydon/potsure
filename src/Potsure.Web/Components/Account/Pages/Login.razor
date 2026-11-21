@@ -1,0 +1,155 @@
+﻿@page "/Account/Login"
+@attribute [AllowAnonymous]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Log in</PageTitle>
+
+<AuthFormCard Title="Log in to your account"
+              Description="Enter your email and password, or use a passkey."
+              FooterPrompt="Don't have an account? "
+              FooterLinkText="Sign up"
+              FooterHref="@RegisterHref">
+    <StatusMessage Message="@errorMessage" />
+    <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+        <DataAnnotationsValidator />
+        <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+        <div class="bb:space-y-4">
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.Email"
+                              Label="Email"
+                              Autocomplete="username webauthn"
+                              Placeholder="name@example.com"
+                              Type="InputType.Email"
+                              Required="true" />
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="Input.Password"
+                              Label="Password"
+                              Autocomplete="current-password"
+                              Placeholder="Password"
+                              Type="InputType.Password"
+                              Required="true" />
+            <div class="bb:flex bb:justify-end">
+                <BbLink Href="Account/ForgotPassword"
+                        Class="bb:text-sm bb:text-muted-foreground bb:underline-offset-4 bb:hover:underline">
+                    Forgot your password?
+                </BbLink>
+            </div>
+            <div class="bb:flex bb:items-center bb:gap-2">
+                <BbCheckbox @bind-Checked="Input.RememberMe" Id="login-remember-me" />
+                <BbLabel For="login-remember-me" Class="bb:font-normal">Remember me</BbLabel>
+            </div>
+            <BbButton Type="ButtonType.Submit" Class="bb:w-full">Log in</BbButton>
+            <AuthOrContinueDivider />
+            <PasskeySubmit Operation="PasskeyOperation.Request"
+                           Name="Input.Passkey"
+                           EmailName="Input.Email"
+                           Outline="true">
+                <LucideIcon Name="fingerprint" Size="18" />
+                Log in with a passkey
+            </PasskeySubmit>
+        </div>
+    </EditForm>
+</AuthFormCard>
+
+@code {
+    private string? errorMessage;
+    private EditContext editContext = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string RegisterHref =>
+        NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?>
+        {
+            ["ReturnUrl"] = ReturnUrl
+        });
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        editContext = new EditContext(Input);
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        if (!string.IsNullOrEmpty(Input.Passkey?.Error))
+        {
+            errorMessage = $"Error: {Input.Passkey.Error}";
+            return;
+        }
+
+        SignInResult result;
+        if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
+        {
+            result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
+        }
+        else
+        {
+            if (!editContext.Validate())
+            {
+                return;
+            }
+
+            result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+        }
+
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in.");
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            RedirectManager.RedirectTo(
+                "Account/LoginWith2fa",
+                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User account locked out.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            errorMessage = "Error: Invalid login attempt.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Remember me?")]
+        public bool RememberMe { get; set; }
+
+        public PasskeyInputModel? Passkey { get; set; }
+    }
+}
