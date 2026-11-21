@@ -441,4 +441,6 @@ samples/**/appsettings.local.json
 # Linux core dumps from local crashes
 core
 core.*
+
+# Machine-local artefacts (not committed)
 .local/

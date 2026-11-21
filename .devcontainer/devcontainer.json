@@ -2,26 +2,27 @@
   "name": "Potsure",
   "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
   "features": {
-    "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {
-      "installCli": true,
-      "useDailyBuilds": false
-    },
+    "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {},
     "ghcr.io/devcontainers/features/docker-in-docker:4": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/azure-cli:1": {},
-    "ghcr.io/markheydon/devcontainer-features/spec-kit:1": {
-      "managedPython": "always",
-      "pythonVersion": "3.12"
-    },
+    "ghcr.io/markheydon/devcontainer-features/spec-kit:1": {},
     "ghcr.io/markheydon/devcontainer-features/dev-agent-tools:1": {},
     "ghcr.io/stu-bell/devcontainer-features/cursor-cli:0": {}
   },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "x509stores",
+      "target": "/home/vscode/.dotnet/corefx/cryptography/x509stores"
+    }
+  ],
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb",
     "storage": "32gb"
   },
-  "onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools",
+  "onCreateCommand": "bash .devcontainer/setup-dotnet-dev-cert.sh && sudo apt-get update && sudo apt-get install -y libnss3-tools",
   "remoteEnv": {
     "SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust",
     "CURSOR_API_KEY": "${localEnv:CURSOR_API_KEY}",

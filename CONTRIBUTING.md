@@ -4,6 +4,8 @@ Read [GOALS.md](GOALS.md), [SCOPE.md](SCOPE.md), [CONVENTIONS.md](CONVENTIONS.md
 
 ## Development
 
+The recommended environment is the [Dev Container](docs/dev-container.md) (Aspire, Docker, Spec Kit, Playwright browsers, and HTTPS dev certificates configured on create).
+
 ```bash
 dotnet format Potsure.slnx --verify-no-changes
 dotnet build Potsure.slnx -c Release -warnaserror
