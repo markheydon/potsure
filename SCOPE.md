@@ -7,7 +7,7 @@ Boundaries below support [GOALS.md](GOALS.md). Detailed v1 behaviour lives in fe
 
 ---
 
-## In Scope — v1.0
+## In Scope  -  v1.0
 
 Aligned with **G1–G6**:
 
