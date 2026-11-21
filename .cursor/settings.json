@@ -1,0 +1,22 @@
+{
+  "plugins": {
+    "aspire-skills/aspire": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-blazor": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-test": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-nuget": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-data": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet": {
+      "enabled": true
+    }
+  }
+}

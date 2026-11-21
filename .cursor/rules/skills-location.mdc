@@ -5,4 +5,4 @@ alwaysApply: true
 
 # Project Skills
 
-Project-specific agent skills live in `.agents/skills/`. When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. See `AGENTS.md` for the skill index and task routing.
+Project-specific agent skills live in `.agents/skills/`. Aspire 17+ Aspire skills are supplied by the Cursor `aspire-skills` plugin (not local copies under `.agents/skills/aspire*`). When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. See `AGENTS.md` for the skill index and task routing.
