@@ -61,8 +61,6 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
-# Playwright E2E failure traces (see docs/e2e-testing.md)
-playwright-traces/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

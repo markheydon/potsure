@@ -11,4 +11,4 @@ Follow the **Testing** section in `CONVENTIONS.md`.
 - xUnit v3 only; built-in `Assert` methods only.
 - NSubstitute for mocks when needed; prefer `QueuedHttpMessageHandler` and JSON fixtures for HTTP/SDK tests.
 - Do not add FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest.
-- No Playwright or AppHost tests unless explicitly scoped in a future change.
+- Aspire AppHost resource modelling MUST NOT be unit-tested (see constitution Principle II).

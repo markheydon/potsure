@@ -42,8 +42,6 @@ Observations from final-leg testing; not yet promoted to `BL-*` rows.
 - **Plan settings dates:** Behaviour matches current spec; owner judgement is that the **model** may be wrong for original product intent (see theme table above), not only labels (BL-012).
 - **Fixed vs variable on confirm:** Detector chooses kind; user wants explicit control (checkbox or dropdown) when wrong on thin history.
 - **Pot default on recurring confirm:** In three-pot (or single-pot-per-category) mode, pre-select mapped pot; retain ability to choose None (e.g. spend from main balance).
-- **Playwright / automated testing:** Journey smoke exists (`tests/Potsure.E2E/`); numeric truth belongs in budgeting/statement goldens and infrastructure tests. Future work: map quickstart scenarios to integration tests before expanding UI assertions.
-
 ---
 
 ## Multi-account and split categorisation (future ideas)

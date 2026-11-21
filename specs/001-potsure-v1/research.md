@@ -2,7 +2,7 @@
 
 **Feature**: `001-potsure-v1`  
 **Date**: 2026-11-03 (identity auth amended 2026-11-04; household plan model 2026-11-09)  
-**Status**: Complete  -  all Technical Context items resolved from spec, constitution v1.2.0, AGENTS.md, and planning prompt. Amended 2026-11-03 for Aspire integration consumption, central package versioning, **EF migration orchestration**. Amended 2026-11-04 for **password-primary hosted Identity**. Amended 2026-11-09 for **standing plan**, **report date range**, **pot mapping modes**, **proration**, and recurring lifecycle (**FR-M008c**/**FR-M008d**).
+**Status**: Complete  -  all Technical Context items resolved from spec, constitution (currently v2.0.0), AGENTS.md, and planning prompt. Amended 2026-11-03 for Aspire integration consumption, central package versioning, **EF migration orchestration**. Amended 2026-11-04 for **password-primary hosted Identity**. Amended 2026-11-09 for **standing plan**, **report date range**, **pot mapping modes**, **proration**, and recurring lifecycle (**FR-M008c**/**FR-M008d**). Amended 2026-11-21 for constitution v2.0.0 testing alignment (layered `Potsure.*.Tests`; no mandatory browser journeys).
 
 ## Monzo CSV parsing
 

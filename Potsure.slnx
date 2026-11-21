@@ -17,7 +17,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Potsure.Budgeting.Tests/Potsure.Budgeting.Tests.csproj" />
-    <Project Path="tests/Potsure.E2E/Potsure.E2E.csproj" />
     <Project Path="tests/Potsure.Infrastructure.Tests/Potsure.Infrastructure.Tests.csproj" />
     <Project Path="tests/Potsure.Recurrence.Tests/Potsure.Recurrence.Tests.csproj" />
     <Project Path="tests/Potsure.Reporting.Tests/Potsure.Reporting.Tests.csproj" />

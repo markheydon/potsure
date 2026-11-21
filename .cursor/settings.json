@@ -17,9 +17,6 @@
     },
     "dotnet-agent-skills/dotnet": {
       "enabled": true
-    },
-    "playwright": {
-      "enabled": true
     }
   }
 }

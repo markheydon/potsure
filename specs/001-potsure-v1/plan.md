@@ -2,7 +2,9 @@
 
 **Branch**: `001-potsure-v1` | **Date**: 2026-11-20 | **Spec**: [spec.md](./spec.md)
 
-**Governance**: [constitution v1.2.0](../../.specify/memory/constitution.md); agent workflow in [AGENTS.md](../../AGENTS.md) (Aspire consumption + central package versioning).
+**Governance**: [constitution v2.0.0](../../.specify/memory/constitution.md); agent workflow in [AGENTS.md](../../AGENTS.md) (Aspire consumption + central package versioning).
+
+**Re-plan note (2026-11-21)**: Testing alignment with constitution v2.0.0. Automated coverage is layered unit and integration tests per area (`Potsure.*.Tests`), including golden parsing, budgeting maths, infrastructure services, and hosted Identity HTTP tests via `WebApplicationFactory`. AppHost resource modelling is not unit-tested.
 
 **Re-plan note (2026-11-20)**: Commercial persistence pivot. Azure SQL cannot be created on the current subscription, so the running store is **no longer a database**. AppHost models **Azure Blob Storage** (Azurite locally). Each signed-in user is one tenant with one financial JSON document, plus separate identity blobs. EF Core, SQL containers, and `Potsure.MigrationsHost` leave the running path. A later database is a new implementation of the document store, not a reason to keep SQL wired now. Product behaviour (standing plan, reports, pots, Identity password sign-in) is unchanged. [tasks.md](./tasks.md) **Phase 35** (**T207**–**T233**) is the only active queue for persistence, AppHost blob wiring, and constitution 1.2.0 consumption gates; earlier `[X]` SQL/EF tasks are historical evidence only.
 
@@ -33,7 +35,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 
 **Storage**: Private Azure Blob container `potsure-userdata` (hosted); Azurite via Aspire `RunAsEmulator` locally, persistent volume. One `tenants/{userId}/state.json` per user. Identity account blobs and a hashed email index are separate from the financial document. Data Protection keys live in `system/data-protection-keys.xml` in the same container. Document `schemaVersion` is migrated in process when that user's file is loaded. Repositories stay in **`Potsure.Infrastructure`**. **`Potsure.Data`** keeps the document and identity types and drops EF. **`Potsure.MigrationsHost`** is removed. Local-only mode (no AppHost) writes the same relative paths under a configured directory. See [contracts/user-state-document.md](./contracts/user-state-document.md).
 
-**Testing**: xUnit v3, NSubstitute, built-in Assert; golden files for Monzo parsing; independent expected results for budgeting core; Playwright C# for key journeys; AppHost not unit-tested.
+**Testing**: xUnit v3, NSubstitute, built-in Assert; golden files for Monzo parsing; independent expected results for budgeting core; area-appropriate integration tests (including `Potsure.Web.Tests` for hosted Identity HTTP); AppHost not unit-tested.
 
 **Target Platform**: Linux containers on Azure Container Apps (Consumption); local Aspire + Azurite for development. No Azure SQL.
 
@@ -63,7 +65,7 @@ Potsure v1 is a **Blazor Server** web application (**.NET 10**, **Aspire** orche
 | Principle | Plan compliance |
 |-----------|-----------------|
 | I Code Quality | DI, async + CancellationToken, nullable, records for DTOs, IHttpClientFactory pattern documented in CONVENTIONS |
-| II Testing | Golden Monzo tests, pure core golden maths, Playwright journeys planned |
+| II Testing | Golden Monzo tests, pure core golden maths, area test projects and hosted Identity HTTP coverage; AppHost not unit-tested |
 | III Maintainability | Parsing / detection / budgeting / reporting separation; core pure |
 | IV Security & Privacy | Hosted: ASP.NET Core Identity email/password (hashed credentials), cookie auth, per-user isolation (owner id selects the only blob names the request may touch; fallback authorization policy); private blob container; HTTPS; storage service encryption at rest; local-only unchanged; validation; structured logging; optional passkeys on template  -  aligned with constitution 1.2.0 |
 | V Documentation | plan, research, data-model, contracts, quickstart; implement adds XML + self-host docs |
@@ -117,8 +119,7 @@ tests/
 ├── Potsure.Recurrence.Tests/
 ├── Potsure.Reporting.Tests/
 ├── Potsure.Infrastructure.Tests/
-├── Potsure.Web.Tests/            # Component/integration where appropriate
-└── Potsure.E2E/                  # Playwright
+└── Potsure.Web.Tests/            # Hosted Identity HTTP and startup validation
 
 samples/
 └── monzo/                        # Anonymised golden CSV snippets only

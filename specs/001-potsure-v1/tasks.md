@@ -5,7 +5,7 @@ description: "Task list for Potsure v1 implementation"
 
 # Tasks: Potsure v1
 
-**Plan sync**: 2026-11-20 (commercial persistence pivot: per-user JSON in Azure Blob Storage via Aspire `AddBlobContainer("userdata")`; document `schemaVersion` replaces EF migrations; remove SQL, EF running path, and `Potsure.MigrationsHost`). Prior sync 2026-11-09: standing budget plan, report date range **FR-M031a**, pot modes, proration **FR-M036**, recurring lifecycle **FR-M008c**/**FR-M008d**; 2026-11-04: hosted Identity; 2026-11-03: EF orchestration (**historical**  -  superseded by Phase 35).
+**Plan sync**: 2026-11-21 (constitution v2.0.0 testing alignment: layered `Potsure.*.Tests`, hosted Identity HTTP via `WebApplicationFactory`). Prior sync 2026-11-20: commercial persistence pivot (per-user JSON in Azure Blob Storage via Aspire `AddBlobContainer("userdata")`; document `schemaVersion` replaces EF migrations; remove SQL, EF running path, and `Potsure.MigrationsHost`); 2026-11-09: standing budget plan, report date range **FR-M031a**, pot modes, proration **FR-M036**, recurring lifecycle **FR-M008c**/**FR-M008d**; 2026-11-04: hosted Identity; 2026-11-03: EF orchestration (**historical**  -  superseded by Phase 35).
 
 **Implementation queue (2026-11-20)**: Phases **1–34** are largely complete against the **SQL/EF store**. **Phase 35** is the active queue: migrate AppHost, web, Infrastructure, Identity, and tests to [contracts/user-state-document.md](./contracts/user-state-document.md). Product behaviour tasks stay valid; persistence wiring must follow Phase 35 before v1.0.0 release sign-off. Completed `[X]` on SQL tasks (**T007**, **T017**–**T020**, **T107**–**T116**, **T158**, Phase 27 EF bullets) is **historical evidence only**  -  do not extend EF for new work.
 
@@ -17,11 +17,11 @@ description: "Task list for Potsure v1 implementation"
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
-**Governance**: [constitution v1.2.0](../../.specify/memory/constitution.md) (Aspire resource consumption, central package versioning); operational steps in [AGENTS.md](../../AGENTS.md).
+**Governance**: [constitution v2.0.0](../../.specify/memory/constitution.md) (Aspire resource consumption, central package versioning); operational steps in [AGENTS.md](../../AGENTS.md).
 
-**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, plus Playwright E2E for key journeys. Constitution 1.2.0 adds dependency hygiene (Scenario 8b) and **blob container readiness** (Scenario 8c, superseding EF migration ordering) in quickstart local run. Test tasks are included with those areas (not strict TDD ordering unless noted). **E2E acceptance**: **T149** / **T150** / **T151** closed release evidence; **re-run** tenancy and import integration tests after Phase 35 (**T224**–**T225**).
+**Tests**: Constitution II requires golden tests for statement parsing and budgeting core, area-appropriate tests per changed code, and xUnit v3 with built-in asserts only. Constitution 2.0.0 adds dependency hygiene (Scenario 8b) and **blob container readiness** (Scenario 8c, superseding EF migration ordering) in quickstart local run. Test tasks are included with those areas (not strict TDD ordering unless noted). **Release evidence**: **T149** / **T150** / **T151** closed acceptance; **re-run** tenancy and import integration tests after Phase 35 (**T224**–**T225**).
 
-**Superseded tasks**: Items marked **Superseded 2026-11-04** and left **unchecked** (**T022**, **T042**, **T132**, **T136**) are not v1.0.0 acceptance evidence. Hosted Identity (**T143**–**T148**) and E2E evidence **T149**–**T151** are complete; **Phase 35** (**T207**–**T233**) is the remaining release gate.
+**Superseded tasks**: Items marked **Superseded 2026-11-04** and left **unchecked** (**T022**, **T042**, **T132**, **T136**) are not v1.0.0 acceptance evidence. Hosted Identity (**T143**–**T148**) and release test evidence **T149**–**T151** are complete; **Phase 35** (**T207**–**T233**) is the remaining release gate.
 
 **Organization**: Tasks grouped by user story for independent increments; Phase 2 covers shared auth, persistence, and pure core.
 
@@ -47,7 +47,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 - [X] T002 Update `Potsure.slnx` to reference all new projects and retire or migrate `src/Potsure/Potsure.csproj` placeholder
 - [X] T003 Add central package versions in `Directory.Packages.props` for CsvHelper, EF Core 10 SQL Server, Aspire hosting integrations, BlazorBlueprint Components/Primitives/Icons, ASP.NET Core Identity passkeys package (optional/deferred  -  not v1.0.0 acceptance-critical), and Microsoft.Extensions.Http.Resilience (latest stable at introduction; constitution 1.2.0 + AGENTS.md outdated sweep before dependency work complete)
 - [X] T004 [P] Wire project references: Web → Infrastructure, Reporting; Infrastructure → Statements, Recurrence, Data; Reporting → Budgeting; Recurrence → Budgeting; Statements → Budgeting
-- [X] T005 [P] Create test projects `tests/Potsure.Budgeting.Tests`, `tests/Potsure.Statements.Tests`, `tests/Potsure.Recurrence.Tests`, `tests/Potsure.Reporting.Tests`, `tests/Potsure.Infrastructure.Tests`, `tests/Potsure.Web.Tests`, `tests/Potsure.E2E` and add to `Potsure.slnx`
+- [X] T005 [P] Create test projects `tests/Potsure.Budgeting.Tests`, `tests/Potsure.Statements.Tests`, `tests/Potsure.Recurrence.Tests`, `tests/Potsure.Reporting.Tests`, `tests/Potsure.Infrastructure.Tests`, `tests/Potsure.Web.Tests` and add to `Potsure.slnx`
 - [X] T006 [P] Add `samples/monzo/` with README stating anonymised fixtures only; no personal exports in repo
 - [X] T007 Scaffold `src/Potsure.AppHost/AppHost.cs` with `AddAzureContainerAppEnvironment`, `AddAzureSqlServer`, `RunAsContainer`, `AddDatabase("potsure")`, web project reference, `WithReference`, `WaitFor`, `PublishAsAzureContainerApp` per plan.md (database reference name must match web `AddSqlServerDbContext` client name). **Superseded for schema readiness** by **T113** (plan 2026-11-03): add `AddEFMigrations` and web `WaitForCompletion(migrations)`  -  do not treat database `WaitFor` alone as sufficient after T113 lands
 - [X] T008 Configure `src/Potsure.Web` for Blazor Server InteractiveServer, `net10.0`, nullable, analysers aligned with `CONVENTIONS.md`
@@ -315,9 +315,9 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ## Phase 15: Polish & Cross-Cutting Concerns
 
-**Purpose**: E2E, docs, security hardening, quickstart validation.
+**Purpose**: Release test evidence, docs, security hardening, quickstart validation.
 
-- [X] T095 [P] Add Playwright E2E tests for import → confirm recurring → category health → export in `tests/Potsure.E2E/KeyJourneysTests.cs` (constitution II)
+- [X] T095 [P] Close constitution II journey coverage via layered integration tests: import and reimport in `tests/Potsure.Infrastructure.Tests`, recurrence in `tests/Potsure.Recurrence.Tests`, category health maths in `tests/Potsure.Budgeting.Tests` / `tests/Potsure.Reporting.Tests`, export in `tests/Potsure.Infrastructure.Tests/ExportFormatTests.cs`
 - [X] T096 [P] XML documentation on public APIs in `src/Potsure.Budgeting/`, `src/Potsure.Statements/`, and `src/Potsure.Reporting/` per constitution V
 - [X] T097 Complete `docs/self-host.md`, `docs/encryption.md`, and deployment stage notes aligned with AppHost SKU/replica policy in plan.md
 - [X] T098 Review input validation and sanitisation for uploads and forms across `src/Potsure.Web/` and Infrastructure (FR-M028)
@@ -330,7 +330,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 
 ### Release evidence (constitution II / SC-007)
 
-- [X] T149 [P] Close Playwright E2E release evidence: `tests/Potsure.E2E/KeyJourneysTests.cs` exercises CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
+- [X] T149 [P] Close release test evidence for import, recurring confirmation, category health, and export via the area test projects listed under **T095**; supersedes partial closure notes on **T125**, **T128**, and **T133** for v1.0.0
 - [X] T150 [US12] Run quickstart Scenario 9 keyboard-only audit on category health, budget balance, and recurring summary; update validation log in `specs/001-potsure-v1/quickstart.md` (**SC-007**)
 - [X] T151 [P] Close **SC-003** release evidence: overlapping re-import scenarios (US2 AC7 / quickstart Scenario 2) demonstrate assignment memory without manual re-entry; non-partial integration coverage in **T106** / **T140**–**T142** or documented equivalent (partial  -  `ReimportAssignmentMemoryTests` is release evidence; quickstart Scenario 2 log refresh in **T185**)
 
@@ -361,7 +361,7 @@ Per [plan.md](./plan.md): `src/Potsure.*` projects, `tests/Potsure.*.Tests`, `sa
 | US10 | Persistence populated | Export/delete |
 | US12 | Core UI pages exist | Polish pass |
 
-Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 35 minimal path (**T209**–**T221**, **T224**, **T227**) → US1 import smoke → US3 plan income → US6 category health. **v1.0.0 release gate** (constitution v1.2.0 + spec P1): **Phase 35** complete (**T207**–**T233**), prior phases **1–34** (product behaviour), hosted encryption on storage (**T230**), Scenario **8c** **Pass** (**T231**), dependency hygiene (**T232**), Playwright E2E (**T149**), **SC-003** (**T151**), hosted Identity (**Phase 23**, **T205**), quickstart validation (**T150**, **T185**), pot modes Scenario 4b.
+Suggested **MVP vertical slice** (demo only, not v1.0.0): Phase 35 minimal path (**T209**–**T221**, **T224**, **T227**) → US1 import smoke → US3 plan income → US6 category health. **v1.0.0 release gate** (constitution v2.0.0 + spec P1): **Phase 35** complete (**T207**–**T233**), prior phases **1–34** (product behaviour), hosted encryption on storage (**T230**), Scenario **8c** **Pass** (**T231**), dependency hygiene (**T232**), release test evidence (**T149**), **SC-003** (**T151**), hosted Identity (**Phase 23**, **T205**), quickstart validation (**T150**, **T185**), pot modes Scenario 4b.
 
 ### Parallel Opportunities
 
@@ -404,7 +404,7 @@ Before tagging v1.0.0, complete **Phase 35** (**T207**–**T233**, document stor
 
 ### Incremental Delivery
 
-Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E/docs.
+Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 release evidence/docs.
 
 ### Parallel Team Strategy
 
@@ -442,7 +442,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T122 [US1] Add Monzo column mapping preview with user confirm or adjust step in `ImportWizard` before `StatementImportService` persists rows per FR-M002 and US1/AC1 (partial)
 - [X] T123 [US1] Persist internal transfer and pot movement rows from imports (excluded from uncategorised and category actuals by default) so users can one-off categorise them as spend per FR-M017 and [contracts/monzo-import.md](contracts/monzo-import.md) (partial)
 - [X] T124 [US10] Replace stub `ReauthenticationService` with a real reauthentication challenge before export and permanent deletion per T026 and export/delete UI flows (partial)
-- [X] T125 [US12] Harden `tests/Potsure.E2E/KeyJourneysTests.cs` to assert import → recurring → category health → export when `POTSURE_E2E_BASE_URL` is set (or document CI wiring) per Constitution II and T095 (partial)
+- [X] T125 [US12] Harden integration coverage for import → recurring review → category health → export in infrastructure, recurrence, and reporting test projects per Constitution II and **T095** (partial)
 
 ---
 
@@ -452,7 +452,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 - [X] T126 [US6] Surface persistent over-allocation warnings on `CategoryHealth.razor` from `CategoryPeriodSummary.OverAllocationWarning` per FR-M017a (partial)
 - [X] T127 [US6] [US7] [US8] Add optional mapped-pot breakdown or detail on category health, budget balance (limiting category), and runway report UIs when pots are configured, using existing rollup/projection inputs per US6/US7/AC2/US8 and tasks T073/T082 (partial)
-- [X] T128 [P] Expand `tests/Potsure.E2E/KeyJourneysTests.cs` to exercise CSV upload, recurring confirmation, and export (not page-heading smoke only) when `POTSURE_E2E_BASE_URL` is set; document CI or local E2E wiring in `docs/` or repository workflow per Constitution II and T095/T125 (partial)
+- [X] T128 [P] Expand infrastructure and recurrence tests to exercise CSV import, recurring confirmation paths, and export snapshots (not heading-only assertions) per Constitution II and **T095**/**T125** (partial)
 
 ---
 
@@ -464,7 +464,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T130 [US2] Allow confirming income patterns with `IncomeCadence.AdHoc` or `IncomeCadence.Variable` (amount without forced weekly/fortnightly/monthly recurrence) in `DetectionReview` and persistence per US2/AC2 (partial)
 - [X] T131 [US1] Add user-adjustable Monzo column mapping controls in `ImportWizard` before import proceeds (not read-only confirm only) per FR-M002 and US1/AC1 (partial)
 - [ ] T132 **N/A (superseded 2026-11-04)** Passkey step-up for export/delete  -  **replaced by T147**; do not implement
-- [X] T133 [P] [US12] Extend `tests/Potsure.E2E/KeyJourneysTests.cs` to confirm at least one suggested recurring pattern in the UI (not only navigate to review) before category health and export when `POTSURE_E2E_BASE_URL` is set per Constitution II and T128 (partial)
+- [X] T133 [P] [US12] Extend `tests/Potsure.Recurrence.Tests` and related infrastructure tests to confirm at least one suggested recurring pattern is persisted on confirm (not navigation-only) before category health and export paths per Constitution II and **T128** (partial)
 
 ---
 
@@ -520,7 +520,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 - [X] T145 [US11] Remove or replace `src/Potsure.Web/Configuration/HostedPasskeySignInEndpoints.cs`, `src/Potsure.Web/Configuration/HostedPasskeyStepUpEndpoints.cs`, and passkey-only `src/Potsure.Web/Components/Account/PasskeySignIn.razor`; update `src/Potsure.Web/Components/Account/RedirectToLogin.razor` and `Program.cs` to use template sign-in/register flows instead of `MapHostedPasskeySignInEndpoints` / `MapHostedPasskeyStepUpEndpoints`
 - [X] T146 [US11] Refactor `src/Potsure.Web/Configuration/HostedIdentityConfiguration.cs` for standard email/password Identity (normal `IdentityOptions.Password` policy per constitution 1.2.0  -  not passkey-style 64-character minimum); rename `AddHostedPasskeyIdentity` to hosted Identity registration used from `Program.cs`; defer mandatory passkey handler wiring to post–v1.0.0 optional milestone (optional passkeys remain via template)
 - [X] T147 [US10] Replace hosted passkey step-up in `src/Potsure.Web/Features/Privacy/Pages/PrivacyDataPanel.razor.cs` with current-password confirmation (preferred) or typed-phrase fallback per amended FR-M022/FR-M023 and [plan.md](./plan.md) reauthentication notes; ensure `ReauthenticationService` grants export/delete without passkey step-up
-- [X] T148 [P] [US11] Add smoke coverage for hosted register and sign-in under Aspire Hosted mode (`Deployment__Mode=Hosted` from AppHost) in `tests/Potsure.Web.Tests/` or `tests/Potsure.E2E/` and record the exercised path in `specs/001-potsure-v1/quickstart.md` (email/password  -  passkeys not required for acceptance) (partial  -  `HostedIdentityConfigurationTests` validates password policy registration)
+- [X] T148 [P] [US11] Add smoke coverage for hosted register and sign-in under hosted deployment mode in `tests/Potsure.Web.Tests/` and record the exercised path in `specs/001-potsure-v1/quickstart.md` (email/password  -  passkeys not required for acceptance) (partial  -  `HostedIdentityConfigurationTests` validates password policy registration)
 
 ---
 
@@ -529,7 +529,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 23) between spec intent, plan decisions, and present codebase behaviour.
 
 - [X] T152 [US11] Convert scaffolded Identity account pages (`Login`, `Register`, `ForgotPassword`, and primary Manage flows) from stock Bootstrap template markup to BlazorBlueprint v4 (`BbCard`, `BbButton`, `BbInput`, `BbAlert`, Lucide per house patterns) per [plan.md](./plan.md) Identity presentation notes and spec Session 2026-11-04 planning note; retain optional template passkey submit without passkey-only login  -  **complete** (template-aligned App/assets/CSS baseline; `Bb*` + Tailwind on feature and Identity UI; exceptions: `PasskeySubmit` native button and hidden inputs)
-- [X] T153 [P] [US11] Add functional hosted register-and-sign-in smoke (`WebApplicationFactory` or Playwright with `Deployment__Mode=Hosted`) beyond `HostedIdentityConfigurationTests` password-policy DI registration; refresh **Hosted Identity bootstrap** copy and validation log in `specs/001-potsure-v1/quickstart.md` for **T148** and **SC-005** (partial)
+- [X] T153 [P] [US11] Add functional hosted register-and-sign-in smoke using `WebApplicationFactory` with `Deployment__Mode=Hosted` beyond `HostedIdentityConfigurationTests` password-policy DI registration; refresh **Hosted Identity bootstrap** copy and validation log in `specs/001-potsure-v1/quickstart.md` for **T148** and **SC-005** (partial)
 - [X] T154 [P] Re-run quickstart Scenario 8c (EF migration ordering after **T144**–**T146** `Program.cs` Identity wiring) via local `aspire run` and update the validation log in `specs/001-potsure-v1/quickstart.md` per Phase 23 post-smoke note (partial)
 
 ---
@@ -538,7 +538,7 @@ Deliver P2 stories (US4, US5, US8, US9) then US12 accessibility and Phase 15 E2E
 
 **Purpose**: Close gaps found by `/speckit-converge` (2026-11-04, post Phase 24) between spec intent, plan decisions, and present codebase behaviour.
 
-- [X] T155 [P] [US11] Add hosted-mode HTTP register-and-sign-in smoke using `WebApplicationFactory` (or Playwright against `Deployment__Mode=Hosted`) that posts to Identity account endpoints and reaches an authenticated state  -  not DI-only `UserManager`/`SignInManager` calls alone in `tests/Potsure.Web.Tests/HostedIdentityFunctionalTests.cs`; refresh quickstart **Hosted Identity** notes if the exercised path changes per **T153**, **T148**, and **SC-005** (partial  -  `HostedIdentityHttpTests` + `PotsureWebApplicationFactory` GET Account pages; full cookie sign-in remains E2E)
+- [X] T155 [P] [US11] Add hosted-mode HTTP register-and-sign-in smoke using `WebApplicationFactory` with `Deployment__Mode=Hosted` that posts to Identity account endpoints and reaches an authenticated state  -  not DI-only `UserManager`/`SignInManager` calls alone in `tests/Potsure.Web.Tests/HostedIdentityFunctionalTests.cs`; refresh quickstart **Hosted Identity** notes if the exercised path changes per **T153**, **T148**, and **SC-005** (partial  -  `HostedIdentityHttpTests` cookie sign-in and `/import` after login)
 - [X] T156 [US11] Convert remaining standard Identity password-flow pages (`ResetPassword`, `ResendEmailConfirmation`, and related login recovery pages still using Bootstrap `form-control` / `btn`) to BlazorBlueprint v4 per [plan.md](./plan.md) Identity presentation and spec Session 2026-11-04 planning note  -  **complete** (2FA/recovery/manage passkeys and external logins converged to `BbFormFieldInput`, `BbDataTable`, `PotsurePageHeader`, and related Bb patterns)
 - [X] T157 [P] Re-run quickstart Scenario 8c (`aspire start` / `aspire wait`: database healthy → `ef-migrations` completed → web healthy) in an environment where the migration resource starts successfully; set validation log Scenario 8c to **Pass** or document a blocking infra defect with reproduction steps per constitution 1.2.0 Scenario 8c and **T154** (Pass 2026-11-20 on Aspire 17; AppHost uses `AddDotnetProject` + `Potsure.MigrationsHost`)
 

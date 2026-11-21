@@ -21,7 +21,7 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "onCreateCommand": "bash .devcontainer/setup-dotnet-dev-cert.sh && sudo apt-get update && sudo apt-get install -y libnss3-tools",
+  "onCreateCommand": "bash .devcontainer/setup-dotnet-dev-cert.sh",
   "remoteEnv": {
     "PATH": "/home/vscode/.aspire/bin:${containerEnv:PATH}",
     "ASPIRE_HOME": "/home/vscode/.aspire",
@@ -31,14 +31,13 @@
     "GH_TOKEN": "${localEnv:GH_TOKEN}",
     "GH_HOST": "github.com"
   },
-  "postCreateCommand": "bash .devcontainer/install-aspire-cli.sh && bash .devcontainer/install-playwright-browsers.sh",
+  "postCreateCommand": "bash .devcontainer/install-aspire-cli.sh",
   "postStartCommand": "aspire certs trust --non-interactive",
   "customizations": {
     "vscode": {
       "extensions": [
         "microsoft-aspire.aspire-vscode",
-        "ms-dotnettools.csdevkit",
-        "ms-playwright.playwright"
+        "ms-dotnettools.csdevkit"
       ]
     }
   }

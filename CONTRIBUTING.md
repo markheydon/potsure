@@ -4,13 +4,15 @@ Read [GOALS.md](GOALS.md), [SCOPE.md](SCOPE.md), [CONVENTIONS.md](CONVENTIONS.md
 
 ## Development
 
-The recommended environment is the [Dev Container](docs/dev-container.md) (Aspire, Docker, Spec Kit, Playwright browsers, and HTTPS dev certificates configured on create).
+The recommended environment is the [Dev Container](docs/dev-container.md) (Aspire, Docker, Spec Kit, and HTTPS dev certificates configured on create).
 
 ```bash
 dotnet format Potsure.slnx --verify-no-changes
 dotnet build Potsure.slnx -c Release -warnaserror
 dotnet test Potsure.slnx -c Release --no-build
 ```
+
+Automated coverage is layered unit and integration tests under `tests/Potsure.*.Tests` (golden parsing, budgeting maths, infrastructure, hosted Identity HTTP). Manual UI checks follow [specs/001-potsure-v1/quickstart.md](specs/001-potsure-v1/quickstart.md). See [CONVENTIONS.md](CONVENTIONS.md) (Testing) and constitution Principle II.
 
 ## Pull requests
 

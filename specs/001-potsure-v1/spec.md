@@ -6,7 +6,7 @@
 
 **Status**: Implementation in progress  -  **Phase 35** (document store pivot, tasks **T207**–**T233**) is the **release gate** before v1.0.0 sign-off. Hosted Identity (**T143**–**T148**) is complete; persistence must follow [contracts/user-state-document.md](./contracts/user-state-document.md) via Aspire `userdata` blob consumption (constitution 1.2.0), not the historical SQL/EF path.
 
-**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v1.2.0](../../.specify/memory/constitution.md).
+**Product alignment**: [GOALS.md](../../GOALS.md) **G1–G6**; [SCOPE.md](../../SCOPE.md) v1 boundaries; non-negotiable budget and deployment rules in [constitution v2.0.0](../../.specify/memory/constitution.md).
 
 **Input**: Build Potsure, a web app that helps people run a pots-based budget from bank statements with minimal manual upkeep (original specify prompt).
 

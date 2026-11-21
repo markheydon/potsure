@@ -1,12 +1,12 @@
 <!--
 Sync Impact Report
-- Version: 1.1.0 → 1.2.0
-- Modified principles: IV. Security & Privacy by Default (hosted auth mandate; password hashing; optional passkeys)
-- Modified sections: Deployment governance (Principle IV compliance wording)
-- Added sections: Revision history (under Governance)
+- Version: 1.2.0 → 2.0.0
+- Modified principles: II. Testing Discipline (removed mandatory browser journey coverage)
+- Modified sections: none
+- Added sections: none
 - Removed sections: none
 - Deferred: none
-- Follow-up (out of scope for this command): update specs/001-potsure-v1 auth sections; speckit-plan / speckit-tasks for plan/research/tasks
+- Follow-up: completed in repository (2026-11-21): browser harness removed; contributor docs and spec plan/tasks refreshed
 -->
 
 # Potsure Constitution
@@ -28,8 +28,7 @@ and keeps contributions aligned without ad hoc style debates.
 Functional changes MUST land with tests appropriate to the area changed. The budgeting
 core MUST have unit tests with explicit, independently verified expected results (not
 only snapshot-of-implementation checks). Statement parsing MUST use golden-file tests.
-A small set of Playwright (C#) end-to-end tests MUST cover key user journeys. Tests
-MUST use xUnit v3, NSubstitute when mocks are required, and built-in `Assert` only.
+Tests MUST use xUnit v3, NSubstitute when mocks are required, and built-in `Assert` only.
 Aspire AppHost resource modelling MUST NOT be unit-tested. **Rationale:** Potsure’s
 correctness depends on arithmetic and parsing; layered tests catch regressions where
 bugs hurt users most.
@@ -151,8 +150,11 @@ known-vulnerability drift and avoid silent skew between local and CI restores.
 
 ### Revision history
 
+- **2.0.0 (2026-11-21):** Remove mandatory browser journey coverage from Principle II;
+  retain golden parsing, independent budgeting maths, area-appropriate tests, and AppHost
+  exclusion from unit tests.
 - **1.2.0 (2026-11-04):** Defer mandatory passkey-only hosted login; adopt ASP.NET Core
   Identity email/password as the primary hosted sign-in path for v1, with optional passkeys
   permitted later via amendment.
 
-**Version**: 1.2.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-04
+**Version**: 2.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-21
