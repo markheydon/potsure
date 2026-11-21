@@ -17,6 +17,9 @@ updates:
       - dependency-name: "Microsoft.Extensions.*"
         update-types:
           - version-update:semver-major
+      - dependency-name: "Aspire.*"
+        update-types:
+          - version-update:semver-major
     groups:
       tests:
         patterns:
@@ -34,11 +37,16 @@ updates:
         update-types:
           - minor
           - patch
+      aspire:
+        patterns:
+          - Aspire.*
+        update-types:
+          - minor
+          - patch
       azure:
         patterns:
           - Azure.*
           - Microsoft.Azure.*
-          - Aspire.*
         update-types:
           - minor
           - patch
