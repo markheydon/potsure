@@ -25,12 +25,13 @@ public sealed class PlanSettingsPageTests
         IPage page = await context.NewPageAsync();
 
         await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
+        string origin = PlaywrightSession.GetPageOrigin(page);
 
-        await page.GotoAsync($"{trimmed}/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await page.GotoAsync($"{origin}/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Plan settings" }).ClickAsync();
 
-        await Assertions.Expect(page).ToHaveURLAsync(new Regex($"{Regex.Escape(trimmed)}/plan"));
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("/plan/?$"));
         await page.GetByRole(AriaRole.Button, new() { Name = "Save plan" }).WaitForAsync(new() { Timeout = 45_000 });
     }
 }

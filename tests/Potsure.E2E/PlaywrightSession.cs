@@ -10,6 +10,12 @@ internal static class PlaywrightSession
 {
     private const string DefaultPassword = "Password1";
 
+    /// <summary>
+    /// Authority after HTTPS redirection (Aspire may publish HTTP while the app listens on HTTPS).
+    /// </summary>
+    public static string GetPageOrigin(IPage page) =>
+        new Uri(page.Url).GetLeftPart(UriPartial.Authority);
+
     public static async Task EnsureCanReachImportAsync(IPage page, string baseUrl)
     {
         string trimmed = baseUrl.TrimEnd('/');
@@ -19,7 +25,7 @@ internal static class PlaywrightSession
         {
             (string email, string password) = ResolveCredentials();
             await RegisterAsync(page, trimmed, email, password);
-            await page.GotoAsync($"{trimmed}/import");
+            await page.GotoAsync($"{GetPageOrigin(page)}/import");
         }
 
         ILocator importHeading = page.Locator("#import-heading");

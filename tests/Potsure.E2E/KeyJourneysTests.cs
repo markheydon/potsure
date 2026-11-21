@@ -45,10 +45,11 @@ public sealed class KeyJourneysTests
             IPage page = await context.NewPageAsync();
 
             await PlaywrightSession.EnsureCanReachImportAsync(page, trimmed);
+            string origin = PlaywrightSession.GetPageOrigin(page);
 
             await ImportJourney.UploadMonzoFixtureAndImportAsync(page, fixturePath);
 
-            await page.GotoAsync($"{trimmed}/recurrence/review");
+            await page.GotoAsync($"{origin}/recurrence/review");
             await page.Locator("h1").Filter(new() { HasText = "Review recurring patterns" }).WaitForAsync(new() { Timeout = 60_000 });
             ILocator confirmButton = page.GetByRole(AriaRole.Button, new() { Name = "Confirm" }).First;
             if (await confirmButton.CountAsync() > 0)
@@ -56,28 +57,45 @@ public sealed class KeyJourneysTests
                 await confirmButton.ClickAsync();
             }
 
-            await page.GotoAsync($"{trimmed}/reports/category-health");
+            await page.GotoAsync($"{origin}/reports/category-health");
             await page.Locator("h1").Filter(new() { HasText = "Category health" }).WaitForAsync();
 
-            await page.GotoAsync($"{trimmed}/privacy");
+            await page.GotoAsync($"{origin}/privacy");
             await page.Locator("h1").Filter(new() { HasText = "Export and delete data" }).WaitForAsync();
             await page.GetByRole(AriaRole.Button, new() { Name = "Export data" }).ClickAsync();
-            ILocator hostedPassword = page.GetByPlaceholder("Current password");
-            ILocator exportPhrase = page.GetByPlaceholder("EXPORT");
-            await hostedPassword.Or(exportPhrase).First.WaitForAsync(new() { Timeout = 30_000 });
 
-            if (await hostedPassword.IsVisibleAsync())
+            ILocator exportConfirm = page.Locator("[aria-label='Confirm export']");
+            ILocator exportReady = page.GetByText("Export ready", new() { Exact = false });
+            ILocator exportFailed = page.GetByText("Export failed", new() { Exact = false });
+            await exportConfirm.Or(exportReady).Or(exportFailed).First.WaitForAsync(new() { Timeout = 60_000 });
+
+            if (await exportConfirm.IsVisibleAsync())
             {
+                ILocator hostedPassword = exportConfirm.GetByLabel("Current password");
+                ILocator exportPhrase = exportConfirm.GetByPlaceholder("EXPORT");
                 string password = Environment.GetEnvironmentVariable("POTSURE_E2E_PASSWORD") ?? "Password1";
-                await hostedPassword.FillAsync(password);
-            }
-            else
-            {
-                await exportPhrase.FillAsync("EXPORT");
+
+                if (await hostedPassword.CountAsync() > 0)
+                {
+                    await hostedPassword.FillAsync(password);
+                }
+                else
+                {
+                    await exportPhrase.FillAsync("EXPORT");
+                }
+
+                await exportConfirm.GetByRole(AriaRole.Button, new() { Name = "Continue export" }).ClickAsync();
             }
 
-            await page.GetByRole(AriaRole.Button, new() { Name = "Continue export" }).ClickAsync();
-            await page.GetByText("Export ready", new() { Exact = false }).WaitForAsync(new() { Timeout = 30_000 });
+            ILocator exportOutcome = exportReady
+                .Or(exportFailed)
+                .Or(page.GetByRole(AriaRole.Link, new() { NameRegex = new System.Text.RegularExpressions.Regex("Download potsure-export", System.Text.RegularExpressions.RegexOptions.IgnoreCase) }));
+            await exportOutcome.First.WaitForAsync(new() { Timeout = 120_000 });
+
+            if (await exportFailed.IsVisibleAsync())
+            {
+                Assert.Fail("Export failed on the privacy page.");
+            }
         }
         catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
         {

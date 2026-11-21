@@ -44,10 +44,15 @@ resolve_web_base_url() {
   aspire describe --format Json --non-interactive --apphost "$APPHOST" | jq -r '
     [.resources[]
      | select(.displayName == "web")
-     | (.urls[]? | select(.name == "http") | .url),
-       (.environment.ASPNETCORE_URLS // "" | split(";")[] | select(startswith("http://")))]
+     | (.urls[]? | .url),
+       (.environment.ASPNETCORE_URLS // "" | split(";")[] | select(length > 0))]
     | map(select(. != null and . != ""))
-    | (map(select(test("localhost|127\\.0\\.0\\.1"))) | first) // first // empty
+    | unique
+    | (map(select(test("^https://") and test("localhost|127\\.0\\.0\\.1"))) | first)
+      // (map(select(test("^http://") and test("localhost|127\\.0\\.0\\.1"))) | first)
+      // (map(select(test("^https://"))) | first)
+      // (map(select(test("^http://"))) | first)
+      // empty
   '
 }
 

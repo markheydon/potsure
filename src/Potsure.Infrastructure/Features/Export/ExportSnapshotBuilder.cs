@@ -49,7 +49,7 @@ public sealed class ExportSnapshotBuilder(
             profile.Pots.Select(p => new BankPotExportRow(
                 p.Id,
                 p.Name,
-                categoryKinds[p.CategoryId],
+                categoryKinds.GetValueOrDefault(p.CategoryId),
                 p.AllocationToPotAmount,
                 p.RecordedFundingAmount)).ToList(),
             profile.MonzoAccount is null
@@ -69,7 +69,7 @@ public sealed class ExportSnapshotBuilder(
             recurringExpenses.Select(e => new RecurringExpenseExportRow(
                 e.Id,
                 e.VendorLabel,
-                categoryKinds[e.CategoryId],
+                categoryKinds.GetValueOrDefault(e.CategoryId),
                 e.Cadence,
                 e.AmountKind,
                 e.FixedAmount,

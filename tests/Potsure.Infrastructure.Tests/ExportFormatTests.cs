@@ -1,13 +1,56 @@
 using System.Globalization;
 using System.IO.Compression;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Potsure.Budgeting;
 using Potsure.Infrastructure.Features.Export;
+using Potsure.Infrastructure.Features.Import;
 
 namespace Potsure.Infrastructure.Tests;
 
 public sealed class ExportFormatTests
 {
+    [Fact]
+    public async Task ExportService_AfterGoldenMonzoImport_ProducesJsonBundle()
+    {
+        const string owner = "export-after-import";
+        string fixturePath = Path.GetFullPath(
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "Potsure.Statements.Tests",
+                "Fixtures",
+                "monzo-golden-valid.csv"));
+        Assert.True(File.Exists(fixturePath), $"Fixture missing at {fixturePath}");
+
+        ServiceProvider provider = DocumentStoreTestHarness.BuildProvider(
+            owner,
+            reauthenticationGate: new AllowExportReauthenticationGate());
+
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+        StatementImportService importService = scope.ServiceProvider.GetRequiredService<StatementImportService>();
+        ExportService exportService = scope.ServiceProvider.GetRequiredService<ExportService>();
+
+        await using FileStream fixture = File.OpenRead(fixturePath);
+        StatementImportSummary importSummary = await importService.ImportAsync(
+            fixture,
+            "monzo-golden-valid.csv",
+            userConfirmedAccount: true,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(importSummary.RequiresAccountConfirmation);
+        Assert.True(importSummary.ImportedCount > 0, "Expected transactions to import.");
+
+        ExportResult? export = await exportService.ExportAsync(
+            ExportFormat.JsonBundle,
+            TestContext.Current.CancellationToken);
+
+        Assert.NotNull(export);
+        Assert.True(export!.Content.Length > 0);
+    }
     [Fact]
     public void JsonBundle_ContainsExportVersionAndCurrency()
     {
@@ -78,4 +121,10 @@ public sealed class ExportFormatTests
                     null,
                     null),
             ]);
+
+    private sealed class AllowExportReauthenticationGate : IExportReauthenticationGate
+    {
+        public Task<bool> ConfirmAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+    }
 }
