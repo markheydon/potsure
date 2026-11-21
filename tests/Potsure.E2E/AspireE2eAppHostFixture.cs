@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Aspire.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,15 @@ public sealed class AspireE2eAppHostFixture : IAsyncLifetime, IAsyncDisposable
             logging.AddFilter("Aspire.", LogLevel.Warning);
         });
 
+        appHost.Services.ConfigureHttpClientDefaults(http =>
+        {
+            http.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+            });
+        });
+
         application = await appHost.BuildAsync(cancellationToken)
             .WaitAsync(StartupTimeout, cancellationToken);
 
@@ -42,7 +52,7 @@ public sealed class AspireE2eAppHostFixture : IAsyncLifetime, IAsyncDisposable
             .WaitForResourceHealthyAsync("web", cancellationToken)
             .WaitAsync(StartupTimeout, cancellationToken);
 
-        WebBaseUrl = application.GetEndpoint("web");
+        WebBaseUrl = application.GetEndpoint("web", "http");
     }
 
     public async ValueTask DisposeAsync()
