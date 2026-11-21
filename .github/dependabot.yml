@@ -102,3 +102,10 @@ updates:
       - markheydon
     labels:
       - type/chore
+    groups:
+      devcontainers:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
