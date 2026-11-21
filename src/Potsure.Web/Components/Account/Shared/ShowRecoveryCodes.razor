@@ -1,0 +1,32 @@
+<StatusMessage Message="@StatusMessage" />
+<BbCard>
+    <BbCardHeader>
+        <BbCardTitle>Recovery codes</BbCardTitle>
+    </BbCardHeader>
+    <BbCardContent>
+        <BbAlert Variant="AlertVariant.Warning">
+            <BbAlertDescription>
+                <BbTypographyP><strong>Put these codes in a safe place.</strong></BbTypographyP>
+                <BbTypographyP>
+                    If you lose your device and do not have the recovery codes, you will lose access to your account.
+                </BbTypographyP>
+            </BbAlertDescription>
+        </BbAlert>
+        <div class="bb:grid bb:gap-4 bb:max-w-2xl">
+            @foreach (var recoveryCode in RecoveryCodes)
+            {
+                <div>
+                    <code>@recoveryCode</code>
+                </div>
+            }
+        </div>
+    </BbCardContent>
+</BbCard>
+
+@code {
+    [Parameter]
+    public string[] RecoveryCodes { get; set; } = [];
+
+    [Parameter]
+    public string? StatusMessage { get; set; }
+}

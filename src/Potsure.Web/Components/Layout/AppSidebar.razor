@@ -1,0 +1,70 @@
+<BbSidebar>
+    <BbSidebarHeader>
+        <BbSidebarMenu>
+            <BbSidebarMenuItem>
+                <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Size="SidebarMenuButtonSize.Large">
+                    <LucideIcon Name="piggy-bank" Class="bb:text-primary" />
+                    <span class="bb:font-semibold">Potsure</span>
+                </BbSidebarMenuButton>
+            </BbSidebarMenuItem>
+        </BbSidebarMenu>
+    </BbSidebarHeader>
+
+    <BbSidebarContent>
+        @foreach (NavGroup group in _groups)
+        {
+            <BbSidebarGroup>
+                <BbSidebarGroupLabel>@group.Title</BbSidebarGroupLabel>
+                <BbSidebarMenu>
+                    @foreach (NavLinkItem item in group.Items)
+                    {
+                        <BbSidebarMenuItem>
+                            <BbSidebarMenuButton Href="@item.Href" Match="@item.Match" Tooltip="@item.Text">
+                                <LucideIcon Name="@item.Icon" />
+                                <span>@item.Text</span>
+                            </BbSidebarMenuButton>
+                        </BbSidebarMenuItem>
+                    }
+                </BbSidebarMenu>
+            </BbSidebarGroup>
+        }
+    </BbSidebarContent>
+
+    <BbSidebarFooter>
+        <BbTypographyMuted Class="bb:px-2">Budgeting from your Monzo exports</BbTypographyMuted>
+    </BbSidebarFooter>
+
+    <BbSidebarRail />
+</BbSidebar>
+
+@code {
+    private sealed record NavLinkItem(string Text, string Href, string Icon, NavLinkMatch Match = NavLinkMatch.Prefix);
+
+    private sealed record NavGroup(string Title, NavLinkItem[] Items);
+
+    private static readonly NavGroup[] _groups =
+    [
+        new("Overview",
+        [
+            new("Dashboard", "/", "layout-dashboard", NavLinkMatch.All),
+            new("Import", "/import", "upload"),
+        ]),
+        new("Plan",
+        [
+            new("Plan settings", "/plan", "sliders-horizontal", NavLinkMatch.All),
+            new("Pots", "/plan/pots", "piggy-bank"),
+            new("Funding", "/plan/funding", "wallet"),
+            new("Recurring", "/recurrence/review", "repeat"),
+        ]),
+        new("Reports",
+        [
+            new("Category health", "/reports/category-health", "chart-column"),
+            new("Budget balance", "/reports/budget-balance", "scale"),
+            new("Runway", "/reports/runway", "trending-up"),
+        ]),
+        new("Data",
+        [
+            new("Export and delete", "/privacy", "shield-check"),
+        ]),
+    ];
+}

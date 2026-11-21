@@ -1,0 +1,217 @@
+﻿@page "/reports/attribution"
+@rendermode InteractiveServer
+
+<PageTitle>Reassign transactions</PageTitle>
+
+<PotsurePageHeader Title="Reassign attributed transactions"
+                   HeadingLevel="1"
+                   />
+
+<BbTypographyMuted>
+    Override expense auto-attribution (FR-M010a) or income credit attribution (FR-M010b) for the selected report date range.
+</BbTypographyMuted>
+
+@if (_loading)
+{
+    <PotsureLoadingState Message="Loading transactions…" />
+}
+else if (_error is not null)
+{
+    <BbAlert Variant="AlertVariant.Warning">
+        <BbAlertTitle>Unavailable</BbAlertTitle>
+        <BbAlertDescription>@_error</BbAlertDescription>
+    </BbAlert>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <BbAlert Variant="AlertVariant.Default">
+            <BbAlertDescription>@_statusMessage</BbAlertDescription>
+        </BbAlert>
+    }
+
+    <PotsurePageHeader Title="Expense debits"
+                       HeadingLevel="2"
+                       />
+
+    @if (_transactions.Count == 0)
+    {
+        <BbTypographyP>No attributed expense debits in the current report date range.</BbTypographyP>
+    }
+    else
+    {
+    <BbDataTable TData="AttributedTransactionRow"
+                 Data="@_transactions"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Attributed expense debits">
+        <Columns>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="DateOnly"
+                               Header="Date">
+                <CellTemplate Context="row">
+                    @row.TransactionDate.ToString("dd/MM/yyyy")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Name"
+                               Property="@(row => row.Name)" />
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="decimal"
+                               Header="Amount">
+                <CellTemplate Context="row">
+                    @UkCurrencyDisplay.FormatAbs(row.Amount)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid"
+                               Header="Category">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@_categoryByTransaction[row.TransactionId]"
+                              ValueChanged="@(id => SetCategory(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Category">
+                                <ChildContent Context="ignored">
+                                    @CategoryLabel(_categoryByTransaction[row.TransactionId])
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (CategoryOption category in _categories)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@category.Id" Text="@BudgetCategoryDisplay.Format(category.Kind)" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid?"
+                               Header="Pot">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@GetPotSelection(row.TransactionId)"
+                              ValueChanged="@(id => SetPotSelection(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="None">
+                                <ChildContent Context="ignored">
+                                    @PotSelectionLabel(row.TransactionId)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                            @foreach (PotOption pot in PotsForCategory(_categoryByTransaction[row.TransactionId]))
+                            {
+                                <BbSelectItem TValue="Guid" Value="@pot.Id" Text="@pot.Name" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="Guid?"
+                               Header="Pattern">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@GetPatternSelection(row.TransactionId)"
+                              ValueChanged="@(id => SetPatternSelection(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="None">
+                                <ChildContent Context="ignored">
+                                    @PatternSelectionLabel(row.TransactionId)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="None" />
+                            @foreach (PatternOption pattern in _patterns)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@pattern.Id" Text="@pattern.Label" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Tag">
+                <CellTemplate Context="row">
+                    <BbInput @bind-Value="_tagByTransaction[row.TransactionId]" Placeholder="Optional" />
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="AttributedTransactionRow" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="row">
+                    <BbButton OnClick="() => SaveOverrideAsync(row.TransactionId)">Save override</BbButton>
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
+    }
+
+    <PotsurePageHeader Title="Income credits"
+                       HeadingLevel="2"
+                       />
+
+    @if (_incomeCredits.Count == 0)
+    {
+        <BbTypographyP>No income credits in the current report date range.</BbTypographyP>
+    }
+    else
+    {
+    <BbDataTable TData="IncomeAttributedTransactionRow"
+                 Data="@_incomeCredits"
+                 ShowToolbar="false"
+                 ShowPagination="false"
+                 AriaLabel="Income credits for attribution">
+        <Columns>
+            <BbDataTableColumn TData="IncomeAttributedTransactionRow" TValue="DateOnly"
+                               Header="Date">
+                <CellTemplate Context="row">
+                    @row.TransactionDate.ToString("dd/MM/yyyy")
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="IncomeAttributedTransactionRow" TValue="string"
+                               Header="Name"
+                               Property="@(row => row.Name)" />
+            <BbDataTableColumn TData="IncomeAttributedTransactionRow" TValue="decimal"
+                               Header="Amount">
+                <CellTemplate Context="row">
+                    @UkCurrencyDisplay.FormatAbs(row.Amount)
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="IncomeAttributedTransactionRow" TValue="Guid?"
+                               Header="Income pattern">
+                <CellTemplate Context="row">
+                    <BbSelect TValue="Guid"
+                              Value="@GetIncomeSourceSelection(row.TransactionId)"
+                              ValueChanged="@(id => SetIncomeSourceSelection(row.TransactionId, id))">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Not attributed">
+                                <ChildContent Context="ignored">
+                                    @IncomeSourceSelectionLabel(row.TransactionId)
+                                </ChildContent>
+                            </BbSelectValue>
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            <BbSelectItem TValue="Guid" Value="@Guid.Empty" Text="Not attributed" />
+                            @foreach (IncomePatternOption pattern in _incomePatterns)
+                            {
+                                <BbSelectItem TValue="Guid" Value="@pattern.Id" Text="@pattern.Label" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                </CellTemplate>
+            </BbDataTableColumn>
+            <BbDataTableColumn TData="IncomeAttributedTransactionRow" TValue="string"
+                               Header="Actions">
+                <CellTemplate Context="row">
+                    <BbButton OnClick="() => SaveIncomeOverrideAsync(row.TransactionId)">Save attribution</BbButton>
+                </CellTemplate>
+            </BbDataTableColumn>
+        </Columns>
+    </BbDataTable>
+    }
+
+    <PotsureRelatedNav>
+    <BbLink Href="/reports/category-health">Back to category health</BbLink>
+    <BbLink Href="/reports/categorise">Assign uncategorised transactions</BbLink>
+    </PotsureRelatedNav>
+}

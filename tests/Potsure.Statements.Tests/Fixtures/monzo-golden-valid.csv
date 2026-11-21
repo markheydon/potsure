@@ -1,0 +1,9 @@
+Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In
+tx_anon_001,01/10/2026,09:15:30,Pot transfer,Needs - 75 Pot,,Saving,14.95,GBP,,,,,,Pot top-up,,14.95,
+tx_anon_002,02/10/2026,12:00:00,Card payment,Corner Cafe,,Eating out,-3.50,GBP,,,,,,,,3.50,
+tx_anon_003,03/10/2026,08:00:00,Direct Debit,Example Energy Ltd,,Bills,-85.00,GBP,,,,,,Monthly bill,,85.00,
+tx_anon_004,05/10/2026,14:30:00,Faster payment,Example Employer,,Income,2500.00,GBP,,,,,,Payroll,,,2500.00
+tx_anon_005,06/10/2026,10:00:00,Monzo-to-Monzo,Example Partner,,,-50.00,GBP,,,,,,,,50.00,
+tx_anon_006,07/10/2026,11:00:00,Flex,Monzo Flex,,,-100.00,GBP,,,,,,Early payment,,100.00,
+tx_anon_007,08/10/2026,16:00:00,Faster payment,Example Landlord,,Bills,-650.00,GBP,,,,,,Rent,,650.00,
+tx_anon_008,09/10/2026,09:00:00,monzo_paid,Monzo,,,-15.00,GBP,,,,,,Plus subscription,,15.00,

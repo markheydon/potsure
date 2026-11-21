@@ -1,0 +1,3 @@
+Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In
+,10/10/2026,10:00:00,Card payment,Corner Cafe,,Eating out,-3.50,GBP,,,,,,Corner  Cafe!,,3.50,
+,10/10/2026,10:05:00,Card payment,Corner Cafe,,Eating out,-3.50,GBP,,,,,,corner cafe,,3.50,

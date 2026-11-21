@@ -1,0 +1,106 @@
+﻿@page "/Account/Manage/DeletePersonalData"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<DeletePersonalData> Logger
+
+<PageTitle>Delete Personal Data</PageTitle>
+
+<StatusMessage Message="@message" />
+
+
+<BbAlert Variant="AlertVariant.Warning">
+    <BbAlertDescription>
+        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+    </BbAlertDescription>
+</BbAlert>
+
+<BbCard Class="bb:w-full bb:max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="bb:text-2xl">Delete personal data</BbCardTitle>
+        <BbCardDescription>Permanently remove your account and all associated data.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent>
+        <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
+            <DataAnnotationsValidator />
+            <ValidationSummary Class="bb:text-sm bb:text-destructive" role="alert" />
+            @if (requirePassword)
+            {
+                <div class="bb:grid bb:gap-4 bb:max-w-2xl">
+                    <BbFormFieldInput TValue="string"
+                                      @bind-Value="Input.Password"
+                                      Label="Password"
+                                      Autocomplete="current-password"
+                                      Placeholder="Please enter your password."
+                                      Type="InputType.Password"
+                                      Required="true" />
+                </div>
+            }
+            <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Destructive" Class="bb:w-full bb:mt-2">Delete data and close my account</BbButton>
+        </EditForm>
+    </BbCardContent>
+</BbCard>
+
+@code {
+    private string? message;
+    private ApplicationUser? user;
+    private bool requirePassword;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+        requirePassword = await UserManager.HasPasswordAsync(user);
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        if (requirePassword && !await UserManager.CheckPasswordAsync(user, Input.Password))
+        {
+            message = "Error: Incorrect password.";
+            return;
+        }
+
+        var result = await UserManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException("Unexpected error occurred deleting user.");
+        }
+
+        await SignInManager.SignOutAsync();
+
+        var userId = await UserManager.GetUserIdAsync(user);
+        Logger.LogInformation("User with ID '{UserId}' deleted themselves.", userId);
+
+        RedirectManager.RedirectToCurrentPage();
+    }
+
+    private sealed class InputModel
+    {
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+    }
+}

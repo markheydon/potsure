@@ -22,7 +22,7 @@ dotnet test Potsure.slnx -c Release --no-build
 | `.cursor/rules/` | File-scoped agent constraints |
 | `.agents/skills/` | Project skills (ADR, docs, code review, BlazorBlueprint, Aspire) |
 | `.devcontainer/` | Dev Container definition (see [docs/dev-container.md](docs/dev-container.md)) |
-| `docs/` | How-to guides (E2E, deployment, Dev Container) |
+| `docs/` | How-to guides (deployment, Dev Container) |
 | `plan/` | Release and PR policy |
 | `adr/` | Architectural decision records |
 

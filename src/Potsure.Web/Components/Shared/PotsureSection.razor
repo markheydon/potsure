@@ -1,0 +1,57 @@
+﻿<BbCard Class="@Class" AdditionalAttributes="@AdditionalAttributes">
+    <BbCardHeader>
+        <div class="bb:flex bb:items-start bb:justify-between bb:gap-4">
+            <div class="bb:min-w-0 bb:space-y-1">
+                <BbCardTitle As="@TitleElement" Class="bb:text-lg bb:font-semibold bb:leading-none">@Title</BbCardTitle>
+                @if (!string.IsNullOrWhiteSpace(Description))
+                {
+                    <BbCardDescription>@Description</BbCardDescription>
+                }
+            </div>
+            @if (Actions is not null)
+            {
+                <div class="bb:shrink-0">@Actions</div>
+            }
+        </div>
+    </BbCardHeader>
+    <BbCardContent Class="@ContentClass">
+        @ChildContent
+    </BbCardContent>
+    @if (Footer is not null)
+    {
+        <BbCardFooter Class="bb:justify-end bb:gap-2">
+            @Footer
+        </BbCardFooter>
+    }
+</BbCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    [Parameter]
+    public int HeadingLevel { get; set; } = 2;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public string ContentClass { get; set; } = "bb:space-y-4";
+
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+
+    [Parameter]
+    public RenderFragment? Footer { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string TitleElement => $"h{Math.Clamp(HeadingLevel, 1, 6)}";
+}

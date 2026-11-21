@@ -1,0 +1,45 @@
+﻿@page "/Account/Manage/PersonalData"
+
+@using Microsoft.AspNetCore.Identity
+@using Potsure.Data.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Personal Data</PageTitle>
+
+<StatusMessage />
+
+<BbCard Class="bb:w-full bb:max-w-2xl">
+    <BbCardHeader>
+        <BbCardTitle Class="bb:text-2xl">Personal data</BbCardTitle>
+        <BbCardDescription>Download or delete your account data.</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent>
+        <BbTypographyP>Your account contains personal data that you have given us. This page allows you to download or delete that data.</BbTypographyP>
+        <BbTypographyP>
+            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+        </BbTypographyP>
+        <form action="Account/Manage/DownloadPersonalData" method="post">
+            <AntiforgeryToken />
+            <BbButton Type="ButtonType.Submit">Download</BbButton>
+        </form>
+        <div class="bb:flex bb:flex-wrap bb:gap-2">
+            <BbButton Variant="ButtonVariant.Destructive" Href="Account/Manage/DeletePersonalData">Delete</BbButton>
+        </div>
+    </BbCardContent>
+</BbCard>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user  = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+        }
+    }
+}

@@ -60,7 +60,10 @@ jobs:
           dotnet clean Potsure.slnx
           dotnet restore Potsure.slnx
           dotnet build Potsure.slnx --no-restore --configuration Release -warnaserror
-          dotnet test Potsure.slnx --no-build --configuration Release --report-trx --results-directory TestResults
+          shopt -s nullglob
+          for test_project in tests/Potsure.*.Tests/Potsure.*.Tests.csproj; do
+            dotnet test "$test_project" --no-build --configuration Release --report-trx --results-directory TestResults
+          done
 
       - name: Upload test results
         uses: actions/upload-artifact@v7

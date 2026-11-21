@@ -23,7 +23,6 @@ updates:
           - xunit*
           - Microsoft.NET.Test.Sdk
           - Microsoft.Testing.*
-          - Microsoft.Playwright*
           - coverlet*
           - NSubstitute*
         update-types:

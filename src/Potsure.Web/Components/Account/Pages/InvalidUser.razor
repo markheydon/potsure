@@ -1,0 +1,12 @@
+﻿@page "/Account/InvalidUser"
+@attribute [AllowAnonymous]
+
+<PageTitle>Invalid user</PageTitle>
+
+<AuthFormCard Title="Invalid user"
+              Description="We could not load your account."
+              FooterPrompt="Return to "
+              FooterLinkText="Log in"
+              FooterHref="Account/Login">
+    <StatusMessage />
+</AuthFormCard>

@@ -3,7 +3,7 @@
 # Conventions
 
 **Project:** Potsure  
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-21
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
 
@@ -84,9 +84,14 @@ Add folders (`samples/`, `docs/`, AppHost, etc.) as the product grows. Update th
 
 ## Testing
 
+Align with [.specify/memory/constitution.md](.specify/memory/constitution.md) Principle II.
+
 - **xUnit v3** with Microsoft.Testing.Platform.
 - **NSubstitute** when mocks are required.
 - **Built-in `Assert` only**  -  no FluentAssertions, Shouldly, Moq, NUnit, or MSTest.
+- **Golden-file tests** for Monzo statement parsing; **independently verified expected results** for the budgeting core (not snapshot-of-implementation checks alone).
+- **Area-appropriate tests** in matching `tests/Potsure.*.Tests` projects; hosted Identity HTTP smoke via `WebApplicationFactory` in `Potsure.Web.Tests`.
+- **Do not unit-test** Aspire AppHost resource modelling.
 - Test classes: `[ClassName]Tests`. Test methods: `Method_State_Expected`.
 
 ---
